@@ -1,11 +1,25 @@
-<script setup lang="ts"></script>
-
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <div :style="appThemeStyles"><top-bar /><router-view /></div>
 </template>
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useThemeStore } from './stores/themeStore'
+import TopBar from '@/components/TopBar.vue'
+import { m, t } from 'vue-router/dist/index-BzEKChPW.js'
 
-<style scoped></style>
+const themeStore = useThemeStore()
+
+const appThemeStyles = computed(() => ({
+  '--theme-color': themeStore.currentTheme,
+  backgroundColor: themeStore.darkMode ? '#1a1a1a' : '#ffffff',
+  color: themeStore.darkMode ? '#ffffff' : '#333333',
+}))
+</script>
+<style scoped>
+#app > div {
+  min-height: 100vh;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+</style>

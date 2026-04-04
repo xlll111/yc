@@ -4,6 +4,8 @@ import Home from '@/views/Home.vue'
 import Login from '@/views/Login.vue'
 import About from '@/views/AboutView.vue'
 import Docs from '@/views/DocsView.vue'
+import Dash from '@/views/Dash.vue'
+import Blank from '@/components/blank.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -17,6 +19,23 @@ const router = createRouter({
       path: '/login',
       name: 'Login',
       component: Login,
+    },
+    {
+      path: '/dash',
+      name: 'Dash',
+      component: Dash,
+      children: [
+        {
+          path: 'a',
+          name: 'DashHome',
+          component: Blank,
+        },
+        {
+          path: '/:pathMatch(.*)*',
+          name: 'Blank',
+          component: Blank,
+        },
+      ],
     },
     {
       path: '/about',

@@ -71,8 +71,6 @@
 </template>
 
 <script>
-// import { R } from 'vue-router/dist/index-BzEKChPW.js'
-
 export default {
   name: 'GlobalHeader',
   data() {

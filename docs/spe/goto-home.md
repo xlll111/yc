@@ -1,4 +1,8 @@
-<script>
+<script setup>
+import { onMounted } from 'vue'
+  
+onMounted(() => {
 const rootUrl = window.location.origin;
 window.location.replace(rootUrl);
+})
 </script>

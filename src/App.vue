@@ -5,7 +5,6 @@
 import { computed } from 'vue'
 import { useThemeStore } from './stores/themeStore'
 import TopBar from '@/components/TopBar.vue'
-import { m, t } from 'vue-router/dist/index-BzEKChPW.js'
 
 const themeStore = useThemeStore()
 

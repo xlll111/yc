@@ -18,7 +18,7 @@
       <!-- 桌面端导航链接 -->
       <nav class="desktop-nav">
         <a href="/" class="nav-link">首页</a>
-        <a href="//yc.xlll.dpdns.org" class="nav-link">文档</a>
+        <a href="/docs" class="nav-link">文档</a>
         <a href="/dash" class="nav-link">控制台</a>
         <a href="/about" class="nav-link">关于</a>
         <div class="dropdown-wrapper">

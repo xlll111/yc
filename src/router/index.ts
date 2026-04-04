@@ -28,6 +28,14 @@ const router = createRouter({
       name: 'Docs',
       component: Docs,
     },
+    {
+      path: '/d',
+      name: 'Doc',
+      beforeEnter() {
+        window.location.replace('https://xlll111.lanzouq.com/b00efkxesb')
+      },
+      component: Home,
+    },
   ],
 })
 

@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs --outDir ../dist/docs",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
@@ -36,6 +38,7 @@
     "typescript": "~6.0.0",
     "vite": "^8.0.3",
     "vite-plugin-vue-devtools": "^8.1.1",
+    "vitepress": "^1.6.4",
     "vue-tsc": "^3.2.6"
   },
   "engines": {

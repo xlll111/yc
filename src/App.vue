@@ -1,5 +1,8 @@
 <template>
-  <div :style="appThemeStyles"><top-bar /><router-view /></div>
+  <div :style="appThemeStyles">
+    <top-bar />
+    <div><router-view /></div>
+  </div>
 </template>
 <script setup lang="ts">
 import { computed } from 'vue'
@@ -19,6 +22,11 @@ const appThemeStyles = computed(() => ({
   min-height: 100vh;
   overflow: auto;
   display: flex;
+  flex-direction: column;
+}
+#app > div > div {
+  display: flex;
+  flex: 9999;
   flex-direction: column;
 }
 </style>

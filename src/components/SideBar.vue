@@ -179,7 +179,7 @@ const activeLink = ref(route.path)
 watch(
   () => route.path,
   (newPath) => {
-    activeLink.value = newPath
+    activeLink.value = newPath.replace('/dash', '')
     // 移动端点击链接后自动关闭侧边栏
     if (isMobile.value) {
       closeMobileSidebar()

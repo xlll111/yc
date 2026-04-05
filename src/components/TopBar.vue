@@ -17,10 +17,10 @@
 
       <!-- 桌面端导航链接 -->
       <nav class="desktop-nav">
-        <a href="/" class="nav-link">首页</a>
+        <router-link to="/" class="nav-link">首页</router-link>
         <a href="/docs" class="nav-link">文档</a>
-        <a href="/dash" class="nav-link">控制台</a>
-        <a href="/about" class="nav-link">关于</a>
+        <router-link to="/dash" class="nav-link">控制台</router-link>
+        <router-link to="/about" class="nav-link">关于</router-link>
         <div class="dropdown-wrapper">
           <button class="dropdown-trigger" @click="toggleDropdown">
             更多 <span class="arrow" :class="{ rotate: dropdownOpen }">▼</span>
@@ -49,18 +49,18 @@
             <button class="close-btn" @click="closeMobileMenu">✕</button>
           </div>
           <div class="mobile-nav-links">
-            <a href="/" @click="closeMobileMenu">首页</a>
+            <router-link to="/" @click="closeMobileMenu">首页</router-link>
             <a href="/docs" @click="closeMobileMenu">文档</a>
-            <a href="/dash" @click="closeMobileMenu">控制台</a>
-            <a href="/about" @click="closeMobileMenu">关于</a>
+            <router-link to="/dash" @click="closeMobileMenu">控制台</router-link>
+            <router-link to="/about" @click="closeMobileMenu">关于</router-link>
             <div class="mobile-dropdown">
               <div class="mobile-dropdown-header" @click="toggleMobileDropdown">
                 更多 <span class="arrow" :class="{ rotate: mobileDropdownOpen }">▼</span>
               </div>
               <div class="mobile-dropdown-content" v-show="mobileDropdownOpen">
-                <a href="/contact" @click="closeMobileMenu">联系我们</a>
-                <a href="/faq" @click="closeMobileMenu">常见问题</a>
-                <a href="/careers" @click="closeMobileMenu">加入我们</a>
+                <router-link to="/contact" @click="closeMobileMenu">联系我们</router-link>
+                <router-link to="/faq" @click="closeMobileMenu">常见问题</router-link>
+                <router-link to="/careers" @click="closeMobileMenu">加入我们</router-link>
               </div>
             </div>
           </div>

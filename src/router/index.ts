@@ -5,7 +5,9 @@ import Login from '@/views/Login.vue'
 import About from '@/views/AboutView.vue'
 import Docs from '@/views/DocsView.vue'
 import Dash from '@/views/Dash.vue'
+
 import Blank from '@/components/blank.vue'
+import E404 from '@/views/E404.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -28,10 +30,10 @@ const router = createRouter({
         {
           path: 'a',
           name: 'DashHome',
-          component: Blank,
+          component: Login,
         },
         {
-          path: '/:pathMatch(.*)*',
+          path: ':pathMatch(.*)*',
           name: 'Blank',
           component: Blank,
         },
@@ -42,11 +44,11 @@ const router = createRouter({
       name: 'About',
       component: About,
     },
-    {
-      path: '/docs',
-      name: 'Docs',
-      component: Docs,
-    },
+    // {
+    //   path: '/docs',
+    //   name: 'Docs',
+    //   component: Docs,
+    // },
     {
       path: '/d',
       name: 'Doc',
@@ -54,6 +56,11 @@ const router = createRouter({
         window.location.replace('https://xlll111.lanzouq.com/b00efkxesb')
       },
       component: Home,
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'E404',
+      component: E404,
     },
   ],
 })

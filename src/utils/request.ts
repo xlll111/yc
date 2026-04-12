@@ -6,8 +6,7 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios'
 import { useUserStore } from '@/stores/userStore'
-import { ElMessage } from 'element-plus' // 可选，用于消息提示
-import 'element-plus/es/components/message/style/css'
+
 // 响应数据统一格式
 export interface ApiResponse<T = any> {
   code: number
@@ -18,18 +17,59 @@ export interface ApiResponse<T = any> {
 
 // 请求配置
 interface RequestConfig extends AxiosRequestConfig {
-  headers?: Record<string, string> // 请求头
-  showLoading?: boolean // 是否显示loading
-  showError?: boolean // 是否显示错误提示
+  headers?: Record<string, string>
+  showLoading?: boolean
+  showError?: boolean
 }
 
-// 创建 axios 实例
+// 安全的消息提示（避免组件未挂载时的错误）
+const safeMessage = {
+  error: (message: string) => {
+    console.error(`[Error]: ${message}`)
+    // 延迟到下一个微任务执行，确保 DOM 已准备
+    Promise.resolve().then(async () => {
+      try {
+        const { ElMessage } = await import('element-plus')
+        await import('element-plus/es/components/message/style/css')
+        ElMessage.error(message)
+      } catch (e) {
+        // 静默失败，只输出到控制台
+        console.warn('Message component not ready:', message)
+      }
+    })
+  },
+  warning: (message: string) => {
+    console.warn(`[Warning]: ${message}`)
+    Promise.resolve().then(async () => {
+      try {
+        const { ElMessage } = await import('element-plus')
+        await import('element-plus/es/components/message/style/css')
+        ElMessage.warning(message)
+      } catch (e) {
+        console.warn('Message component not ready:', message)
+      }
+    })
+  },
+  success: (message: string) => {
+    console.log(`[Success]: ${message}`)
+    Promise.resolve().then(async () => {
+      try {
+        const { ElMessage } = await import('element-plus')
+        await import('element-plus/es/components/message/style/css')
+        ElMessage.success(message)
+      } catch (e) {
+        console.log('Message component not ready:', message)
+      }
+    })
+  },
+}
+
 class Request {
   private instance: AxiosInstance
 
   constructor() {
     this.instance = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+      baseURL: import.meta.env.VITE_API_BASE_URL0 || '/api',
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -39,12 +79,10 @@ class Request {
     this.setupInterceptors()
   }
 
-  // 设置拦截器
   private setupInterceptors() {
     // 请求拦截器
     this.instance.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        // 添加 token
         const userStore = useUserStore()
         const token = userStore.getToken
 
@@ -52,7 +90,6 @@ class Request {
           config.headers.Authorization = `Bearer ${token}`
         }
 
-        // 添加时间戳防止缓存（可选）
         if (config.method === 'get') {
           config.params = {
             ...config.params,
@@ -71,64 +108,61 @@ class Request {
     // 响应拦截器
     this.instance.interceptors.response.use(
       (response: AxiosResponse<ApiResponse>) => {
-        const { data, config } = response
-        console.log('Response data:', response.data)
-        // console.log('data:', data)
-        // console.log('Response status:', response.status)
-        // console.log('Response config:', config)
+        const { data } = response
 
-        // 根据业务状态码处理
         if (data.code === 200 || data.code === 0) {
-          return data.data // 直接返回业务数据
+          return data.data
         } else if (data.code === 401) {
-          // token 过期或未登录
           const userStore = useUserStore()
           userStore.logout()
+          safeMessage.error(data.message || '登录已过期')
           return Promise.reject(new Error(data.message))
         } else if (data.code === 403) {
-          ElMessage.error('没有权限访问')
+          safeMessage.error('没有权限访问')
           return Promise.reject(new Error(data.message))
         } else {
-          // 其他错误
-          ElMessage.error(data.message || '请求失败')
+          safeMessage.error(data.message || '请求失败')
           return Promise.reject(new Error(data.message))
         }
       },
-      (error: { response: { status: any }; message: any; request: any }) => {
-        console.log('Response error:', error)
-        ElMessage.error('Response error:', error.message)
+      (error: any) => {
+        console.error('Response error:', error)
+
         // HTTP 状态码错误处理
         if (error.response) {
-          console.log('Response status:', error.response.status)
           const { status } = error.response
-          ElMessage.error(`HTTP状态码错误: ${status}`)
+
           switch (status) {
             case 400:
-              ElMessage.error('请求参数错误')
+              safeMessage.error('请求参数错误')
               break
             case 401:
-              ElMessage.error('登录已过期，请重新登录')
+              safeMessage.error('登录已过期，请重新登录')
               const userStore = useUserStore()
               userStore.logout()
-              window.location.href = '/login'
+              // 避免在初始化时跳转导致问题
+              setTimeout(() => {
+                if (window.location.pathname !== '/login') {
+                  window.location.href = '/login'
+                }
+              }, 100)
               break
             case 403:
-              ElMessage.error('拒绝访问')
+              safeMessage.error('拒绝访问')
               break
             case 404:
-              ElMessage.error('请求资源不存在')
+              safeMessage.error('请求资源不存在')
               break
             case 500:
-              ElMessage.error('服务器内部错误')
+              safeMessage.error('服务器内部错误')
               break
             default:
-              ElMessage.error(`连接错误: ${error.message}`)
+              safeMessage.error(`连接错误: ${error.message}`)
           }
         } else if (error.request) {
-          ElMessage.error('网络连接异常')
-          ElMessage.error(error.message)
+          safeMessage.error('网络连接异常')
         } else {
-          ElMessage.error(error.message || '请求失败')
+          safeMessage.error(error.message || '请求失败')
         }
 
         return Promise.reject(error)
@@ -136,27 +170,22 @@ class Request {
     )
   }
 
-  // 封装 GET 请求
   get<T = any>(url: string, params?: any, config?: RequestConfig): Promise<T> {
     return this.instance.get(url, { params, ...config })
   }
 
-  // 封装 POST 请求
   post<T = any>(url: string, data?: any, config?: RequestConfig): Promise<T> {
     return this.instance.post(url, data, config)
   }
 
-  // 封装 PUT 请求
   put<T = any>(url: string, data?: any, config?: RequestConfig): Promise<T> {
     return this.instance.put(url, data, config)
   }
 
-  // 封装 DELETE 请求
   delete<T = any>(url: string, params?: any, config?: RequestConfig): Promise<T> {
     return this.instance.delete(url, { params, ...config })
   }
 
-  // 文件上传
   upload<T = any>(url: string, file: File, fieldName: string = 'file'): Promise<T> {
     const formData = new FormData()
     formData.append(fieldName, file)
@@ -167,7 +196,6 @@ class Request {
     })
   }
 
-  // 文件下载
   download(url: string, filename: string, params?: any) {
     return this.instance
       .get(url, {
@@ -186,5 +214,4 @@ class Request {
   }
 }
 
-// 导出单例
 export const request = new Request()

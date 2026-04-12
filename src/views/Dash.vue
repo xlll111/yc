@@ -5,7 +5,16 @@
   </div>
 </template>
 <script setup>
+import { useRouter } from 'vue-router'
 import SideBar from '@/components/SideBar.vue'
+import { useUserStore } from '@/stores/userStore'
+import { ElMessage } from 'element-plus'
+const router = useRouter()
+const userStore = useUserStore()
+if (!userStore.getIsLoggedIn) {
+  ElMessage.error('请先登录')
+  router.push('/login')
+}
 </script>
 <style>
 #dash {

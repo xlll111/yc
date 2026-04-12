@@ -1,21 +1,23 @@
 <template>
-  <div :style="appThemeStyles">
+  <div>
     <top-bar />
     <div><router-view /></div>
   </div>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useThemeStore } from './stores/themeStore'
+import { onMounted } from 'vue'
+
 import TopBar from '@/components/TopBar.vue'
+import { useUserStore } from '@/stores/userStore'
 
-const themeStore = useThemeStore()
+const userStore = useUserStore()
 
-const appThemeStyles = computed(() => ({
-  '--theme-color': themeStore.currentTheme,
-  backgroundColor: themeStore.darkMode ? '#1a1a1a' : '#ffffff',
-  color: themeStore.darkMode ? '#ffffff' : '#333333',
-}))
+onMounted(() => {
+  // 如果存在 token 但没有用户信息，自动获取
+  if (userStore.getToken && !userStore.getUserInfo) {
+    userStore.fetchUserInfo()
+  }
+})
 </script>
 <style scoped>
 #app > div {

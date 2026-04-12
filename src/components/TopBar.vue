@@ -33,9 +33,15 @@
         </div>
       </nav>
 
-      <!-- 右侧用户区域（示例） -->
+      <!-- 右侧用户区域 -->
       <div class="user-area">
-        <router-link to="/login" class="user-btn">登录</router-link>
+        <div v-if="isLoggedIn" class="user-menu-wrapper">
+          <span class="user-name-trigger">{{ userName }}</span>
+          <div class="logout-dropdown">
+            <button class="logout-btn" @click="logout">退出登录</button>
+          </div>
+        </div>
+        <router-link v-else to="/login" class="user-btn">登录</router-link>
       </div>
     </div>
 
@@ -71,6 +77,7 @@
 </template>
 
 <script>
+import { useUserStore } from '@/stores/userStore'
 export default {
   name: 'GlobalHeader',
   data() {
@@ -79,6 +86,17 @@ export default {
       mobileMenuOpen: false, // 移动端侧边菜单
       mobileDropdownOpen: false, // 移动端更多展开
     }
+  },
+  computed: {
+    userStore() {
+      return useUserStore()
+    },
+    isLoggedIn() {
+      return this.userStore.getIsLoggedIn
+    },
+    userName() {
+      return this.userStore.getUserInfo?.username || '???'
+    },
   },
   mounted() {
     // 监听窗口尺寸变化，当从小屏幕切换到宽屏时自动关闭移动菜单
@@ -115,6 +133,9 @@ export default {
       if (window.innerWidth >= 768 && this.mobileMenuOpen) {
         this.closeMobileMenu()
       }
+    },
+    logout() {
+      this.userStore.logout()
     },
   },
   directives: {
@@ -268,6 +289,104 @@ export default {
 
 .user-area {
   margin-left: auto;
+}
+/* 用户菜单外层包装器 - 用于定位下拉菜单 */
+.user-menu-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+/* 用户名触发区 - 鼠标悬浮目标 */
+.user-name-trigger {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  color: #374151;
+  border-radius: 9999px;
+  font-weight: bold; /* 用户名字体加粗 */
+  border: 1px solid #d1d5db;
+  padding: 6px 14px;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.user-name-trigger:hover {
+  color: #1e40af;
+  background-color: rgba(30, 64, 175, 0.05);
+}
+
+/* 下拉菜单 - 退出登录卡片 */
+.logout-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 120px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease,
+    transform 0.2s ease;
+  z-index: 100;
+}
+
+/* 鼠标悬浮在菜单包装器上时显示下拉菜单 */
+.user-menu-wrapper:hover .logout-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* 退出登录按钮 */
+.logout-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+  text-align: left;
+}
+
+.logout-btn:hover {
+  background-color: #f3f4f6;
+  color: #1e40af;
+}
+.user {
+  color: #007bff; /* 用户名颜色 */
+  font-weight: bold; /* 用户名字体加粗 */
+  background: none;
+  border: 1px solid #d1d5db;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.user:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
 }
 
 .user-btn {

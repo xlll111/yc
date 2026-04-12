@@ -130,9 +130,9 @@
 
         <div class="form-options">
           <label class="checkbox-label">
-            <input type="checkbox" v-model="formData.rememberMe" class="checkbox-input" />
+            <!-- <input type="checkbox" v-model="formData.rememberMe" class="checkbox-input" />
             <span class="checkbox-custom"></span>
-            <span class="checkbox-text">记住我</span>
+            <span class="checkbox-text">记住我</span> -->
           </label>
           <a href="#" class="forgot-link" @click.prevent="handleForgotPassword">忘记密码？</a>
         </div>
@@ -154,7 +154,17 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import loginIcon from '@/components/icons/loginIcon.vue'
+import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/stores/userStore'
+import 'element-plus/es/components/message/style/css'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
+const userStore = useUserStore()
+if (userStore.getIsLoggedIn) {
+  router.push('/dash')
+}
+console.log(userStore.getIsLoggedIn, userStore.getUserInfo)
 // 表单数据
 const formData = reactive({
   username: '',
@@ -176,49 +186,37 @@ const togglePasswordVisibility = () => {
 const handleLogin = async () => {
   // 简单的前端验证
   if (!formData.username.trim()) {
-    alert('请输入用户名或邮箱')
+    ElMessage.error('请输入用户名')
     return
   }
   if (!formData.password) {
-    alert('请输入密码')
+    ElMessage.error('请输入密码')
     return
   }
-
   isLoading.value = true
-
-  // 模拟 API 请求延迟
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      isLoading.value = false
-
-      // 模拟登录成功（实际项目中应验证凭证）
-      console.log('登录信息：', {
-        username: formData.username,
-        password: formData.password,
-        rememberMe: formData.rememberMe,
-      })
-
-      // 显示登录成功提示（演示登录管理功能）
-      alert(
-        `登录成功！\n欢迎回来，${formData.username}\n${formData.rememberMe ? '已记住登录状态' : '未记住登录状态'}`,
-      )
-
-      // 这里可以跳转到仪表盘或主页
-      router.push('/dashboard')
-
-      resolve()
-    }, 800)
-  })
+  try {
+    const success = await userStore.login(formData)
+    if (success) {
+      ElMessage.success('登录成功')
+      setTimeout(() => {
+        router.push('/dash')
+      }, 500)
+    } else {
+      ElMessage.error('登录失败，请检查用户名和密码')
+    }
+  } finally {
+    isLoading.value = false
+  }
 }
 
 // 忘记密码处理
 const handleForgotPassword = () => {
-  alert('密码重置链接已发送至您的注册邮箱（演示功能）')
+  ElMessage.info('密码重置链接已发送至您的注册邮箱（演示功能）')
 }
 
 // 注册处理
 const handleSignup = () => {
-  alert('跳转至注册页面（演示功能）')
+  ElMessage.info('跳转至注册页面（演示功能）')
 }
 </script>
 

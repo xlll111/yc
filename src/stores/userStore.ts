@@ -1,11 +1,9 @@
 // stores/userStore.ts
 import { defineStore } from 'pinia'
-import { useRouter } from 'vue-router'
 import { ref, computed } from 'vue'
 import { userApi } from '@/api/user'
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
-const router = useRouter()
 // 用户信息类型定义
 export interface UserInfo {
   id: number
@@ -83,13 +81,10 @@ export const useUserStore = defineStore('user', () => {
       userInfo.value = null
       isLoggedIn.value = false
       ElMessage.success('已退出登录')
-      // 刷新当前界面
-      const currentRoute = router.currentRoute.value
-      router.push({ path: '/', query: { reload: Date.now() } }).then(() => {
-        router.replace(currentRoute)
-      })
+      return Promise.resolve()
     } catch (error) {
       console.error('Logout failed:', error)
+      return Promise.reject(error)
     }
   }
 

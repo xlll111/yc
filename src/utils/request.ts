@@ -69,7 +69,7 @@ class Request {
 
   constructor() {
     this.instance = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL0 || 'https://yc-server-v.xlll.dpdns.org',
+      baseURL: import.meta.env.VITE_API_BASE_URL1 || 'https://yc-server-v.xlll.dpdns.org',
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',

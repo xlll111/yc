@@ -78,8 +78,19 @@
 
 <script>
 import { useUserStore } from '@/stores/userStore'
+import { useRouter } from 'vue-router'
 export default {
   name: 'GlobalHeader',
+  setup() {
+    // 在 setup 中初始化 store 和 router
+    const userStore = useUserStore()
+    const router = useRouter()
+
+    return {
+      userStore,
+      router,
+    }
+  },
   data() {
     return {
       dropdownOpen: false, // 桌面端更多下拉菜单
@@ -88,9 +99,6 @@ export default {
     }
   },
   computed: {
-    userStore() {
-      return useUserStore()
-    },
     isLoggedIn() {
       return this.userStore.getIsLoggedIn
     },
@@ -134,8 +142,17 @@ export default {
         this.closeMobileMenu()
       }
     },
-    logout() {
-      this.userStore.logout()
+    async logout() {
+      try {
+        // 清除状态
+        await this.userStore.logout()
+        // 跳转到登录页
+        await this.router.push('/login')
+        // 刷新页面重置所有状态
+        window.location.reload()
+      } catch (error) {
+        console.error('Logout failed:', error)
+      }
     },
   },
   directives: {

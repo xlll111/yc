@@ -3,7 +3,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '@/views/Home.vue'
 import Login from '@/views/Login.vue'
 import About from '@/views/AboutView.vue'
-import Docs from '@/views/DocsView.vue'
 import Dash from '@/views/Dash.vue'
 
 import Blank from '@/components/blank.vue'
@@ -44,11 +43,14 @@ const router = createRouter({
       name: 'About',
       component: About,
     },
-    // {
-    //   path: '/docs',
-    //   name: 'Docs',
-    //   component: Docs,
-    // },
+    {
+      path: '/docs',
+      name: 'Docs',
+      beforeEnter() {
+        window.location.replace('/docs')
+      },
+      component: Home,
+    },
     {
       path: '/d',
       name: 'Doc',

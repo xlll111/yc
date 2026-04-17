@@ -35,13 +35,14 @@
 
       <!-- 右侧用户区域 -->
       <div class="user-area">
-        <div v-if="isLoggedIn" class="user-menu-wrapper">
-          <span class="user-name-trigger">{{ userName }}</span>
+        <router-link v-if="!isLoggedIn" to="/login" class="user-btn">登录</router-link>
+        <div v-else class="user-menu-wrapper">
+          <span v-if="userName" class="user-name-trigger">{{ userName }}</span>
+          <Spinner v-else class="user-name-trigger" inline size="tiny" />
           <div class="logout-dropdown">
             <button class="logout-btn" @click="logout">退出登录</button>
           </div>
         </div>
-        <router-link v-else to="/login" class="user-btn">登录</router-link>
       </div>
     </div>
 
@@ -79,6 +80,7 @@
 <script>
 import { useUserStore } from '@/stores/userStore'
 import { useRouter } from 'vue-router'
+import Spinner from './Spinner.vue'
 export default {
   name: 'GlobalHeader',
   setup() {
@@ -98,12 +100,15 @@ export default {
       mobileDropdownOpen: false, // 移动端更多展开
     }
   },
+  components: {
+    Spinner,
+  },
   computed: {
     isLoggedIn() {
       return this.userStore.getIsLoggedIn
     },
     userName() {
-      return this.userStore.getUserInfo?.username || '???'
+      return this.userStore.getUserInfo?.username || ''
     },
   },
   mounted() {
@@ -149,7 +154,7 @@ export default {
         // 跳转到登录页
         await this.router.push('/login')
         // 刷新页面重置所有状态
-        window.location.reload()
+        // window.location.reload()
       } catch (error) {
         console.error('Logout failed:', error)
       }

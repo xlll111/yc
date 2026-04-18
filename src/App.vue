@@ -38,21 +38,6 @@ onMounted(async () => {
 })
 </script>
 <style>
-html,
-body {
-  height: 100%;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  display: flex;
-}
-#app {
-  height: 100%;
-  display: flex;
-  overflow: hidden;
-  flex: 1;
-}
 #app > div {
   min-height: 100vh;
   overflow: hidden;
@@ -65,5 +50,21 @@ body {
   flex: 9999;
   flex-direction: column;
   overflow: auto;
+}
+@media (min-width: 768px) {
+  html,
+  body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+  }
+  #app {
+    height: 100%;
+    display: flex;
+    flex: 1;
+  }
 }
 </style>

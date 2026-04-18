@@ -39,11 +39,7 @@ const router = createRouter({
           name: 'clients',
           component: ClientsList,
         },
-        {
-          path: 'a',
-          name: 'DashHome',
-          component: Login,
-        },
+
         {
           path: ':pathMatch(.*)*',
           name: 'Blank',
@@ -53,7 +49,6 @@ const router = createRouter({
       meta: {
         title: '控制台',
       },
-      redirect: '/dash/clients',
     },
     {
       path: '/about',

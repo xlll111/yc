@@ -130,9 +130,9 @@
 
         <div class="form-options">
           <label class="checkbox-label">
-            <!-- <input type="checkbox" v-model="formData.rememberMe" class="checkbox-input" />
+            <input type="checkbox" v-model="formData.rememberMe" class="checkbox-input" />
             <span class="checkbox-custom"></span>
-            <span class="checkbox-text">记住我</span> -->
+            <span class="checkbox-text">记住我(30天)</span>
           </label>
           <a href="#" class="forgot-link" @click.prevent="handleForgotPassword">忘记密码？</a>
         </div>
@@ -156,10 +156,10 @@ import { ref, reactive } from 'vue'
 import loginIcon from '@/components/icons/loginIcon.vue'
 import { useUserStore } from '@/stores/userStore'
 import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
-import 'element-plus/es/components/message-box/style/css'
-import { pa } from 'element-plus/es/locale/index.mjs'
+// import { ElMessageBox } from 'element-plus'
+// import 'element-plus/es/components/message-box/style/css'
 
 const router = useRouter()
 const userStore = useUserStore()

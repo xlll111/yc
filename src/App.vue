@@ -3,7 +3,7 @@
     <top-bar />
     <div>
       <router-view />
-      <spinner v-if="isLoading" size="large" :text="loadingText" :overlay="true" inline />
+      <spinner v-if="isLoading" size="large" :text="loadingText" />
     </div>
   </div>
 </template>
@@ -37,16 +37,33 @@ onMounted(async () => {
   }
 })
 </script>
-<style scoped>
+<style>
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+}
+#app {
+  height: 100%;
+  display: flex;
+  overflow: hidden;
+  flex: 1;
+}
 #app > div {
   min-height: 100vh;
-  overflow: auto;
+  overflow: hidden;
   display: flex;
+  flex: 1;
   flex-direction: column;
 }
 #app > div > div {
   display: flex;
   flex: 9999;
   flex-direction: column;
+  overflow: auto;
 }
 </style>

@@ -18,7 +18,7 @@ export const userApi = {
   getUserInfo(token: string): Promise<UserInfo> {
     return request.get(
       '/user/get_user_info_by_token',
-      null, // 或者 undefined，没有 URL 参数
+      null,
       { headers: { Authorization: `Bearer ${token}` } }, // 第三个参数是 config
     )
   },

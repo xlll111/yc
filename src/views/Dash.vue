@@ -21,9 +21,14 @@ if (!userStore.getIsLoggedIn) {
   display: flex;
   flex-direction: row;
   flex: auto;
+  overflow: hidden;
 }
 #dash > div {
   display: flex;
   flex: 50;
+  overflow: auto;
+}
+#dash > div > div {
+  z-index: 1;
 }
 </style>

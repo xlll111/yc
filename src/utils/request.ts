@@ -110,7 +110,7 @@ class Request {
     this.instance.interceptors.response.use(
       (response: AxiosResponse<ApiResponse>) => {
         const { data } = response
-        console.log('Response :', response)
+        // console.log('Response :', response)
         if (data.code === 200 || data.code === 0) {
           return data.data
         } else if (data.code === 401) {
@@ -195,6 +195,29 @@ class Request {
         'Content-Type': 'multipart/form-data',
       },
     })
+  }
+
+  authget<T = any>(url: string, params?: any, config?: RequestConfig): Promise<T> {
+    const userStore = useUserStore()
+    const token = userStore.getToken
+    if (token) {
+      return this.get(url, params, {
+        headers: { Authorization: `Bearer ${token}` },
+        ...config,
+      })
+    } else {
+      return Promise.reject(new Error('未登录'))
+    }
+  }
+
+  authpost<T = any>(url: string, data?: any, config?: RequestConfig): Promise<T> {
+    const userStore = useUserStore()
+    const token = userStore.getToken
+    if (token) {
+      return this.post(url, data, { headers: { Authorization: `Bearer ${token}` }, ...config })
+    } else {
+      return Promise.reject(new Error('未登录'))
+    }
   }
 
   download(url: string, filename: string, params?: any) {

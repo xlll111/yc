@@ -5,6 +5,7 @@ const Home = () => import('@/views/Home.vue')
 const Login = () => import('@/views/Login.vue')
 const About = () => import('@/views/AboutView.vue')
 const Dash = () => import('@/views/Dash.vue')
+const ClientsList = () => import('@/views/ClientsList.vue')
 
 const Blank = () => import('@/components/blank.vue')
 const E404 = () => import('@/views/E404.vue')
@@ -34,6 +35,11 @@ const router = createRouter({
       component: Dash,
       children: [
         {
+          path: 'clients',
+          name: 'clients',
+          component: ClientsList,
+        },
+        {
           path: 'a',
           name: 'DashHome',
           component: Login,
@@ -47,6 +53,7 @@ const router = createRouter({
       meta: {
         title: '控制台',
       },
+      redirect: '/dash/clients',
     },
     {
       path: '/about',

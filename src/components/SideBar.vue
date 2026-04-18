@@ -1,5 +1,5 @@
 <template>
-  <aside class="vitepress-sidebar" :style="cssVariables">
+  <aside class="vitepress-sidebar" :class="{ 'mobile-open': isSidebarOpen }" :style="cssVariables">
     <!-- 移动端遮罩层 -->
     <div v-if="isMobileOpen" class="mobile-overlay" @click="closeMobileSidebar" />
 
@@ -169,6 +169,7 @@ const toggleGroup = (groupId) => {
 // 响应式状态
 const isMobile = ref(false)
 const isMobileOpen = ref(false)
+const isSidebarOpen = ref(false)
 
 // 路由相关
 const router = useRouter()
@@ -202,7 +203,6 @@ const handleResize = () => {
   // 桌面端自动关闭移动端展开状态
   if (!isMobile.value && isMobileOpen.value) {
     isMobileOpen.value = false
-    document.body.style.overflow = ''
   }
 }
 
@@ -210,13 +210,15 @@ const handleResize = () => {
 const openMobileSidebar = () => {
   if (isMobile.value) {
     isMobileOpen.value = true
-    document.body.style.overflow = 'hidden'
+    isSidebarOpen.value = true
   }
 }
 
 const closeMobileSidebar = () => {
   isMobileOpen.value = false
-  document.body.style.overflow = ''
+  setTimeout(() => {
+    isSidebarOpen.value = false
+  }, 200)
 }
 
 // CSS 变量注入
@@ -235,6 +237,7 @@ const cssVariables = computed(() => ({
 
 // 生命周期
 onMounted(() => {
+  activeLink.value = route.path.replace('/dash', '')
   initGroupState()
   handleResize()
   window.addEventListener('resize', handleResize)
@@ -242,7 +245,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
-  document.body.style.overflow = ''
 })
 </script>
 
@@ -461,9 +463,11 @@ onUnmounted(() => {
     position: fixed;
     top: 64px;
     left: 0;
+    height: 0;
+  }
+  .vitepress-sidebar.mobile-open {
     height: 100%;
   }
-
   .sidebar-container.mobile-open {
     transform: translateX(0);
   }

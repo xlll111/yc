@@ -92,10 +92,9 @@ const computedColor = computed(() => {
 /* 全屏模式 (默认) */
 .spinner-container:not(.spinner-inline) {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 64;
+  height: 100%;
+  width: 100%;
   z-index: 9999;
   background-color: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(2px);

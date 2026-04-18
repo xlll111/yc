@@ -2,8 +2,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { userApi } from '@/api/user'
-import { ElMessage } from 'element-plus'
-import 'element-plus/es/components/message/style/css'
+
 // 用户信息类型定义
 export interface UserInfo {
   id: number

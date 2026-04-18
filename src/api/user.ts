@@ -1,11 +1,11 @@
 // api/user.ts
 import { request } from '@/utils/request'
-import type { LoginParams, LoginResponse, UserInfo } from '@/stores/userStore'
+import type { LoginRequest, LoginResponse, UserInfo } from '@/stores/userStore'
 
 // 用户相关 API
 export const userApi = {
   // 登录
-  login(data: LoginParams): Promise<LoginResponse> {
+  login(data: LoginRequest): Promise<LoginResponse> {
     return request.post('/auth/login', data)
   },
 

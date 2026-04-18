@@ -140,7 +140,7 @@ const computedColor = computed(() => {
   height: 24px;
 }
 .spinner-tiny .spinner-text {
-  font-size: 8px;
+  font-size: 11px;
 }
 .spinner-small .spinner-svg {
   width: 32px;
@@ -225,8 +225,12 @@ const computedColor = computed(() => {
 
 /* 响应式调整 - 768px 断点 */
 @media (max-width: 768px) {
-  .spinner-inline {
+  /* .spinner-inline {
     min-height: 100px;
+  } */
+  .spinner-tiny .spinner-svg {
+    width: 21px;
+    height: 21px;
   }
 
   .spinner-small .spinner-svg {

@@ -154,17 +154,18 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import loginIcon from '@/components/icons/loginIcon.vue'
-import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/userStore'
-import 'element-plus/es/components/message/style/css'
 import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import 'element-plus/es/components/message/style/css'
+import 'element-plus/es/components/message-box/style/css'
+import { pa } from 'element-plus/es/locale/index.mjs'
 
 const router = useRouter()
 const userStore = useUserStore()
 if (userStore.getIsLoggedIn) {
   router.push('/dash')
 }
-console.log(userStore.getIsLoggedIn, userStore.getUserInfo)
 // 表单数据
 const formData = reactive({
   username: '',

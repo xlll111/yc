@@ -18,8 +18,13 @@ export interface UserInfo {
 export interface LoginParams {
   username: string
   password: string
+  rememberMe: boolean
 }
-
+export interface LoginRequest {
+  username: string
+  passwordhash: string
+  rememberMe: boolean
+}
 // 登录响应类型
 export interface LoginResponse {
   token: string
@@ -54,7 +59,12 @@ export const useUserStore = defineStore('user', () => {
   const login = async (params: LoginParams): Promise<boolean> => {
     try {
       // 调用登录 API
-      const response = await userApi.login(params)
+      const requestData: LoginRequest = {
+        username: params.username,
+        passwordhash: await hashPassword(params.password),
+        rememberMe: params.rememberMe,
+      }
+      const response = await userApi.login(requestData)
       const { token: newToken, userInfo: newUserInfo } = response
 
       // 保存 token 到 localStorage
@@ -69,7 +79,14 @@ export const useUserStore = defineStore('user', () => {
       return false
     }
   }
-
+  const hashPassword = async (password: string): Promise<string> => {
+    const encoder = new TextEncoder()
+    const data = encoder.encode(password)
+    const hash = await crypto.subtle.digest('SHA-256', data)
+    return Array.from(new Uint8Array(hash))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+  }
   // 登出
   const logout = async (): Promise<void> => {
     try {

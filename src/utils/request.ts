@@ -70,7 +70,7 @@ class Request {
 
   constructor() {
     this.instance = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL1 || 'https://yc-server-v.xlll.dpdns.org',
+      baseURL: import.meta.env.VITE_API_BASE_URL0 || 'https://yc-server-v.xlll.dpdns.org',
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -110,13 +110,13 @@ class Request {
     this.instance.interceptors.response.use(
       (response: AxiosResponse<ApiResponse>) => {
         const { data } = response
-
+        console.log('Response :', response)
         if (data.code === 200 || data.code === 0) {
           return data.data
         } else if (data.code === 401) {
           const userStore = useUserStore()
           userStore.logout()
-          safeMessage.error(data.message || '登录已过期')
+          // safeMessage.error(data.message || '登录已过期')
           return Promise.reject(new Error(data.message))
         } else if (data.code === 403) {
           safeMessage.error('没有权限访问')

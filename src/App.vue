@@ -2,20 +2,22 @@
   <div>
     <top-bar />
     <div>
-      <div v-if="isLoading"><spinner size="large" :text="`正在加载...${loadProgress}%`" /></div>
       <router-view />
+      <spinner v-if="isLoading" size="large" :text="loadingText" :overlay="true" inline />
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import TopBar from '@/components/TopBar.vue'
 import { useUserStore } from '@/stores/userStore'
+import { useLoadingStore } from '@/stores/loading'
 import Spinner from '@/components/Spinner.vue'
+const loadingStore = useLoadingStore()
+const { isLoading, loadingText } = storeToRefs(loadingStore)
 
 const userStore = useUserStore()
-const isLoading = ref(true)
-const loadProgress = ref(0)
 onMounted(async () => {
   // 如果存在 token 但没有用户信息，自动获取
   if (userStore.getToken && !userStore.getUserInfo) {
@@ -32,10 +34,7 @@ onMounted(async () => {
 
   for (const resource of resources) {
     await resource.load()
-    loadProgress.value += Math.floor(100 / resources.length)
   }
-
-  isLoading.value = false
 })
 </script>
 <style scoped>

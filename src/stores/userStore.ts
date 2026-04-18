@@ -80,7 +80,6 @@ export const useUserStore = defineStore('user', () => {
       token.value = ''
       userInfo.value = null
       isLoggedIn.value = false
-      ElMessage.success('已退出登录')
       return Promise.resolve()
     } catch (error) {
       console.error('Logout failed:', error)

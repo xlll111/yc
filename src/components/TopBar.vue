@@ -81,6 +81,7 @@
 import { useUserStore } from '@/stores/userStore'
 import { useRouter } from 'vue-router'
 import Spinner from './Spinner.vue'
+import { ElMessage } from 'element-plus'
 export default {
   name: 'GlobalHeader',
   setup() {
@@ -151,6 +152,7 @@ export default {
       try {
         // 清除状态
         await this.userStore.logout()
+        ElMessage.success('退出登录成功')
         // 跳转到登录页
         await this.router.push('/login')
         // 刷新页面重置所有状态

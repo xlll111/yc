@@ -6,6 +6,7 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios'
 import { useUserStore } from '@/stores/userStore'
+import router from '@/router'
 
 // 响应数据统一格式
 export interface ApiResponse<T = any> {
@@ -143,7 +144,7 @@ class Request {
               // 避免在初始化时跳转导致问题
               setTimeout(() => {
                 if (window.location.pathname !== '/login') {
-                  window.location.href = '/login'
+                  router.push('/login')
                 }
               }, 100)
               break

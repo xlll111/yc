@@ -1,5 +1,8 @@
-<template><div>BLANK</div></template>
-<script></script>
+<template>
+  <div>BLANK</div>
+</template>
+<script setup></script>
+
 <style scoped>
 div {
   width: 100%;

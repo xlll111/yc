@@ -193,8 +193,7 @@ export default {
 }
 
 .header-container {
-  max-width: 1200px;
-  margin: 0 auto;
+  margin: 0 1vh;
   padding: 0 24px;
   height: 64px;
   display: flex;
@@ -557,6 +556,7 @@ export default {
   }
   .header-container {
     padding: 0 16px;
+    margin: 0 auto;
   }
   .user-btn {
     padding: 4px 12px;

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <top-bar />
+    <top-bar id="top-bar" />
     <div>
       <router-view />
       <spinner v-if="isLoading" size="large" :text="loadingText" />

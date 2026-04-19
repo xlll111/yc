@@ -1,5 +1,12 @@
 <template>
-  <aside class="vitepress-sidebar" :class="{ 'mobile-open': isSidebarOpen }" :style="cssVariables">
+  <aside
+    class="vitepress-sidebar"
+    :class="{ 'mobile-open': isSidebarOpen }"
+    :style="{
+      ...cssVariables,
+      top: sidebarTop + 'px',
+    }"
+  >
     <!-- 移动端遮罩层 -->
     <div v-if="isMobileOpen" class="mobile-overlay" @click="closeMobileSidebar" />
 
@@ -170,7 +177,7 @@ const toggleGroup = (groupId) => {
 const isMobile = ref(false)
 const isMobileOpen = ref(false)
 const isSidebarOpen = ref(false)
-
+const sidebarTop = ref('72px')
 // 路由相关
 const router = useRouter()
 const route = useRoute()
@@ -206,16 +213,33 @@ const handleResize = () => {
   }
 }
 
+const handleScroll = () => {
+  // 获取顶部导航栏元素
+  const header = document.getElementById('top-bar')
+  if (header) {
+    const rect = header.getBoundingClientRect()
+    // 如果导航栏底部已经滚出视口
+    if (rect.bottom <= 0) {
+      sidebarTop.value = 0
+    } else {
+      // 导航栏还可见时，计算剩余高度
+
+      sidebarTop.value = Math.max(0, rect.bottom)
+    }
+  }
+}
 // 移动端操作
 const openMobileSidebar = () => {
   if (isMobile.value) {
     isMobileOpen.value = true
     isSidebarOpen.value = true
+    document.body.style.overflow = 'hidden'
   }
 }
 
 const closeMobileSidebar = () => {
   isMobileOpen.value = false
+  document.body.style.overflow = ''
   setTimeout(() => {
     isSidebarOpen.value = false
   }, 200)
@@ -240,11 +264,14 @@ onMounted(() => {
   activeLink.value = route.path.replace('/dash', '')
   initGroupState()
   handleResize()
+  handleScroll()
   window.addEventListener('resize', handleResize)
+  window.addEventListener('scroll', handleScroll, { passive: true })
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 

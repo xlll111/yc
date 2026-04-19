@@ -4,7 +4,7 @@
     :class="{ 'mobile-open': isSidebarOpen }"
     :style="{
       ...cssVariables,
-      top: sidebarTop + 'px',
+      top: isMobile ? sidebarTop + 'px' : '0',
     }"
   >
     <!-- 移动端遮罩层 -->

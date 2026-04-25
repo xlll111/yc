@@ -37,7 +37,12 @@
       <nav class="sidebar-nav">
         <div v-for="item in menuItems" :key="item.id" class="nav-item-wrapper">
           <!-- 分组标题 -->
-          <div v-if="item.type === 'group'" class="nav-group">
+          <div
+            v-if="
+              item.type === 'group' && !(item.id === 'client' && !clientStore.getCurrentClientUUID)
+            "
+            class="nav-group"
+          >
             <div
               class="nav-group-title"
               @click="toggleGroup(item.id)"
@@ -105,6 +110,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import dashIcon from './icons/dashIcon.vue'
+import { useClientStore } from '@/stores/clientStore'
 
 // 定义侧边栏菜单数据结构
 const menuItems = ref([
@@ -182,6 +188,7 @@ const sidebarTop = ref('72px')
 const router = useRouter()
 const route = useRoute()
 const activeLink = ref(route.path)
+const clientStore = useClientStore()
 
 // 监听路由变化更新激活状态
 watch(

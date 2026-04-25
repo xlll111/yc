@@ -18,14 +18,17 @@ const checkLogin = () => {
   if (!userStore.getIsLoggedIn) {
     ElMessage.error('请先登录')
     router.push('/login')
-  } else {
-    router.push('/dash/clients')
+    return false
   }
+  return true
 }
 watch(
   () => route.path,
   (newPath, oldPath) => {
-    if (newPath == '/dash' && newPath !== oldPath) {
+    if (newPath === oldPath) return
+    if (newPath === '/dash') {
+      if (checkLogin()) router.push('/dash/clients')
+    } else if (newPath.startsWith('/dash')) {
       checkLogin()
     }
   },

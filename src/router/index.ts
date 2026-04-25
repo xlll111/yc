@@ -7,6 +7,10 @@ const About = () => import('@/views/AboutView.vue')
 const Dash = () => import('@/views/Dash.vue')
 const ClientsList = () => import('@/views/ClientsList.vue')
 
+const Client = () => import('@/views/Client.vue')
+const Overview = () => import('@/views/client/Overview.vue')
+const Setting = () => import('@/views/client/Setting.vue')
+
 const Blank = () => import('@/components/blank.vue')
 const E404 = () => import('@/views/E404.vue')
 
@@ -39,7 +43,23 @@ const router = createRouter({
           name: 'clients',
           component: ClientsList,
         },
-
+        {
+          path: 'client',
+          name: 'client',
+          component: Client,
+          children: [
+            {
+              path: 'overview',
+              name: 'overview',
+              component: Overview,
+            },
+            {
+              path: 'setting',
+              name: 'setting',
+              component: Setting,
+            },
+          ],
+        },
         {
           path: ':pathMatch(.*)*',
           name: 'Blank',

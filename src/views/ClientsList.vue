@@ -79,9 +79,9 @@
         <!-- 卡片头部：UUID 和 状态 -->
         <div class="card-header">
           <span class="uuid" :title="client.uuid">{{ truncateUuid(client.uuid) }}</span>
-          <span class="status-badge" :class="client.online ? 'online' : 'offline'">
+          <span class="status-badge" :class="isOnline(client.lastSeen) ? 'online' : 'offline'">
             <span class="status-dot"></span>
-            {{ client.online ? '在线' : '离线' }}
+            {{ isOnline(client.lastSeen) ? '在线' : '离线' }}
           </span>
         </div>
 
@@ -145,7 +145,7 @@ import { useClientStore } from '@/stores/clientStore'
 
 // 模拟 API 调用 - 请在实际项目中替换为真实的 API 请求
 const mockFetchClients = async () => {
-  return await clientStore.getClients()
+  return await clientStore.fetchClients()
   //   return new Promise((resolve, reject) => {
   //     setTimeout(() => {
   //       reject(new Error('获取客户端列表失败，请稍后重试'))
@@ -238,10 +238,15 @@ const fetchClients = async () => {
 // 查看详情
 const viewDetail = (uuid) => {
   // 跳转到详情页，根据实际路由配置调整
-  router.push(`/clients/${uuid}`)
+  clientStore.setCurrentClient(uuid)
+  router.push(`/dash/client`)
   // 或者使用命名路由: router.push({ name: 'ClientDetail', params: { id: uuid } })
 }
-
+const isOnline = (lastSeen) => {
+  if (!lastSeen) return false
+  const diff = new Date().getTime() - new Date(lastSeen).getTime()
+  return diff < 120000 // 2分钟内视为在线
+}
 onMounted(() => {
   fetchClients()
 })

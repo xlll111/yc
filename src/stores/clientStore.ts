@@ -57,7 +57,7 @@ export const useClientStore = defineStore('client', () => {
     if (currentClientUuid.value !== null) {
       try {
         const settings = await clientApi.getClientSettings(currentClientUuid.value)
-        console.log('client settings', settings)
+        // console.log('client settings', settings)
         if (settings) {
           CurrentClientSettings.value = settings
         }

@@ -10,6 +10,9 @@ const ClientsList = () => import('@/views/ClientsList.vue')
 const Client = () => import('@/views/Client.vue')
 const Overview = () => import('@/views/client/Overview.vue')
 const Setting = () => import('@/views/client/Setting.vue')
+const Netauth = () => import('@/views/client/NetAuth.vue')
+const WhiteList = () => import('@/views/client/WhiteList.vue')
+const UDiskAllow = () => import('@/views/client/UDiskAllow.vue')
 
 const Blank = () => import('@/components/blank.vue')
 const E404 = () => import('@/views/E404.vue')
@@ -58,11 +61,31 @@ const router = createRouter({
               name: 'setting',
               component: Setting,
             },
+            {
+              path: 'authorize_net',
+              name: 'authorize_net',
+              component: Netauth,
+            },
+            {
+              path: 'net_whitelist',
+              name: 'net_whitelist',
+              component: WhiteList,
+            },
+            {
+              path: 'udisk_records',
+              name: 'udisk_records',
+              component: UDiskAllow,
+            },
+            {
+              path: ':pathMatch(.*)*',
+              name: 'ClientBlank',
+              component: Blank,
+            },
           ],
         },
         {
           path: ':pathMatch(.*)*',
-          name: 'Blank',
+          name: 'DashBlank',
           component: Blank,
         },
       ],

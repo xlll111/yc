@@ -110,8 +110,8 @@ class Request {
     this.instance.interceptors.response.use(
       (response: AxiosResponse<ApiResponse>) => {
         const { data } = response
-        console.log('Response :', response)
-        console.log('Response data:', data)
+        // console.log('Response :', response)
+        // console.log('Response data:', data)
         if (data.code === 200 || data.code === 0) {
           return data.data
         } else if (data.code === 401) {

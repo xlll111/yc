@@ -101,18 +101,22 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 
-// 路由实例，用于返回上一页
+import { useClientStore } from '@/stores/clientStore'
+import Spinner from '@/components/Spinner.vue'
+import { ElMessage } from 'element-plus'
+import 'element-plus/es/components/message/style/css'
+// inject 过滤器对象
+const $filters = inject('$filters')
 const router = useRouter()
-
-// 模拟的客户端UUID (实际可以从路由参数或store获取)
-// 此处假定路由参数中有clientId，若无则使用模拟值，实际对接时替换为真实参数
-const clientUuid = ref('550e8400-e29b-41d4-a716-446655440000')
+const clientStore = useClientStore()
+const uuid = clientStore.getCurrentClientUUID
+const appList = computed(() => clientStore.getCurrentClientWhiteList || [])
 
 // 白名单数据模型
-const appList = ref([]) // 应用列表 { id, filename }
+// const appList = ref([]) // 应用列表 { id, filename }
 const loading = ref(false) // 加载中状态
 const isAdding = ref(false) // 添加按钮防抖
 const removingIds = ref(new Set()) // 正在移除的id集合
@@ -122,10 +126,10 @@ const newAppName = ref('')
 
 // 截断显示UUID
 const truncatedUuid = computed(() => {
-  const uuid = clientUuid.value
-  if (!uuid) return '未知客户端'
-  if (uuid.length <= 12) return uuid
-  return `${uuid.slice(0, 8)}...${uuid.slice(-4)}`
+  const uuidShort = uuid
+  if (!uuidShort) return '未知客户端'
+  if (uuidShort.length <= 12) return uuidShort
+  return `${uuidShort.slice(0, 8)}...${uuidShort.slice(-4)}`
 })
 
 /**
@@ -231,12 +235,15 @@ const removeApplication = async (id) => {
 const goBack = () => {
   router.back()
 }
-
+const getClientWhiteList = async () => {
+  if (!clientStore.getCurrentClientWhiteList) await clientStore.fetchClientWhiteList()
+  console.log(' getClientWhiteList', clientStore.getCurrentClientWhiteList)
+}
 // 组件挂载时获取数据
 onMounted(() => {
   // 实际项目中可以从路由参数获取clientId，如：useRoute().params.clientId
   // 然后调用fetchWhitelist(clientId)
-  fetchWhitelist()
+  getClientWhiteList()
 })
 </script>
 

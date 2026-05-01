@@ -1,18 +1,49 @@
 //api/clients.ts
 import { request } from '@/utils/request'
-import type { clientInfo, clientSettings, clientSettingsRequest } from '@/stores/clientStore'
+import type {
+  clientInfo,
+  clientSettings,
+  clientSettingsRequest,
+  clientNetAllowedUntilResponse,
+  clientUDisk,
+} from '@/stores/clientStore'
 
 export const clientApi = {
   getClients(): Promise<clientInfo[]> {
     return request.authget('/clients/get_clients')
   },
   getClient(uuid: string): Promise<clientInfo> {
-    return request.authget('/clients/get_client', { uuid })
+    return request.authget('/clients/get_client', null, { params: { uuid } })
   },
   getClientSettings(uuid: string): Promise<clientSettings> {
-    return request.authget('/clients/get_client_settings', { uuid })
+    return request.authget('/clients/get_client_settings', null, { params: { uuid } })
   },
   updateClientSettings(uuid: string, data: clientSettingsRequest): Promise<void> {
     return request.authpost('/clients/update_client_settings', data, { params: { uuid } })
+  },
+  updateClientNetAllowedUntil(uuid: string, netAllowedUntil: string): Promise<string> {
+    return request.authpost(
+      '/clients/update_client_net_allowed_until',
+      { netAllowedUntil },
+      { params: { uuid } },
+    )
+  },
+  getClientWhiteList(uuid: string): Promise<string[]> {
+    return request.authget('/clients/get_whitelist', null, { params: { uuid } })
+  },
+  addAppToWhiteList(uuid: string, app: string): Promise<void> {
+    return request.authpost('/clients/add_app_to_whitelist', { app }, { params: { uuid } })
+  },
+  removeAppFromWhiteList(uuid: string, app: string): Promise<void> {
+    return request.authpost('/clients/remove_app_from_whitelist', { app }, { params: { uuid } })
+  },
+  getUDiskList(uuid: string): Promise<clientUDisk[]> {
+    return request.authget('/clients/get_udisk_list', null, { params: { uuid } })
+  },
+  allowUDisk(uuid: string, usbId: string): Promise<void> {
+    return request.authpost('/clients/allow_udisk', { usbId }, { params: { uuid } })
+  },
+  denyUDisk(uuid: string, usbId: string): Promise<void> {
+    return request.authpost('/clients/deny_udisk', { usbId }, { params: { uuid } })
   },
 }

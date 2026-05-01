@@ -6,11 +6,8 @@ import router from './router'
 
 const app = createApp(App)
 
-app.use(createPinia())
-app.use(router)
-
-app.config.globalProperties.$filters = {
-  formatDateTime(isoString: string) {
+const filters = {
+  formatDateTime: (isoString: string) => {
     if (!isoString) return '--'
     const date = new Date(isoString)
     return date.toLocaleString('zh-CN', {
@@ -21,8 +18,17 @@ app.config.globalProperties.$filters = {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      hour12: false, // 24小时制
+      hour12: false,
     })
   },
+  isoToTimestamp: (isoString: string) => {
+    if (!isoString) return null
+    const timestamp = new Date(isoString).getTime()
+    return isNaN(timestamp) ? null : timestamp
+  },
 }
+
+app.provide('$filters', filters)
+app.use(createPinia())
+app.use(router)
 app.mount('#app')

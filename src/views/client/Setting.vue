@@ -186,7 +186,6 @@ const saveSettings = async () => {
   isSaving.value = true
 
   try {
-    // 模拟API请求延迟
     await clientStore.updateClientSettings(form)
     console.log('设置已保存:', { ...form })
     ElMessage.success('设置已保存')
@@ -197,12 +196,15 @@ const saveSettings = async () => {
     isSaving.value = false
   }
 }
-onMounted(async () => {
+const getCurrentClientSettings = async () => {
   if (!clientStore.getCurrentClientSettings || clientStore.getCurrentClientSettings === 'error')
     await clientStore.fetchClientSettings()
   if (clientStore.getCurrentClientSettings && clientStore.getCurrentClientSettings !== 'error')
     Object.assign(form, clientStore.getCurrentClientSettings)
-  console.log('设置已加载:', form)
+  // console.log('设置已加载:', form)
+}
+onMounted(async () => {
+  getCurrentClientSettings()
 })
 </script>
 

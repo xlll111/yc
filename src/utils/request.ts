@@ -21,6 +21,7 @@ interface RequestConfig extends AxiosRequestConfig {
   headers?: Record<string, string>
   showLoading?: boolean
   showError?: boolean
+  params?: Record<string, any>
 }
 
 // 安全的消息提示（避免组件未挂载时的错误）
@@ -111,7 +112,7 @@ class Request {
       (response: AxiosResponse<ApiResponse>) => {
         const { data } = response
         // console.log('Response :', response)
-        // console.log('Response data:', data)
+        console.log('Response data:', data)
         if (data.code === 200 || data.code === 0) {
           return data.data
         } else if (data.code === 401) {
@@ -128,7 +129,15 @@ class Request {
         }
       },
       (error: any) => {
-        console.error('Response error:', error)
+        if (error.response) {
+          console.error('Error Response Data:', error.response.data)
+          console.error('Error Response Status:', error.response.status)
+          console.error('Error Response Headers:', error.response.headers)
+        } else if (error.request) {
+          console.error('No response received:', error.request)
+        } else {
+          console.error('Error message:', error.message)
+        }
 
         // HTTP 状态码错误处理
         if (error.response) {

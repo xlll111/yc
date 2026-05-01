@@ -135,7 +135,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
@@ -205,6 +205,7 @@ const mockFetchClients = async () => {
 }
 
 const router = useRouter()
+const $filters = inject('$filters')
 const clients = ref([])
 const loading = ref(false)
 const error = ref(null)
@@ -237,10 +238,9 @@ const fetchClients = async () => {
 
 // 查看详情
 const viewDetail = (uuid) => {
-  // 跳转到详情页，根据实际路由配置调整
+  // 跳转到详情页
   clientStore.setCurrentClient(uuid)
   router.push(`/dash/client`)
-  // 或者使用命名路由: router.push({ name: 'ClientDetail', params: { id: uuid } })
 }
 const isOnline = (lastSeen) => {
   if (!lastSeen) return false

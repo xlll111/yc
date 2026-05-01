@@ -1,7 +1,7 @@
 <template>
-  <div class="auth-container">
+  <div class="container">
     <!-- 头部导航区 -->
-    <div class="whitelist-header">
+    <div class="header">
       <button class="back-button" @click="goBack">
         <svg
           class="back-icon"
@@ -21,7 +21,7 @@
         <span class="client-uuid">{{ truncatedUuid }}</span>
       </div>
     </div>
-    <div class="auth-card">
+    <div class="card">
       <!-- 标题栏 -->
       <div class="card-header">
         <div class="title-section">
@@ -55,7 +55,7 @@ const goBack = () => {
 
 <style scoped>
 /* 容器与卡片 */
-.auth-container {
+.container {
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
@@ -63,10 +63,9 @@ const goBack = () => {
   box-sizing: border-box;
 }
 
-.auth-card {
+.card {
   background: #ffffff;
   border-radius: 8px;
-  /* border: 1px solid #e5e7eb; */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   padding: 24px;
   display: flex;
@@ -75,12 +74,12 @@ const goBack = () => {
   transition: box-shadow 0.2s ease;
 }
 
-.auth-card:hover {
+.card:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 /* 头部导航 */
-.whitelist-header {
+.header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -175,8 +174,7 @@ const goBack = () => {
     padding: 16px;
   }
 
-  .whitelist-header {
-    /* flex-direction: column; */
+  .header {
     align-items: stretch;
   }
 
@@ -188,11 +186,11 @@ const goBack = () => {
     font-size: 1.4rem;
   }
 
-  .auth-container {
+  .container {
     padding: 16px;
   }
 
-  .auth-card {
+  .card {
     padding: 20px;
     gap: 20px;
   }

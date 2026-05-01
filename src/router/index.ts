@@ -13,6 +13,7 @@ const Setting = () => import('@/views/client/Setting.vue')
 const Netauth = () => import('@/views/client/NetAuth.vue')
 const WhiteList = () => import('@/views/client/WhiteList.vue')
 const UDiskAllow = () => import('@/views/client/UDiskAllow.vue')
+const DnsUrl = () => import('@/views/client/DnsUrl.vue')
 
 const Blank = () => import('@/components/blank.vue')
 const E404 = () => import('@/views/E404.vue')
@@ -75,6 +76,11 @@ const router = createRouter({
               path: 'udisk_records',
               name: 'udisk_records',
               component: UDiskAllow,
+            },
+            {
+              path: 'url_records',
+              name: 'url_records',
+              component: DnsUrl,
             },
             {
               path: ':pathMatch(.*)*',

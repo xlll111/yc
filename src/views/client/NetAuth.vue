@@ -1,7 +1,7 @@
 <template>
   <div class="auth-container">
     <!-- 头部导航区 -->
-    <div class="whitelist-header">
+    <div class="header">
       <button class="back-button" @click="goBack">
         <svg
           class="back-icon"
@@ -18,7 +18,7 @@
       </button>
       <div class="client-info">
         <span class="client-label">客户端</span>
-        <span class="client-uuid">{{ truncatedUuid }}</span>
+        <span v-middle-ellipsis="uuid" class="client-uuid">{{ displayUUID }}</span>
       </div>
     </div>
     <div class="auth-card">
@@ -29,9 +29,34 @@
         </div>
         <p class="subtitle">管理当前客户端的联网授权状态</p>
       </div>
+      <!-- 加载状态 -->
+      <div v-if="!clientStore.getCurrentClientSettings" class="loading-state">
+        <Spinner inline text="加载中..." />
+      </div>
+
+      <!-- 错误状态 -->
+      <div v-else-if="clientStore.getCurrentClientSettings === 'error'" class="error-state">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <p>加载数据失败，请重试</p>
+        <button class="retry-btn" @click="clientStore.fetchClientSettings">重试</button>
+      </div>
 
       <!-- 状态卡片 -->
-      <div class="status-section">
+      <div class="status-section" v-if="loadingSettings">
         <div class="status-badge" :class="{ enabled: controlEnabled, disabled: !controlEnabled }">
           <span class="status-dot"></span>
           {{ controlEnabled ? '联网控制已启用' : '联网控制未启用' }}
@@ -40,21 +65,21 @@
       </div>
 
       <!-- 授权状态展示区 -->
-      <div class="info-panel" v-if="controlEnabled">
-        <div v-if="currentAuth.active" class="auth-active">
+      <div class="info-panel" v-if="loadingSettings && controlEnabled">
+        <div v-if="active" class="auth-active">
           <div class="info-row">
             <span class="info-label">授权状态</span>
             <span class="info-value status-active">已授权</span>
           </div>
           <div class="info-row">
             <span class="info-label">截止时间</span>
-            <span class="info-value">{{ formatTime(currentAuth.expireAt) }}</span>
+            <span class="info-value">{{ $filters.formatDateTime(expireAt) }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">剩余时长</span>
             <span class="info-value highlight">{{ remainingText }}</span>
           </div>
-          <button class="btn btn-danger" @click="handleCancelAuth">
+          <button class="btn btn-danger" @click="handleCancelAuth" :disabled="isSaving">
             <svg
               width="16"
               height="16"
@@ -67,7 +92,8 @@
               <line x1="15" y1="9" x2="9" y2="15" />
               <line x1="9" y1="9" x2="15" y2="15" />
             </svg>
-            取消授权
+            <span v-if="!isSaving">取消授权</span>
+            <span v-else class="saving-spinner">保存中...</span>
           </button>
         </div>
         <div v-else class="auth-inactive">
@@ -79,7 +105,7 @@
       </div>
 
       <!-- 设置授权区（仅在未授权且控制启用时显示） -->
-      <div class="set-auth-section" v-if="controlEnabled && !currentAuth.active">
+      <div class="set-auth-section" v-if="loadingSettings && controlEnabled && !active">
         <h3 class="section-title">设置联网授权</h3>
         <div class="preset-grid">
           <button
@@ -111,7 +137,11 @@
           />
           <span class="input-suffix">分钟</span>
         </div>
-        <button class="btn btn-primary submit-btn" @click="submitAuth" :disabled="!isFormValid">
+        <button
+          class="btn btn-primary submit-btn"
+          @click="submitAuth"
+          :disabled="!isFormValid || isSaving"
+        >
           <svg
             width="16"
             height="16"
@@ -122,43 +152,34 @@
           >
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
-          确认授权
+          <span v-if="!isSaving">确认授权</span>
+          <span v-else>保存中...</span>
         </button>
         <p v-if="submitError" class="error-text">{{ submitError }}</p>
       </div>
 
       <!-- 底部操作 -->
-      <div class="card-footer">
+      <!-- <div class="card-footer">
         <button class="btn btn-outline" @click="goBack()">取消</button>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, inject } from 'vue'
 import { useRouter } from 'vue-router'
+
+import { useClientStore } from '@/stores/clientStore'
+import Spinner from '@/components/Spinner.vue'
+import { ElMessage } from 'element-plus'
+import 'element-plus/es/components/message/style/css'
+
+// inject 过滤器对象
+const $filters = inject('$filters')
 const router = useRouter()
-
-const props = defineProps({
-  clientUuid: {
-    type: String,
-    required: true,
-  },
-  // 联网控制是否在系统层面启用
-  controlEnabled: {
-    type: Boolean,
-    default: false,
-  },
-  // 当前授权信息，格式 { active: boolean, expireAt: number (timestamp ms) } 或 null
-  currentAuth: {
-    type: Object,
-    default: () => ({ active: false, expireAt: null }),
-  },
-})
-
-const emit = defineEmits(['back', 'cancel', 'submit-auth', 'cancel-auth'])
-
+const clientStore = useClientStore()
+const isSaving = ref(false)
 const presetMinutes = [10, 20, 30, 40, 60]
 const selectedPreset = ref(null)
 const customMode = ref(false)
@@ -166,7 +187,52 @@ const customMinutes = ref(null)
 const submitError = ref('')
 const now = ref(Date.now())
 let timer = null
+const uuid = clientStore.getCurrentClientUUID
+const displayUUID = ref(uuid)
+const controlEnabled = computed(
+  () =>
+    clientStore.getCurrentClientSettings?.netControlEnabled ||
+    clientStore.getCurrentClientSettings?.netPeriodEnabled,
+)
+const active = computed(() => !!clientStore.getCurrentClientSettings?.netAllowedUntil)
+const expireAt = computed(() => clientStore.getCurrentClientSettings?.netAllowedUntil)
+const loadingSettings = computed(
+  () => clientStore.getCurrentClientSettings && clientStore.getCurrentClientSettings !== 'error',
+)
 
+// 中间省略函数
+const truncateMiddle = (str, maxLength = 20, headLen = 8, tailLen = 8) => {
+  if (str.length <= maxLength) return str
+  const head = str.slice(0, headLen)
+  const tail = str.slice(-tailLen)
+  return `${head}...${tail}`
+}
+
+// 根据容器宽度动态调整
+const updateDisplay = (el) => {
+  if (!el || !uuid) return
+  const containerWidth = el.parentElement?.clientWidth || el.clientWidth
+  let maxLen = 28
+  if (containerWidth < 250) maxLen = 16
+  if (containerWidth < 180) maxLen = 12
+  if (containerWidth < 120) maxLen = 8
+
+  displayUUID.value = truncateMiddle(uuid, maxLen, 6, 6)
+}
+
+// 自定义指令
+const vMiddleEllipsis = {
+  mounted(el, binding) {
+    const resizeObserver = new ResizeObserver(() => {
+      updateDisplay(el)
+    })
+    resizeObserver.observe(el.parentElement || el)
+    updateDisplay(el)
+  },
+  updated(el) {
+    updateDisplay(el)
+  },
+}
 // 表单有效性
 const isFormValid = computed(() => {
   if (customMode.value) {
@@ -186,8 +252,8 @@ const selectedMinutes = computed(() => {
 
 // 剩余时间文本
 const remainingText = computed(() => {
-  if (!props.currentAuth.active || !props.currentAuth.expireAt) return '--'
-  const diff = props.currentAuth.expireAt - now.value
+  if (!active || !expireAt) return '--'
+  const diff = $filters.isoToTimestamp(expireAt.value) - now.value
   if (diff <= 0) return '已过期'
   const totalSeconds = Math.floor(diff / 1000)
   const hours = Math.floor(totalSeconds / 3600)
@@ -201,19 +267,6 @@ const remainingText = computed(() => {
   }
   return `${seconds} 秒`
 })
-
-// 格式化时间戳
-function formatTime(timestamp) {
-  if (!timestamp) return '--'
-  return new Date(timestamp).toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  })
-}
 
 // 选择预设
 function selectPreset(min) {
@@ -233,23 +286,42 @@ function enableCustomMode() {
 // 提交授权
 function submitAuth() {
   submitError.value = ''
+  isSaving.value = true
   if (!isFormValid.value) {
     submitError.value = '请选择或输入有效的授权时长（1-1440分钟）'
     return
   }
-  if (!props.clientUuid) {
-    submitError.value = '客户端标识缺失'
-    return
-  }
-  emit('submit-auth', {
-    uuid: props.clientUuid,
-    minutes: selectedMinutes.value,
-  })
+  clientStore
+    .updateClientNetAllowedUntil(selectedMinutes.value * 60 * 1000 + now.value)
+    .then(() => {
+      ElMessage.success('授权成功')
+      resetForm()
+    })
+    .catch((e) => {
+      console.error('error updating client net allowed until', e)
+      submitError.value = '授权失败，请稍后重试'
+    })
+    .finally(() => {
+      isSaving.value = false
+    })
 }
 
 // 取消授权
 function handleCancelAuth() {
-  emit('cancel-auth', { uuid: props.clientUuid })
+  isSaving.value = true
+  clientStore
+    .clearClientNetAllowedUntil()
+    .then(() => {
+      ElMessage.success('取消授权成功')
+      resetForm()
+    })
+    .catch((e) => {
+      console.error('error clearing client net allowed until', e)
+      submitError.value = '取消授权失败，请稍后重试'
+    })
+    .finally(() => {
+      isSaving.value = false
+    })
 }
 
 // 重置表单
@@ -263,9 +335,13 @@ function resetForm() {
 const goBack = () => {
   router.back()
 }
+const getCurrentClientSettings = async () => {
+  if (!clientStore.getCurrentClientSettings || clientStore.getCurrentClientSettings === 'error')
+    await clientStore.fetchClientSettings()
+}
 // 监听授权状态变化，自动重置表单
 watch(
-  () => props.currentAuth.active,
+  () => active,
   (newVal) => {
     if (newVal) {
       resetForm()
@@ -273,7 +349,8 @@ watch(
   },
 )
 
-onMounted(() => {
+onMounted(async () => {
+  getCurrentClientSettings()
   timer = setInterval(() => {
     now.value = Date.now()
   }, 1000)
@@ -281,6 +358,10 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (timer) clearInterval(timer)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
 })
 </script>
 
@@ -311,7 +392,7 @@ onUnmounted(() => {
 }
 
 /* 头部导航 */
-.whitelist-header {
+.header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -372,6 +453,13 @@ onUnmounted(() => {
   background: #eff6ff;
   padding: 4px 8px;
   border-radius: 9999px;
+
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: ltr;
 }
 /* 卡片头部 */
 .card-header {
@@ -398,6 +486,21 @@ onUnmounted(() => {
   color: #6b7280;
   font-size: 0.85rem;
   margin: 0;
+}
+/* 状态卡片 */
+.loading-state,
+.error-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #6b7280;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
 }
 /* 状态标识 */
 .status-section {
@@ -553,11 +656,14 @@ onUnmounted(() => {
   margin-top: 12px;
 }
 
-.btn-danger:hover {
+.btn-danger:hover:not(:disabled) {
   background: #fef2f2;
   border-color: #fca5a5;
 }
-
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .btn-outline {
   background: white;
   color: #374151;
@@ -697,7 +803,7 @@ onUnmounted(() => {
     padding: 16px;
   }
 
-  .whitelist-header {
+  .header {
     /* flex-direction: column; */
     align-items: stretch;
   }

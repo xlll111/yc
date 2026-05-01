@@ -324,7 +324,7 @@ onMounted(async () => {
   }, 1000)
 })
 onMounted(() => {
-  bindElement(targetRef.value)
+  if (targetRef.value) bindElement(targetRef.value)
 })
 
 onUnmounted(() => {

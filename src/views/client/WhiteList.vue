@@ -140,7 +140,6 @@ const appList = computed(() => clientStore.getCurrentClientWhiteList || [])
 const targetRef = ref(null)
 const { displayUUID, bindElement } = useMiddleEllipsis(uuid)
 // 白名单数据模型
-// const appList = ref([]) // 应用列表 { id, filename }
 const loading = computed(() => clientStore.getCurrentClientWhiteList !== null)
 const error = computed(() => clientStore.getCurrentClientWhiteList[0]?.id === -1)
 const isAdding = ref(false) // 添加按钮防抖
@@ -157,7 +156,7 @@ const addApplication = async () => {
     return
   }
   // 简单校验重复 (可扩展)
-  const exists = appList.value.some((app) => app.filename.toLowerCase() === filename.toLowerCase())
+  const exists = appList.value.some((app) => app.appName.toLowerCase() === filename.toLowerCase())
   if (exists) {
     alert('该应用已在白名单中')
     return
@@ -590,7 +589,7 @@ onMounted(() => {
 
 .remove-button:disabled {
   opacity: 0.6;
-  cursor: wait;
+  cursor: not-allowed;
   border-color: #e5e7eb;
 }
 

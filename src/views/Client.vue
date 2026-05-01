@@ -1,4 +1,4 @@
-<template><router-view /></template>
+<template><router-view v-if="currentClient" /></template>
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -8,12 +8,14 @@ import 'element-plus/es/components/message/style/css'
 const router = useRouter()
 const route = useRoute()
 const clientStore = useClientStore()
+const currentClient = ref(false)
 const checkCurrentClint = () => {
   if (!clientStore.getCurrentClientUUID) {
     ElMessage.error('请先选择客户端')
     router.push('/dash/clients')
     return false
   }
+  currentClient.value = true
   return true
 }
 watch(

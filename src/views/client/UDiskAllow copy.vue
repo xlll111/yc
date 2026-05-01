@@ -18,7 +18,7 @@
       </button>
       <div class="client-info">
         <span class="client-label">客户端</span>
-        <span class="client-uuid">{{ truncatedUuid }}</span>
+        <span ref="targetRef" class="client-uuid">{{ displayUUID }}</span>
       </div>
     </div>
     <div class="card">
@@ -43,14 +43,29 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, inject } from 'vue'
 import { useRouter } from 'vue-router'
+import { useClientStore } from '@/stores/clientStore'
+import Spinner from '@/components/Spinner.vue'
+import { ElMessage } from 'element-plus'
+import 'element-plus/es/components/message/style/css'
+import { useMiddleEllipsis } from '@/composables/useMiddleEllipsis'
+
 const router = useRouter()
+const clientStore = useClientStore()
+const $filters = inject('$filters')
+const uuid = clientStore.getCurrentClientUUID
+const targetRef = ref(null)
+const { displayUUID, bindElement } = useMiddleEllipsis(uuid)
 
 // 返回上一页
 const goBack = () => {
   router.back()
 }
+
+onMounted(() => {
+  bindElement(targetRef.value)
+})
 </script>
 
 <style scoped>
@@ -83,13 +98,14 @@ const goBack = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 16px;
   margin-bottom: 28px;
 }
 
 .back-button {
   display: inline-flex;
+  min-width: max-content;
   align-items: center;
   gap: 6px;
   background: transparent;
@@ -117,6 +133,8 @@ const goBack = () => {
 
 .client-info {
   background: #fff;
+  max-width: 60vw;
+  min-width: 30%;
   padding: 6px 16px;
   border-radius: 9999px;
   border: 1px solid #e5e7eb;
@@ -127,6 +145,7 @@ const goBack = () => {
 }
 
 .client-label {
+  min-width: max-content;
   font-size: 0.85rem;
   font-weight: 500;
   color: #6b7280;

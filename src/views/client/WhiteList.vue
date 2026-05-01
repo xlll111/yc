@@ -18,7 +18,7 @@
       </button>
       <div class="client-info">
         <span class="client-label">客户端</span>
-        <span class="client-uuid">{{ truncatedUuid }}</span>
+        <span ref="targetRef" class="client-uuid">{{ displayUUID }}</span>
       </div>
     </div>
 
@@ -28,13 +28,39 @@
       <div class="card-header">
         <div class="title-section">
           <h2>应用白名单</h2>
-          <span class="badge">{{ appList.length }}</span>
+          <span v-if="loading" class="badge">{{ appList.length }}</span>
+          <span v-else><Spinner inline size="tiny" /></span>
         </div>
         <p class="subtitle">仅允许白名单内的应用在客户端运行</p>
       </div>
+      <!-- 加载状态 -->
+      <div v-if="!loading" class="loading-state">
+        <Spinner inline text="加载中..." />
+      </div>
+
+      <!-- 错误状态 -->
+      <div v-else-if="error" class="error-state">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <p>加载数据失败，请重试</p>
+        <button class="retry-btn" @click="clientStore.fetchClientSettings">重试</button>
+      </div>
 
       <!-- 添加区域 -->
-      <div class="add-section">
+      <div v-if="loading" class="add-section">
         <div class="input-group">
           <input
             v-model="newAppName"
@@ -51,12 +77,8 @@
       </div>
 
       <!-- 列表区域 / 空状态 -->
-      <div class="list-section">
-        <div v-if="loading" class="loading-state">
-          <div class="spinner"></div>
-          <span>加载白名单中...</span>
-        </div>
-        <div v-else-if="appList.length === 0" class="empty-state">
+      <div v-if="loading" class="list-section">
+        <div v-if="appList.length === 0" class="empty-state">
           <svg
             class="empty-icon"
             viewBox="0 0 24 24"
@@ -84,11 +106,11 @@
                   />
                 </svg>
               </div>
-              <span class="app-filename">{{ app.filename }}</span>
+              <span class="app-filename">{{ app.appName }}</span>
             </div>
             <button
               class="remove-button"
-              @click="removeApplication(app.id)"
+              @click="removeApplication(app.id, app.appName)"
               :disabled="removingIds.has(app.id)"
             >
               {{ removingIds.has(app.id) ? '移除中' : '移除' }}
@@ -108,81 +130,26 @@ import { useClientStore } from '@/stores/clientStore'
 import Spinner from '@/components/Spinner.vue'
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
+import { useMiddleEllipsis } from '@/composables/useMiddleEllipsis'
 // inject 过滤器对象
 const $filters = inject('$filters')
 const router = useRouter()
 const clientStore = useClientStore()
 const uuid = clientStore.getCurrentClientUUID
 const appList = computed(() => clientStore.getCurrentClientWhiteList || [])
-
+const targetRef = ref(null)
+const { displayUUID, bindElement } = useMiddleEllipsis(uuid)
 // 白名单数据模型
 // const appList = ref([]) // 应用列表 { id, filename }
-const loading = ref(false) // 加载中状态
+const loading = computed(() => clientStore.getCurrentClientWhiteList !== null)
+const error = computed(() => clientStore.getCurrentClientWhiteList[0]?.id === -1)
 const isAdding = ref(false) // 添加按钮防抖
 const removingIds = ref(new Set()) // 正在移除的id集合
 
 // 新应用输入
 const newAppName = ref('')
 
-// 截断显示UUID
-const truncatedUuid = computed(() => {
-  const uuidShort = uuid
-  if (!uuidShort) return '未知客户端'
-  if (uuidShort.length <= 12) return uuidShort
-  return `${uuidShort.slice(0, 8)}...${uuidShort.slice(-4)}`
-})
-
-/**
- * 模拟API调用 - 获取白名单列表
- * 实际使用时替换为真实API调用
- */
-const fetchWhitelist = async () => {
-  loading.value = true
-  try {
-    // 模拟网络延迟
-    await new Promise((resolve) => setTimeout(resolve, 300))
-    // 模拟从API返回的数据结构
-    // 实际应为 GET /api/client/:clientId/whitelist
-    const mockData = [
-      { id: '1', filename: 'chrome.exe' },
-      { id: '2', filename: 'notepad.exe' },
-      { id: '3', filename: 'calculator.exe' },
-    ]
-    appList.value = mockData
-  } catch (error) {
-    console.error('获取白名单失败', error)
-    // 可在此处添加错误提示UI，为保持简洁，只控制台打印
-    alert('加载白名单失败，请稍后重试')
-  } finally {
-    loading.value = false
-  }
-}
-
-/**
- * 模拟API调用 - 添加应用
- * @param {string} filename 应用文件名
- */
-const addAppApi = async (filename) => {
-  // 模拟添加请求
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  // 生成临时id
-  const newId = Date.now().toString()
-  return { id: newId, filename: filename.trim() }
-}
-
-/**
- * 模拟API调用 - 移除应用
- * @param {string} id 应用id
- */
-const removeAppApi = async (id) => {
-  await new Promise((resolve) => setTimeout(resolve, 400))
-  // 模拟成功
-  return true
-}
-
-/**
- * 添加应用逻辑
- */
+// 添加应用逻辑
 const addApplication = async () => {
   const filename = newAppName.value.trim()
   if (!filename) {
@@ -198,32 +165,28 @@ const addApplication = async () => {
 
   isAdding.value = true
   try {
-    const newApp = await addAppApi(filename)
-    appList.value.push(newApp)
+    await clientStore.addAppToWhiteList(filename)
     newAppName.value = '' // 清空输入
   } catch (error) {
     console.error('添加失败', error)
-    alert('添加应用失败，请稍后重试')
+    ElMessage.error('添加应用失败，请稍后重试')
   } finally {
     isAdding.value = false
   }
 }
 
-/**
- * 移除应用逻辑
- * @param {string} id
- */
-const removeApplication = async (id) => {
+// 移除应用逻辑
+const removeApplication = async (id, appName) => {
   // 防止重复点击
   if (removingIds.value.has(id)) return
   removingIds.value.add(id)
   try {
-    await removeAppApi(id)
+    await clientStore.removeAppFromWhiteList(appName)
     // 前端删除对应项
-    appList.value = appList.value.filter((app) => app.id !== id)
+    // appList.value = appList.value.filter((app) => app.id !== id)
   } catch (error) {
     console.error('移除失败', error)
-    alert('移除应用失败，请稍后重试')
+    ElMessage.error('移除应用失败，请稍后重试')
   } finally {
     removingIds.value.delete(id)
   }
@@ -236,13 +199,15 @@ const goBack = () => {
   router.back()
 }
 const getClientWhiteList = async () => {
-  if (!clientStore.getCurrentClientWhiteList) await clientStore.fetchClientWhiteList()
+  if (!clientStore.getCurrentClientWhiteList || clientStore.getCurrentClientWhiteList[0]?.id === -1)
+    await clientStore.fetchClientWhiteList()
   console.log(' getClientWhiteList', clientStore.getCurrentClientWhiteList)
 }
+onMounted(() => {
+  bindElement(targetRef.value)
+})
 // 组件挂载时获取数据
 onMounted(() => {
-  // 实际项目中可以从路由参数获取clientId，如：useRoute().params.clientId
-  // 然后调用fetchWhitelist(clientId)
   getClientWhiteList()
 })
 </script>
@@ -270,13 +235,14 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 16px;
   margin-bottom: 28px;
 }
 
 .back-button {
   display: inline-flex;
+  min-width: max-content;
   align-items: center;
   gap: 6px;
   background: transparent;
@@ -304,6 +270,8 @@ onMounted(() => {
 
 .client-info {
   background: #fff;
+  max-width: 60vw;
+  min-width: 30%;
   padding: 6px 16px;
   border-radius: 9999px;
   border: 1px solid #e5e7eb;
@@ -314,6 +282,7 @@ onMounted(() => {
 }
 
 .client-label {
+  min-width: max-content;
   font-size: 0.85rem;
   font-weight: 500;
   color: #6b7280;
@@ -339,6 +308,61 @@ onMounted(() => {
 }
 .whitelist-card:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+/* 状态卡片 */
+.loading-state,
+.error-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #6b7280;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #1e40af;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+.error-state svg,
+.empty-state svg {
+  color: #9ca3af;
+  margin-bottom: 16px;
+}
+
+.error-state p,
+.empty-state p {
+  margin: 8px 0 16px;
+  font-size: 1rem;
+}
+
+.retry-btn {
+  padding: 8px 20px;
+  background-color: #1e40af;
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.retry-btn:hover {
+  background-color: #1e3a8a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 /* 卡片头部 */
 .card-header {
@@ -463,15 +487,6 @@ onMounted(() => {
   color: #6b7280;
   gap: 12px;
   text-align: center;
-}
-
-.spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #1e40af;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {

@@ -6,6 +6,7 @@ import type {
   clientSettingsRequest,
   clientNetAllowedUntilResponse,
   clientUDisk,
+  clientWhiteListItem,
 } from '@/stores/clientStore'
 
 export const clientApi = {
@@ -28,7 +29,7 @@ export const clientApi = {
       { params: { uuid } },
     )
   },
-  getClientWhiteList(uuid: string): Promise<string[]> {
+  getClientWhiteList(uuid: string): Promise<clientWhiteListItem[]> {
     return request.authget('/clients/get_whitelist', null, { params: { uuid } })
   },
   addAppToWhiteList(uuid: string, app: string): Promise<void> {

@@ -18,7 +18,7 @@
       </button>
       <div class="client-info">
         <span class="client-label">客户端</span>
-        <span v-middle-ellipsis="uuid" class="client-uuid">{{ displayUUID }}</span>
+        <span ref="targetRef" class="client-uuid">{{ displayUUID }}</span>
       </div>
     </div>
     <div class="auth-card">
@@ -174,6 +174,7 @@ import { useClientStore } from '@/stores/clientStore'
 import Spinner from '@/components/Spinner.vue'
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
+import { useMiddleEllipsis } from '@/composables/useMiddleEllipsis'
 
 // inject 过滤器对象
 const $filters = inject('$filters')
@@ -188,7 +189,6 @@ const submitError = ref('')
 const now = ref(Date.now())
 let timer = null
 const uuid = clientStore.getCurrentClientUUID
-const displayUUID = ref(uuid)
 const controlEnabled = computed(
   () =>
     clientStore.getCurrentClientSettings?.netControlEnabled ||
@@ -199,40 +199,8 @@ const expireAt = computed(() => clientStore.getCurrentClientSettings?.netAllowed
 const loadingSettings = computed(
   () => clientStore.getCurrentClientSettings && clientStore.getCurrentClientSettings !== 'error',
 )
-
-// 中间省略函数
-const truncateMiddle = (str, maxLength = 20, headLen = 8, tailLen = 8) => {
-  if (str.length <= maxLength) return str
-  const head = str.slice(0, headLen)
-  const tail = str.slice(-tailLen)
-  return `${head}...${tail}`
-}
-
-// 根据容器宽度动态调整
-const updateDisplay = (el) => {
-  if (!el || !uuid) return
-  const containerWidth = el.parentElement?.clientWidth || el.clientWidth
-  let maxLen = 28
-  if (containerWidth < 250) maxLen = 16
-  if (containerWidth < 180) maxLen = 12
-  if (containerWidth < 120) maxLen = 8
-
-  displayUUID.value = truncateMiddle(uuid, maxLen, 6, 6)
-}
-
-// 自定义指令
-const vMiddleEllipsis = {
-  mounted(el, binding) {
-    const resizeObserver = new ResizeObserver(() => {
-      updateDisplay(el)
-    })
-    resizeObserver.observe(el.parentElement || el)
-    updateDisplay(el)
-  },
-  updated(el) {
-    updateDisplay(el)
-  },
-}
+const targetRef = ref(null)
+const { displayUUID, bindElement } = useMiddleEllipsis(uuid)
 // 表单有效性
 const isFormValid = computed(() => {
   if (customMode.value) {
@@ -355,13 +323,12 @@ onMounted(async () => {
     now.value = Date.now()
   }, 1000)
 })
+onMounted(() => {
+  bindElement(targetRef.value)
+})
 
 onUnmounted(() => {
   if (timer) clearInterval(timer)
-  if (resizeObserver) {
-    resizeObserver.disconnect()
-    resizeObserver = null
-  }
 })
 </script>
 
@@ -396,13 +363,14 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 16px;
   margin-bottom: 28px;
 }
 
 .back-button {
   display: inline-flex;
+  min-width: max-content;
   align-items: center;
   gap: 6px;
   background: transparent;
@@ -430,6 +398,8 @@ onUnmounted(() => {
 
 .client-info {
   background: #fff;
+  max-width: 60vw;
+  min-width: 30%;
   padding: 6px 16px;
   border-radius: 9999px;
   border: 1px solid #e5e7eb;
@@ -440,6 +410,7 @@ onUnmounted(() => {
 }
 
 .client-label {
+  min-width: max-content;
   font-size: 0.85rem;
   font-weight: 500;
   color: #6b7280;
@@ -453,13 +424,6 @@ onUnmounted(() => {
   background: #eff6ff;
   padding: 4px 8px;
   border-radius: 9999px;
-
-  display: inline-block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  direction: ltr;
 }
 /* 卡片头部 */
 .card-header {
@@ -501,6 +465,46 @@ onUnmounted(() => {
   background-color: #f9fafb;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #1e40af;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+.error-state svg,
+.empty-state svg {
+  color: #9ca3af;
+  margin-bottom: 16px;
+}
+
+.error-state p,
+.empty-state p {
+  margin: 8px 0 16px;
+  font-size: 1rem;
+}
+
+.retry-btn {
+  padding: 8px 20px;
+  background-color: #1e40af;
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.retry-btn:hover {
+  background-color: #1e3a8a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 /* 状态标识 */
 .status-section {

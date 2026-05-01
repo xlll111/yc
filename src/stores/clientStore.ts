@@ -36,12 +36,16 @@ export interface clientUDisk {
   usbId: string
   allowed: boolean
 }
+export interface clientWhiteListItem {
+  id: number
+  appName: string
+}
 export const useClientStore = defineStore('client', () => {
   // State
   const currentClientUuid = ref<string | null>(null)
   const currentClientInfo = ref<clientInfo | null>(null)
   const currentClientSettings = ref<clientSettings | string | null>(null)
-  const currentClientWhiteList = ref<string[] | null>(null)
+  const currentClientWhiteList = ref<clientWhiteListItem[] | null>(null)
   const currentUDiskList = ref<clientUDisk[] | null>(null)
   const currentDNSUrl = ref<string | null>(null)
   // Getters
@@ -117,13 +121,15 @@ export const useClientStore = defineStore('client', () => {
     currentClientWhiteList.value = null
     if (currentClientUuid.value !== null) {
       try {
-        const whiteList: string[] = await clientApi.getClientWhiteList(currentClientUuid.value)
+        const whiteList: clientWhiteListItem[] = await clientApi.getClientWhiteList(
+          currentClientUuid.value,
+        )
         if (whiteList) {
           currentClientWhiteList.value = whiteList
         }
       } catch (e) {
         console.error('error fetching client white list', e)
-        currentClientWhiteList.value = ['error']
+        currentClientWhiteList.value = [{ id: -1, appName: 'error' }]
       }
     } else {
       console.error('currentClientUuid is null, cannot fetch white list')

@@ -28,36 +28,41 @@
         <div class="title-section">
           <h2>U盘插入记录管理</h2>
         </div>
-        <p class="subtitle">管理该客户端所有已插入U盘的使用权限，控制允许或拒绝访问</p>
+        <p class="subtitle">管理该客户端所有记录的U盘的使用权限，控制允许或拒绝访问</p>
       </div>
 
       <!-- 加载状态 -->
       <div v-if="loading" class="loading-state">
-        <div class="loading-spinner"></div>
-        <span>加载记录中...</span>
+        <Spinner inline text="加载中..." />
       </div>
 
-      <!-- 错误提示 -->
+      <!-- 错误状态 -->
       <div v-else-if="error" class="error-state">
         <svg
-          class="error-icon"
+          xmlns="http://www.w3.org/2000/svg"
+          width="48"
+          height="48"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          stroke-width="2"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
         >
           <circle cx="12" cy="12" r="10" />
           <line x1="12" y1="8" x2="12" y2="12" />
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
-        <span>{{ error }}</span>
-        <button class="retry-button" @click="fetchRecords">重试</button>
+        <p>加载失败，请稍后再试</p>
+        <button class="retry-btn" @click="getClientUDiskList">重试</button>
       </div>
 
       <!-- 空状态 -->
       <div v-else-if="records.length === 0" class="empty-state">
         <svg
-          class="empty-icon"
+          xmlns="http://www.w3.org/2000/svg"
+          width="48"
+          height="48"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -66,7 +71,7 @@
           stroke-linejoin="round"
         >
           <rect x="2" y="4" width="20" height="16" rx="2" />
-          <path d="M8 2v4M16 2v4M2 10h20" />
+          <line x1="8" y1="10" x2="16" y2="10" />
         </svg>
         <p class="empty-text">暂无U盘插入记录</p>
         <p class="empty-hint">该客户端目前没有检测到任何U盘插入行为</p>
@@ -87,27 +92,27 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="record in records" :key="record.id || record.usb_id">
-                <td class="disk-name" :title="record.disk_name">
-                  {{ record.disk_name || '未知磁盘' }}
+              <tr v-for="record in records" :key="record.id || record.usbId">
+                <td class="disk-name" :title="record.volName">
+                  {{ record.volName || '未知磁盘' }}
                 </td>
-                <td class="usb-id">{{ record.usb_id }}</td>
-                <td class="insert-time">{{ formatTime(record.insert_time) }}</td>
+                <td class="usb-id">{{ record.usbId }}</td>
+                <td class="insert-time">{{ formatTime(record.lastTime) }}</td>
                 <td>
                   <span
                     class="status-badge"
-                    :class="record.status === 'allowed' ? 'status-allowed' : 'status-denied'"
+                    :class="record.allowed ? 'status-allowed' : 'status-denied'"
                   >
                     <span class="status-dot"></span>
-                    {{ record.status === 'allowed' ? '已允许' : '已拒绝' }}
+                    {{ record.allowed ? '已允许' : '已拒绝' }}
                   </span>
                 </td>
                 <td>
                   <button
-                    v-if="record.status === 'denied'"
+                    v-if="!record.allowed"
                     class="action-btn allow-btn"
-                    @click="updatePermission(record, 'allowed')"
-                    :disabled="updatingId === record.id"
+                    @click="updatePermission(record, true)"
+                    :disabled="updatingId.includes(record.id)"
                   >
                     <svg
                       class="btn-icon"
@@ -120,13 +125,13 @@
                     >
                       <path d="M20 6L9 17l-5-5" />
                     </svg>
-                    {{ updatingId === record.id ? '处理中...' : '允许使用' }}
+                    {{ updatingId.includes(record.id) ? '处理中...' : '允许使用' }}
                   </button>
                   <button
                     v-else
                     class="action-btn deny-btn"
-                    @click="updatePermission(record, 'denied')"
-                    :disabled="updatingId === record.id"
+                    @click="updatePermission(record, false)"
+                    :disabled="updatingId.includes(record.id)"
                   >
                     <svg
                       class="btn-icon"
@@ -140,7 +145,7 @@
                       <line x1="18" y1="6" x2="6" y2="18" />
                       <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
-                    {{ updatingId === record.id ? '处理中...' : '拒绝使用' }}
+                    {{ updatingId.includes(record.id) ? '处理中...' : '拒绝使用' }}
                   </button>
                 </td>
               </tr>
@@ -150,18 +155,19 @@
 
         <!-- 移动端：卡片列表视图 -->
         <div class="mobile-card-list">
-          <div v-for="record in records" :key="record.id || record.usb_id" class="usb-card">
+          <div v-for="record in records" :key="record.id || record.usbId" class="usb-card">
             <div class="card-top">
               <div class="card-info">
-                <h3 class="card-disk-name">{{ record.disk_name || '未知磁盘' }}</h3>
-                <span class="card-usb-id">{{ record.usb_id }}</span>
+                <h3 class="card-disk-name">{{ record.volName || '未知磁盘' }}</h3>
+                <div></div>
+                <span class="card-usb-id">{{ record.usbId }}</span>
               </div>
               <span
                 class="status-badge"
-                :class="record.status === 'allowed' ? 'status-allowed' : 'status-denied'"
+                :class="record.allowed ? 'status-allowed' : 'status-denied'"
               >
                 <span class="status-dot"></span>
-                {{ record.status === 'allowed' ? '已允许' : '已拒绝' }}
+                {{ record.allowed ? '已允许' : '已拒绝' }}
               </span>
             </div>
             <div class="card-time">
@@ -177,14 +183,14 @@
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
-              <span>{{ formatTime(record.insert_time) }}</span>
+              <span>{{ formatTime(record.lastTime) }}</span>
             </div>
             <div class="card-actions">
               <button
-                v-if="record.status === 'denied'"
+                v-if="!record.allowed"
                 class="action-btn allow-btn mobile-full"
-                @click="updatePermission(record, 'allowed')"
-                :disabled="updatingId === record.id"
+                @click="updatePermission(record, true)"
+                :disabled="updatingId.includes(record.id)"
               >
                 <svg
                   class="btn-icon"
@@ -197,13 +203,13 @@
                 >
                   <path d="M20 6L9 17l-5-5" />
                 </svg>
-                {{ updatingId === record.id ? '处理中...' : '允许使用' }}
+                {{ updatingId.includes(record.id) ? '处理中...' : '允许使用' }}
               </button>
               <button
                 v-else
                 class="action-btn deny-btn mobile-full"
-                @click="updatePermission(record, 'denied')"
-                :disabled="updatingId === record.id"
+                @click="updatePermission(record, false)"
+                :disabled="updatingId.includes(record.id)"
               >
                 <svg
                   class="btn-icon"
@@ -217,7 +223,7 @@
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
-                {{ updatingId === record.id ? '处理中...' : '拒绝使用' }}
+                {{ updatingId.includes(record.id) ? '处理中...' : '拒绝使用' }}
               </button>
             </div>
           </div>
@@ -244,26 +250,13 @@ const uuid = clientStore.getCurrentClientUUID
 const targetRef = ref(null)
 const { displayUUID, bindElement } = useMiddleEllipsis(uuid)
 
+const loading = computed(() => clientStore.getCurrentUDiskList === null)
+const error = computed(() => clientStore.getCurrentUDiskList?.[0]?.id === -1)
+const records = computed(() => clientStore.getCurrentUDiskList || [])
 // 从路由参数获取客户端UUID
-const clientUuid = ref(
-  route.params.uuid || route.query.uuid || 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-)
-
-const truncatedUuid = computed(() => {
-  if (!clientUuid.value) return ''
-  if (clientUuid.value.length <= 12) return clientUuid.value
-  return (
-    clientUuid.value.substring(0, 8) +
-    '...' +
-    clientUuid.value.substring(clientUuid.value.length - 4)
-  )
-})
 
 // 数据状态
-const records = ref([])
-const loading = ref(false)
-const error = ref('')
-const updatingId = ref(null)
+const updatingId = ref([])
 
 // 返回上一页
 const goBack = () => {
@@ -272,6 +265,7 @@ const goBack = () => {
 
 // 格式化时间
 const formatTime = (timeStr) => {
+  return $filters.formatDateTime(timeStr)
   if (!timeStr) return '--'
   try {
     const date = new Date(timeStr)
@@ -287,101 +281,27 @@ const formatTime = (timeStr) => {
   }
 }
 
-// 模拟API调用 ———— 实际项目中替换为真实接口
-const api = {
-  // 获取U盘插入记录
-  async getUsbRecords(uuid) {
-    console.log('获取客户端U盘记录:', uuid)
-    await new Promise((resolve) => setTimeout(resolve, 600))
-    return {
-      code: 200,
-      data: [
-        {
-          id: 1,
-          disk_name: 'Kingston DataTraveler 3.0',
-          usb_id: '0951:1666',
-          insert_time: '2026-04-29T14:30:00Z',
-          status: 'allowed',
-        },
-        {
-          id: 2,
-          disk_name: 'SanDisk Ultra USB 3.0',
-          usb_id: '0781:5583',
-          insert_time: '2026-04-28T09:15:00Z',
-          status: 'denied',
-        },
-        {
-          id: 3,
-          disk_name: 'Samsung USB Drive',
-          usb_id: '04e8:61b6',
-          insert_time: '2026-04-27T16:45:00Z',
-          status: 'allowed',
-        },
-      ],
-    }
-  },
-  // 更新U盘权限
-  async updateUsbPermission(uuid, usbId, status) {
-    console.log('更新U盘权限:', uuid, usbId, status)
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    return { code: 200, message: 'success' }
-  },
-}
-
-// 获取记录
-const fetchRecords = async () => {
-  if (!clientUuid.value) return
-  loading.value = true
-  error.value = ''
-  try {
-    const res = await api.getUsbRecords(clientUuid.value)
-    if (res.code === 200 && Array.isArray(res.data)) {
-      records.value = res.data
-    } else {
-      records.value = []
-      if (res.message) error.value = res.message
-    }
-  } catch (e) {
-    console.error('获取U盘记录失败:', e)
-    error.value = '获取记录失败，请检查网络连接或稍后重试'
-    records.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
 // 更新权限
-const updatePermission = async (record, newStatus) => {
-  if (updatingId.value) return
-  updatingId.value = record.id
+const updatePermission = async (usb, allowed) => {
+  updatingId.value.push(usb.id)
   try {
-    const res = await api.updateUsbPermission(clientUuid.value, record.usb_id, newStatus)
-    if (res.code === 200) {
-      const target = records.value.find((r) => r.id === record.id)
-      if (target) {
-        target.status = newStatus
-      }
-    } else {
-      alert(res.message || '操作失败，请重试')
-    }
-  } catch (e) {
-    console.error('更新权限失败:', e)
-    alert('更新权限失败，请稍后重试')
+    if (allowed) await clientStore.allowUDisk(usb.usbId)
+    else await clientStore.denyUDisk(usb.usbId)
+    ElMessage.success('权限更新成功')
+  } catch (error) {
+    ElMessage.error('权限更新失败')
   } finally {
-    updatingId.value = null
+    updatingId.value.splice(updatingId.value.indexOf(usb.id), 1)
   }
+}
+const getClientUDiskList = async () => {
+  if (!clientStore.getCurrentUDiskList || clientStore.getCurrentUDiskList?.[0]?.id === -1)
+    await clientStore.fetchUDiskList()
+  console.log(' getClientUDiskList:', clientStore.getCurrentUDiskList)
 }
 onMounted(() => {
   bindElement(targetRef.value)
-})
-onMounted(() => {
-  fetchRecords()
-})
-
-watch(clientUuid, (newVal) => {
-  if (newVal) {
-    fetchRecords()
-  }
+  getClientUDiskList()
 })
 </script>
 
@@ -505,93 +425,50 @@ watch(clientUuid, (newVal) => {
   margin: 0;
 }
 
-/* 加载状态 */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 48px 24px;
-  color: #6b7280;
-  font-size: 0.9rem;
-}
-
-.loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #1e40af;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* 错误状态 */
-.error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 48px 24px;
-  color: #6b7280;
-  font-size: 0.9rem;
-}
-
-.error-icon {
-  width: 40px;
-  height: 40px;
-  color: #ef4444;
-}
-
-.retry-button {
-  background: #1e40af;
-  color: white;
-  border: none;
-  padding: 8px 24px;
-  border-radius: 9999px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  margin-top: 4px;
-}
-
-.retry-button:hover {
-  background: #1e3a8a;
-}
-
-/* 空状态 */
+/* 状态卡片 */
+.loading-state,
+.error-state,
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 56px 24px;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #6b7280;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
 }
 
-.empty-icon {
-  width: 48px;
-  height: 48px;
-  color: #d1d5db;
-  margin-bottom: 8px;
-}
-
-.empty-text {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #374151;
-  margin: 0;
-}
-
-.empty-hint {
-  font-size: 0.85rem;
+.error-state svg,
+.empty-state svg {
   color: #9ca3af;
-  margin: 0;
+  margin-bottom: 16px;
+}
+
+.error-state p,
+.empty-state p {
+  margin: 8px 0 16px;
+  font-size: 1rem;
+}
+
+.retry-btn {
+  padding: 8px 20px;
+  background-color: #1e40af;
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.retry-btn:hover {
+  background-color: #1e3a8a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 /* 桌面端表格 */
@@ -609,9 +486,31 @@ watch(clientUuid, (newVal) => {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
+  table-layout: auto;
+  /* white-space: nowrap; */
+}
+.records-table th:nth-child(1),
+.records-table td:nth-child(1) {
+  width: 10%;
+}
+.records-table th:nth-child(2),
+.records-table td:nth-child(2) {
+  width: 25%;
+}
+.records-table th:nth-child(3),
+.records-table td:nth-child(3) {
+  width: 15%;
+}
+.records-table th:nth-child(4),
+.records-table td:nth-child(4) {
+  width: 1%;
   white-space: nowrap;
 }
-
+.records-table th:nth-child(5),
+.records-table td:nth-child(5) {
+  width: 1%;
+  white-space: nowrap;
+}
 .records-table thead {
   background: #f9fafb;
 }
@@ -631,6 +530,8 @@ watch(clientUuid, (newVal) => {
   padding: 14px 16px;
   color: #374151;
   border-bottom: 1px solid #f3f4f6;
+  vertical-align: center;
+  /* text-align: center; */
 }
 
 .records-table tbody tr {
@@ -656,6 +557,10 @@ watch(clientUuid, (newVal) => {
   font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
   font-size: 0.85rem;
   color: #4b5563;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-all;
 }
 
 .insert-time {
@@ -796,6 +701,9 @@ watch(clientUuid, (newVal) => {
   font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
   font-size: 0.8rem;
   color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .card-time {
@@ -837,7 +745,7 @@ watch(clientUuid, (newVal) => {
   .header {
     align-items: stretch;
     gap: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
   }
   .title-section h2 {
     font-size: 1.4rem;

@@ -332,16 +332,6 @@ onMounted(() => {
   border: 1px solid #e5e7eb;
 }
 
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #1e40af;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 16px;
-}
-
 .error-state svg,
 .empty-state svg {
   color: #9ca3af;

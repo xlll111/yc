@@ -105,7 +105,7 @@
       </div>
 
       <!-- 设置授权区（仅在未授权且控制启用时显示） -->
-      <div class="set-auth-section" v-if="loadingSettings && controlEnabled && !active">
+      <div class="set-auth-section" v-if="loadingSettings && controlEnabled">
         <h3 class="section-title">设置联网授权</h3>
         <div class="preset-grid">
           <button
@@ -350,7 +350,7 @@ onUnmounted(() => {
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   transition: box-shadow 0.2s ease;
 }
 
@@ -427,7 +427,7 @@ onUnmounted(() => {
 }
 /* 卡片头部 */
 .card-header {
-  margin-bottom: 28px;
+  margin-bottom: 0px;
 }
 
 .title-section {
@@ -685,6 +685,7 @@ onUnmounted(() => {
 
 /* 预设网格 */
 .set-auth-section {
+  margin-top: 4px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -810,6 +811,7 @@ onUnmounted(() => {
   .header {
     /* flex-direction: column; */
     align-items: stretch;
+    margin-bottom: 10px;
   }
 
   .client-info {
@@ -826,7 +828,7 @@ onUnmounted(() => {
 
   .auth-card {
     padding: 20px;
-    gap: 20px;
+    gap: 16px;
   }
 
   .card-header {

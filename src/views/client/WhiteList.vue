@@ -141,7 +141,7 @@ const targetRef = ref(null)
 const { displayUUID, bindElement } = useMiddleEllipsis(uuid)
 // 白名单数据模型
 const loading = computed(() => clientStore.getCurrentClientWhiteList !== null)
-const error = computed(() => clientStore.getCurrentClientWhiteList[0]?.id === -1)
+const error = computed(() => clientStore.getCurrentClientWhiteList?.[0]?.id === -1)
 const isAdding = ref(false) // 添加按钮防抖
 const removingIds = ref(new Set()) // 正在移除的id集合
 
@@ -218,14 +218,6 @@ onMounted(() => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
   box-sizing: border-box;
 }
 
@@ -365,7 +357,7 @@ onMounted(() => {
 }
 /* 卡片头部 */
 .card-header {
-  margin-bottom: 28px;
+  margin-bottom: 18px;
 }
 
 .title-section {
@@ -602,6 +594,7 @@ onMounted(() => {
   .whitelist-header {
     /* flex-direction: column; */
     align-items: stretch;
+    margin-bottom: 10px;
   }
 
   .client-info {

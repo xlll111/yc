@@ -32,9 +32,11 @@ export interface clientNetAllowedUntilResponse {
   netAllowedUntil: string
 }
 export interface clientUDisk {
+  id: number
   volName: string
   usbId: string
   allowed: boolean
+  lastTime: string
 }
 export interface clientWhiteListItem {
   id: number
@@ -163,6 +165,9 @@ export const useClientStore = defineStore('client', () => {
           currentUDiskList.value = udiskList
         }
       } catch (e) {
+        currentUDiskList.value = [
+          { id: -1, volName: 'error', usbId: 'error', allowed: false, lastTime: 'error' },
+        ]
         console.error('error fetching udisk list', e)
       }
     }

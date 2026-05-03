@@ -1,48 +1,59 @@
-# yc
+# YCMAIN - 轻量工具集
 
-This template should help get you started developing with Vue 3 in Vite.
+你的设备管理助手，聚焦效率，让设备管理更轻松。提供课表管理、定时任务、网络控制与监控等实用功能。
 
-## Recommended IDE Setup
+---
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## 📖 项目背景
 
-## Recommended Browser Setup
+这是一个采用 **Vue 3** 构建的现代化 Web 应用
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+---
 
-## Type Support for `.vue` Imports in TS
+## 🛠️ 技术栈
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+- Vue 3
+- Vue Router
+- Pinia 状态管理
+- Vite
 
-## Customize configuration
+---
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+## 💻 运行环境与构建
 
-## Project Setup
+### 环境要求
 
-```sh
+- Node.js 24.13.0
+
+### 项目搭建
+
+```bash
+# 安装依赖
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+### 开发运行
 
-```sh
+```bash
+# 启动开发服务器（支持热重载）
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+### 生产构建
 
-```sh
+```bash
+# 类型检查、编译并压缩为生产环境代码
 npm run build
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+### 代码检查
 
-```sh
+```bash
+# 使用 ESLint 进行代码规范检查
 npm run lint
 ```
+
+### 联系与支持
+
+本项目目前为开源状态，项目地址：
+<https://github.com/xlll111/yc>

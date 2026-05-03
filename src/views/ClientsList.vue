@@ -146,62 +146,6 @@ import { useClientStore } from '@/stores/clientStore'
 // 模拟 API 调用 - 请在实际项目中替换为真实的 API 请求
 const mockFetchClients = async () => {
   return await clientStore.fetchClients()
-  //   return new Promise((resolve, reject) => {
-  //     setTimeout(() => {
-  //       reject(new Error('获取客户端列表失败，请稍后重试'))
-  //     }, 1600)
-  //   })
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        {
-          uuid: '360bdcf7-6d9d-4a1b-8c2e-9f3a1b2c3d4e',
-          ipAddress: '10.121.65.10',
-          hostname: 'DESKTOP-5490FRS',
-          osInfo: 'Windows 11 专业版',
-          lastSeen: '2026-04-17 16:59:30',
-          note: '',
-          online: '在线',
-        },
-        {
-          uuid: '7a8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d',
-          note: '办公室',
-          ipAddress: '10.121.65.22',
-          hostname: 'TEACHER-PC',
-          osInfo: 'Windows 10 教育版',
-          lastSeen: '2026-04-17 14:22:15',
-          note: '在线',
-        },
-        {
-          uuid: '2f3e4d5c-6b7a-8c9d-0e1f-2a3b4c5d6e7f',
-          note: '机房A-03',
-          ipAddress: '10.121.66.45',
-          hostname: 'LAB-A-03',
-          osInfo: 'Ubuntu 22.04 LTS',
-          lastSeen: '2026-04-16 09:15:42',
-          note: '离线',
-        },
-        {
-          uuid: 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d',
-          note: '图书馆查询机',
-          ipAddress: '10.121.64.88',
-          hostname: 'LIB-QUERY-01',
-          osInfo: 'Windows 10 企业版 LTSC',
-          lastSeen: '2026-04-17 11:03:20',
-          note: '在线',
-        },
-        {
-          uuid: 'f9e8d7c6-b5a4-3c2d-1e0f-9a8b7c6d5e4f',
-          note: '行政楼',
-          ipAddress: '10.121.63.120',
-          hostname: 'ADMIN-PC-07',
-          osInfo: 'macOS Ventura',
-          lastSeen: '2026-04-15 18:30:00',
-          note: '离线',
-        },
-      ])
-    }, 1600)
-  })
 }
 
 const router = useRouter()
@@ -225,7 +169,12 @@ const fetchClients = async () => {
 
   try {
     const data = await mockFetchClients()
-    clients.value = data
+    // 按 lastSeen 从新到旧排序
+    const sortedData = [...data].sort((a, b) => {
+      return new Date(b.lastSeen) - new Date(a.lastSeen)
+    })
+    clients.value = sortedData
+    console.log('Fetched clients:', sortedData)
     ElMessage.success('客户端列表刷新成功')
   } catch (err) {
     error.value = err.message || '获取客户端列表失败，请稍后重试'

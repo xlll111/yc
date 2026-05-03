@@ -23,12 +23,12 @@
         <router-link to="/about" class="nav-link">关于</router-link>
         <div class="dropdown-wrapper">
           <button class="dropdown-trigger" @click="toggleDropdown">
-            更多 <span class="arrow" :class="{ rotate: dropdownOpen }">▼</span>
+            换源 <span class="arrow" :class="{ rotate: dropdownOpen }">▼</span>
           </button>
           <div class="dropdown-menu" v-if="dropdownOpen" v-click-outside="closeDropdown">
-            <a href="/contact">联系我们</a>
-            <a href="/faq">常见问题</a>
-            <a href="/careers">加入我们</a>
+            <a href="https://yc-g.xlll.dpdns.org/" @click="closeMobileMenu">Github</a>
+            <a href="https://yc-c.xlll.dpdns.org/" @click="closeMobileMenu">Cloudflare</a>
+            <a href="https://yc-v.xlll.dpdns.org/" @click="closeMobileMenu">Vercel</a>
           </div>
         </div>
       </nav>
@@ -62,12 +62,12 @@
             <router-link to="/about" @click="closeMobileMenu">关于</router-link>
             <div class="mobile-dropdown">
               <div class="mobile-dropdown-header" @click="toggleMobileDropdown">
-                更多 <span class="arrow" :class="{ rotate: mobileDropdownOpen }">▼</span>
+                换源 <span class="arrow" :class="{ rotate: mobileDropdownOpen }">▼</span>
               </div>
               <div class="mobile-dropdown-content" v-show="mobileDropdownOpen">
-                <router-link to="/contact" @click="closeMobileMenu">联系我们</router-link>
-                <router-link to="/faq" @click="closeMobileMenu">常见问题</router-link>
-                <router-link to="/careers" @click="closeMobileMenu">加入我们</router-link>
+                <a href="https://yc-g.xlll.dpdns.org/" @click="closeMobileMenu">Github</a>
+                <a href="https://yc-c.xlll.dpdns.org/" @click="closeMobileMenu">Cloudflare</a>
+                <a href="https://yc-v.xlll.dpdns.org/" @click="closeMobileMenu">Vercel</a>
               </div>
             </div>
           </div>

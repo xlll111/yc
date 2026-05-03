@@ -1,6 +1,6 @@
 # 控制台
 
-https://class.xlll.dpdns.org
+https://yc.xlll.dpdns.org/dash/clients
 
 ::: warning 注意
 

@@ -138,7 +138,7 @@
     >
       <div class="card-header">
         <h2 class="card-title">U盘管控 · 今日新设备</h2>
-        <button class="btn btn-text" @click="goToUsbManagement">管理U盘 →</button>
+        <button class="btn btn-text" @click="goToUsbRecords">管理U盘 →</button>
       </div>
       <LoadingState
         :loading="!UDiskRecordsLoading"
@@ -149,8 +149,8 @@
     </section>
     <section v-else class="info-card usb-control-section">
       <div class="card-header">
-        <h2 class="card-title">U盘管控 · 今日新设备</h2>
-        <button class="btn btn-text" @click="goToUsbManagement">管理U盘 →</button>
+        <h2 class="card-title">U盘管控 · 今日设备</h2>
+        <button class="btn btn-text" @click="goToUsbRecords">管理U盘 →</button>
       </div>
 
       <div v-if="setting.disableControlPanel" class="warning-banner">
@@ -230,8 +230,8 @@ const isOnline = computed(() => {
   if (!client.value.lastSeen) return false
   const last = new Date(client.value.lastSeen).getTime()
   const now = Date.now()
-  // 假设计算在线状态：最后在线时间在5分钟内
-  return now - last < 5 * 60 * 1000
+  // 假设计算在线状态：最后在线时间在2分钟内
+  return Math.abs(now - last) < 2 * 60 * 1000
 })
 
 const formattedLastSeen = computed(() => {
@@ -307,17 +307,25 @@ const todayUnknownUsbs = computed(() => {
   today.setHours(0, 0, 0, 0)
   const todayStart = today.toISOString()
 
-  return usbRecord.value
+  const filtered = usbRecord.value.filter((record) => record.time >= todayStart)
+
+  // 去重：保留每个 volName 第一次出现的记录
+  const seen = new Set()
+  const uniqueRecords = [...filtered]
+    .reverse() // 让较新的记录在前
     .filter((record) => {
-      return record.time >= todayStart
+      if (seen.has(record.volName)) return false
+      seen.add(record.volName)
+      return true
     })
-    .map((record) => ({
-      diskName: record.usbId,
-      insertTime: new Date(record.time).toLocaleTimeString('zh-CN', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    }))
+
+  return uniqueRecords.map((record) => ({
+    diskName: record.volName,
+    insertTime: new Date(record.time).toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+  }))
 })
 
 // ---------- 图表数据准备 ----------
@@ -409,7 +417,7 @@ const usbChartOption = computed(() => {
     Array.from({ length: 3 }, () => ({ count: 0, diskNames: [] })),
   )
 
-  // 2. 统计近三天的 USB 插入次数（只累加计数，不记录 usbId）
+  // 2. 统计近三天的 USB 插入次数
   const recentUsbRecords = usbRecord.value.filter((r) => {
     const recDate = new Date(r.time)
     return days.some((d) => d.dateStr === formatDateStr(recDate))
@@ -421,8 +429,8 @@ const usbChartOption = computed(() => {
     const hour = date.getHours()
     if (dayIndex !== -1 && hour >= 0 && hour < 24) {
       matrix[hour][dayIndex].count += 1
-      if (!matrix[hour][dayIndex].diskNames.includes(r.usbId)) {
-        matrix[hour][dayIndex].diskNames.push(r.usbId)
+      if (!matrix[hour][dayIndex].diskNames.includes(r.volName)) {
+        matrix[hour][dayIndex].diskNames.push(r.volName)
       }
     }
   })
@@ -523,19 +531,13 @@ function getLastThreeDays() {
 
 function formatDateStr(date) {
   return $filters.formatDateTime(date, 'YYYY-MM-dd')
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  console.log(`${year}-${month}-${day}`)
-  return `${year}-${month}-${day}`
 }
 
 // ---------- 路由跳转占位方法 ----------
-const goToAuthConfig = () => router.push('/client/auth-config')
-const goToWhitelist = () => router.push('/client/whitelist')
-const goToUsbRecords = () => router.push('/client/usb-records')
-const goToUrlRecords = () => router.push('/client/url-records')
-const goToUsbManagement = () => router.push('/client/usb-management')
+const goToAuthConfig = () => router.push('/dash/client/authorize_net')
+const goToWhitelist = () => router.push('/dash/client/net_whitelist')
+const goToUsbRecords = () => router.push('/dash/client/udisk_records')
+const goToUrlRecords = () => router.push('/dash/client/url_records')
 </script>
 
 <style scoped>
@@ -543,6 +545,7 @@ const goToUsbManagement = () => router.push('/client/usb-management')
 .client-overview {
   flex: 1;
   min-width: 0;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
   display: flex;

@@ -245,7 +245,7 @@ const viewDetail = (uuid) => {
 const isOnline = (lastSeen) => {
   if (!lastSeen) return false
   const diff = new Date().getTime() - new Date(lastSeen).getTime()
-  return diff < 120000 // 2分钟内视为在线
+  return Math.abs(diff) < 120000 // 2分钟内视为在线
 }
 onMounted(() => {
   fetchClients()

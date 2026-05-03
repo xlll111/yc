@@ -226,6 +226,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   flex: auto;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
   font-family: var(--font-family);

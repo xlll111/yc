@@ -9,7 +9,7 @@
           提供课表管理、定时任务、网络控制与监控等实用功能
         </p>
         <div class="hero-buttons">
-          <button class="btn btn-primary" @click="router.push('/docs/')">开始使用</button>
+          <button class="btn btn-primary" @click="download">开始使用</button>
           <button class="btn btn-secondary" @click="router.push('/docs/')">了解详情</button>
         </div>
       </section>
@@ -88,7 +88,7 @@
         </div>
       </section>
 
-      <!-- 产品展示区域 -->
+      <!-- 产品展示区域 - 循环图片轮播 -->
       <section class="showcase">
         <div class="showcase-content">
           <h2 class="showcase-title">强大的监控与防护</h2>
@@ -103,38 +103,59 @@
           </ul>
         </div>
         <div class="showcase-image">
-          <div class="placeholder-image">
-            <svg
-              width="64"
-              height="64"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <rect
-                x="3"
-                y="3"
-                width="18"
-                height="18"
-                rx="2"
+          <!-- 替换为轮播图组件 -->
+          <div class="carousel-container">
+            <div class="carousel-wrapper">
+              <div
+                class="carousel-slides"
+                :style="{ transform: `translateX(-${currentIndex * 100}%)` }"
+              >
+                <div v-for="(image, idx) in carouselImages" :key="idx" class="carousel-slide">
+                  <div class="carousel-image-placeholder">
+                    <img :src="image.url" alt="" />
+                    <component :is="image.icon" class="carousel-icon" />
+                    <p class="carousel-label">{{ image.label }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 指示点 -->
+            <div class="carousel-dots">
+              <button
+                v-for="(_, idx) in carouselImages"
+                :key="idx"
+                class="carousel-dot"
+                :class="{ active: currentIndex === idx }"
+                @click="goToSlide(idx)"
+              ></button>
+            </div>
+
+            <!-- 左右箭头 -->
+            <button class="carousel-arrow carousel-arrow-left" @click="prevSlide">
+              <svg
+                viewBox="0 0 24 24"
+                width="24"
+                height="24"
+                fill="none"
                 stroke="currentColor"
-                stroke-width="1.5"
-              />
-              <path d="M8 7L16 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-              <path
-                d="M8 12L16 12"
+                stroke-width="2"
+              >
+                <path d="M15 18L9 12L15 6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+            <button class="carousel-arrow carousel-arrow-right" @click="nextSlide">
+              <svg
+                viewBox="0 0 24 24"
+                width="24"
+                height="24"
+                fill="none"
                 stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-              />
-              <path
-                d="M8 17L12 17"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-              />
-            </svg>
-            <p>产品界面预览</p>
+                stroke-width="2"
+              >
+                <path d="M9 18L15 12L9 6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
           </div>
         </div>
       </section>
@@ -143,7 +164,7 @@
       <section class="cta">
         <h2 class="cta-title">开始管理你的设备</h2>
         <p class="cta-description">立即下载，查看完整文档或前往控制台进行配置</p>
-        <button class="btn btn-primary btn-large" @click="router.push('/docs/')">免费下载</button>
+        <button class="btn btn-primary btn-large" @click="download">免费下载</button>
       </section>
     </div>
   </div>
@@ -151,8 +172,72 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 const router = useRouter()
+const download = () => {
+  window.open('https://class.xlll.dpdns.org/api/files/installer/download/latest', '_blank')
+}
+// 轮播图数据
+const carouselImages = ref([
+  {
+    icon: 'dashboard-icon',
+    label: '控制台',
+    url: 'https://fgarbogqref4qxbc.public.blob.vercel-storage.com/YCDash0.png',
+  },
+  {
+    icon: 'dashboard-icon1',
+    label: '控制台1',
+    url: 'https://fgarbogqref4qxbc.public.blob.vercel-storage.com/YCDash1.png',
+  },
+  {
+    icon: 'dashboard-icon2',
+    label: '控制台2',
+    url: 'https://fgarbogqref4qxbc.public.blob.vercel-storage.com/YCDash2.png',
+  },
+])
+
+const currentIndex = ref(0)
+let intervalId = null
+
+// 下一张
+const nextSlide = () => {
+  currentIndex.value = (currentIndex.value + 1) % carouselImages.value.length
+}
+
+// 上一张
+const prevSlide = () => {
+  currentIndex.value =
+    (currentIndex.value - 1 + carouselImages.value.length) % carouselImages.value.length
+}
+
+// 跳转到指定幻灯片
+const goToSlide = (index) => {
+  currentIndex.value = index
+  resetInterval()
+}
+
+// 重置自动播放计时器
+const resetInterval = () => {
+  if (intervalId) {
+    clearInterval(intervalId)
+  }
+  intervalId = setInterval(() => {
+    nextSlide()
+  }, 4000)
+}
+
+// 组件挂载时启动自动轮播
+onMounted(() => {
+  resetInterval()
+})
+
+// 组件卸载时清除计时器
+onUnmounted(() => {
+  if (intervalId) {
+    clearInterval(intervalId)
+  }
+})
 </script>
 
 <style scoped>
@@ -334,31 +419,154 @@ const router = useRouter()
 
 .showcase-image {
   display: flex;
+  max-width: min-content;
   justify-content: center;
   align-items: center;
 }
 
-.placeholder-image {
+/* ----- 轮播图样式 ----- */
+.carousel-container {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.carousel-wrapper {
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.carousel-slides {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+}
+
+.carousel-slide {
+  flex-shrink: 0;
   width: 100%;
   height: 320px;
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-image-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  height: 100%;
+  /* gap: 16px; */
+  padding: 32px;
 }
 
-.placeholder-image svg {
+.carousel-image-placeholder img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.carousel-icon {
+  width: 96px;
+  /* height: 96px; */
+  color: #1e40af;
+  opacity: 0.9;
+  transition: transform 0.3s ease;
+}
+
+.carousel-slide:hover .carousel-icon {
+  transform: scale(1.05);
+}
+
+.carousel-svg svg {
+  width: 96px;
+  height: 96px;
+}
+
+.carousel-label {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #1e40af;
+  letter-spacing: 0.5px;
+  margin-top: 8px;
   margin-bottom: 16px;
-  color: #9ca3af;
 }
 
-.placeholder-image p {
-  font-size: 0.875rem;
+/* 指示点样式 */
+.carousel-dots {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  z-index: 10;
+}
+
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(100, 116, 139, 0.5);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.carousel-dot.active {
+  width: 24px;
+  border-radius: 4px;
+  background: #1e40af;
+}
+
+.carousel-dot:hover {
+  background: #1e40af;
+  transform: scale(1.1);
+}
+
+/* 左右箭头样式 */
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #475569;
+  transition: all 0.2s ease;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+
+.carousel-arrow:hover {
+  background: white;
+  color: #1e40af;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.carousel-arrow-left {
+  left: 12px;
+}
+
+.carousel-arrow-right {
+  right: 12px;
 }
 
 /* CTA 区域 */
@@ -410,6 +618,7 @@ const router = useRouter()
     grid-template-columns: 1fr;
     gap: 32px;
     padding: 40px 0;
+    justify-items: center;
   }
 
   .showcase-content {
@@ -425,6 +634,24 @@ const router = useRouter()
     text-align: left;
     max-width: 280px;
     margin: 0 auto;
+  }
+
+  .carousel-container {
+    max-width: 100%;
+  }
+
+  .carousel-slide {
+    height: 280px;
+  }
+
+  .carousel-icon {
+    width: 72px;
+    /* height: 72px; */
+  }
+
+  .carousel-svg svg {
+    width: 72px;
+    height: 72px;
   }
 
   .cta {

@@ -4,12 +4,23 @@
     <section class="info-card">
       <div class="card-header">
         <h2 class="card-title">客户端信息</h2>
-        <span class="status-badge" :class="isOnline ? 'status-online' : 'status-offline'">
+        <spinner v-if="!clientLoading" inline size="tiny" />
+        <span
+          v-else-if="!clientLoadingError"
+          class="status-badge"
+          :class="isOnline ? 'status-online' : 'status-offline'"
+        >
           {{ isOnline ? '在线' : '离线' }}
         </span>
       </div>
-
-      <div class="info-grid">
+      <LoadingState
+        :loading="!clientLoading"
+        :error="clientLoadingError"
+        @retry="clientStore.fetchClientByUUID"
+        loadingText="加载中..."
+        errorText="客户端信息加载失败"
+      />
+      <div v-if="clientLoading && !clientLoadingError" class="info-grid">
         <div class="info-item">
           <span class="label">主机名</span>
           <span class="value">{{ client.hostname }}</span>
@@ -54,14 +65,26 @@
               @keyup.enter="saveNote"
             />
             <span v-else class="value note-text">{{ client.note || '暂无备注' }}</span>
-            <button class="icon-btn" title="编辑备注" @click="startEditNote">✎</button>
+            <button
+              class="icon-btn"
+              title="编辑备注"
+              @click="startEditNote"
+              :disabled="isSavingNote"
+            >
+              ✎
+            </button>
+            <spinner v-if="isSavingNote" inline size="tiny" />
           </div>
         </div>
       </div>
 
       <!-- 联网授权状态区域 -->
+
       <div class="auth-section">
-        <div class="auth-status">
+        <div v-if="!clientSettingsLoading" class="auth-status">
+          <span class="label">联网授权</span><spinner inline size="tiny" />
+        </div>
+        <div v-else-if="!clientSettingsLoadingError" class="auth-status">
           <span class="label">联网授权</span>
           <span v-if="!setting.netControlEnabled" class="auth-tag tag-disabled">未启用</span>
           <template v-else>
@@ -72,27 +95,59 @@
             <span class="auth-deadline"> 截止：{{ formattedAuthDeadline }} </span>
           </template>
         </div>
-        <div class="auth-actions">
-          <button class="btn btn-primary" @click="goToAuthConfig">设置联网授权</button>
-          <button class="btn btn-secondary" @click="goToWhitelist">编辑白名单</button>
+        <div v-else class="auth-status">
+          <span class="label">联网授权</span>
+          <span class="auth-tag tag-error">加载失败</span>
         </div>
       </div>
-
-      <!-- 快捷入口 -->
-      <div class="quick-actions">
-        <button class="btn btn-outline" @click="goToUsbRecords">💾 查看U盘记录</button>
-        <button class="btn btn-outline" @click="goToUrlRecords">🌐 查看URL记录</button>
+      <div class="actions">
+        <div class="auth-actions">
+          <button class="btn btn-primary" @click="goToAuthConfig">设置联网授权</button>
+          <button class="btn btn-primary" @click="goToWhitelist">编辑白名单</button>
+        </div>
+        <div class="quick-actions">
+          <button class="btn btn-outline" @click="goToUsbRecords">查看U盘记录</button>
+          <button class="btn btn-outline" @click="goToUrlRecords">查看URL记录</button>
+        </div>
       </div>
+      <!-- 快捷入口 -->
     </section>
 
     <!-- 二、客户端在线记录图表 -->
     <section class="chart-card">
       <h2 class="card-title">在线记录（近三天）</h2>
-      <v-chart class="chart" :option="onlineChartOption" autoresize />
+      <LoadingState
+        :loading="!clientRecordsLoading"
+        :error="clientRecordsLoadingError"
+        @retry="clientStore.fetchClientRecords"
+        errorText="客户端在线记录加载失败"
+      />
+      <v-chart
+        v-if="clientRecordsLoading && !clientRecordsLoadingError"
+        class="chart"
+        :option="onlineChartOption"
+        autoresize
+      />
     </section>
 
     <!-- 三、U盘管控（当天新加入） -->
-    <section class="info-card usb-control-section">
+
+    <section
+      v-if="!UDiskRecordsLoading || UDiskRecordsLoadingError"
+      class="info-card usb-control-section"
+    >
+      <div class="card-header">
+        <h2 class="card-title">U盘管控 · 今日新设备</h2>
+        <button class="btn btn-text" @click="goToUsbManagement">管理U盘 →</button>
+      </div>
+      <LoadingState
+        :loading="!UDiskRecordsLoading"
+        :error="UDiskRecordsLoadingError"
+        @retry="clientStore.fetchUDiskRecords"
+        errorText="U盘记录加载失败"
+      />
+    </section>
+    <section v-else class="info-card usb-control-section">
       <div class="card-header">
         <h2 class="card-title">U盘管控 · 今日新设备</h2>
         <button class="btn btn-text" @click="goToUsbManagement">管理U盘 →</button>
@@ -114,7 +169,18 @@
     <!-- 四、U盘记录图表（近三天，显示磁盘名） -->
     <section class="chart-card">
       <h2 class="card-title">U盘插入记录（近三天）</h2>
-      <v-chart class="chart" :option="usbChartOption" autoresize />
+      <LoadingState
+        :loading="!UDiskRecordsLoading"
+        :error="UDiskRecordsLoadingError"
+        @retry="clientStore.fetchUDiskRecords"
+        errorText="U盘记录加载失败"
+      />
+      <v-chart
+        v-if="UDiskRecordsLoading && !UDiskRecordsLoadingError"
+        class="chart"
+        :option="usbChartOption"
+        autoresize
+      />
     </section>
   </div>
 </template>
@@ -131,6 +197,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 
 import { useClientStore } from '@/stores/clientStore'
 import Spinner from '@/components/Spinner.vue'
+import LoadingState from '@/components/LoadingState.vue'
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 
@@ -139,58 +206,24 @@ const $filters = inject('$filters')
 const router = useRouter()
 const clientStore = useClientStore()
 
+const clientLoading = computed(() => clientStore.getCurrentClientInfo !== null)
+const clientLoadingError = computed(() => clientStore.getCurrentClientInfo?.uuid === 'error')
+const clientSettingsLoading = computed(() => clientStore.getCurrentClientSettings !== null)
+const clientSettingsLoadingError = computed(() => clientStore.getCurrentClientSettings === 'error')
+const clientRecordsLoading = computed(() => clientStore.getCurrentClientRecords !== null)
+const clientRecordsLoadingError = computed(
+  () => clientStore.getCurrentClientRecords?.[0]?.id === -1,
+)
+const UDiskRecordsLoading = computed(() => clientStore.getCurrentUDiskRecords !== null)
+const UDiskRecordsLoadingError = computed(() => clientStore.getCurrentUDiskRecords?.[0]?.id === -1)
+
 // 注册必要的 ECharts 模块
 use([HeatmapChart, TooltipComponent, GridComponent, VisualMapComponent, CanvasRenderer])
 
-// ---------- 已知默认数据（实际开发中通过 API 获取）----------
-const client = ref({
-  hostname: 'hostname',
-  ipAddress: '127.0.0.1',
-  lastSeen: '2026-05-02T20:27:11.603000Z',
-  note: '备注',
-  osInfo: 'os_info',
-  uuid: 'uuid',
-  version: 'B0.7.9',
-})
-
-const setting = ref({
-  disableControlPanel: false,
-  disableSystemSettings: false,
-  disableTaskManager: false,
-  netAllowedUntil: '2026-05-06T20:20:11.603000Z',
-  netControlEnabled: false,
-  netPeriodEnabled: false,
-  usbControlEnabled: false,
-})
-
-const clientRecord = ref([
-  { id: 1, uuid: 'uuid', time: '2026-05-02T13:30:53.339000+00:00' },
-  { id: 2, uuid: 'uuid', time: '2026-05-02T13:32:53.339000+00:00' },
-  { id: 3, uuid: 'uuid', time: '2026-05-02T13:35:53.339000+00:00' },
-  { id: 4, uuid: 'uuid', time: '2026-05-02T13:38:53.339000+00:00' },
-  { id: 5, uuid: 'uuid', time: '2026-05-02T13:41:53.339000+00:00' },
-  { id: 6, uuid: 'uuid', time: '2026-05-02T13:45:53.339000+00:00' },
-  { id: 7, uuid: 'uuid', time: '2026-05-02T13:47:53.339000+00:00' },
-  { id: 8, uuid: 'uuid', time: '2026-05-02T13:50:53.339000+00:00' },
-  { id: 9, uuid: 'uuid', time: '2026-05-02T13:55:53.339000+00:00' },
-  { id: 10, uuid: 'uuid', time: '2026-05-02T13:58:53.339000+00:00' },
-  { id: 11, uuid: 'uuid', time: '2026-05-02T13:59:53.339000+00:00' },
-  { id: 12, uuid: 'uuid', time: '2026-05-02T14:02:53.339000+00:00' },
-])
-
-const usbRecord = ref([
-  { id: 6, uuid: 'uuid', usbId: 'usb_id', time: '2026-04-25T07:13:59.052504+00:00' },
-  { id: 7, uuid: 'uuid', usbId: 'usb_id2', time: '2026-05-02T06:36:22.582000+00:00' },
-  { id: 8, uuid: 'uuid', usbId: 'usb_id2', time: '2026-05-02T06:38:22.582000+00:00' },
-  { id: 9, uuid: 'uuid', usbId: 'usb_id2', time: '2026-05-02T06:40:22.582000+00:00' },
-  { id: 10, uuid: 'uuid', usbId: 'usb_id', time: '2026-04-25T09:16:59.052000+00:00' },
-  { id: 11, uuid: 'uuid', usbId: 'usb_id', time: '2026-04-25T09:19:59.052000+00:00' },
-  { id: 12, uuid: 'uuid', usbId: 'usb_id1', time: '2026-04-05T12:37:50.879000+00:00' },
-  { id: 13, uuid: 'uuid', usbId: 'usb_id1', time: '2026-04-05T12:39:50.879000+00:00' },
-  { id: 14, uuid: 'uuid', usbId: 'usb_id', time: '2026-04-26T07:13:59.052000+00:00' },
-  { id: 15, uuid: 'uuid', usbId: 'usb_id', time: '2026-04-26T07:16:59.052000+00:00' },
-  { id: 16, uuid: 'uuid', usbId: 'usb_id', time: '2026-04-26T07:17:59.052000+00:00' },
-])
+const client = computed(() => clientStore.getCurrentClientInfo || {})
+const setting = computed(() => clientStore.getCurrentClientSettings || {})
+const clientRecord = computed(() => clientStore.getCurrentClientRecords || [])
+const usbRecord = computed(() => clientStore.getCurrentUDiskRecords || [])
 
 // ---------- 派生状态 ----------
 const isOnline = computed(() => {
@@ -235,6 +268,7 @@ const remainingMinutes = computed(() => {
 
 // 备注编辑
 const isEditingNote = ref(false)
+const isSavingNote = ref(false)
 const editableNote = ref('')
 const noteInputRef = ref(null)
 
@@ -249,11 +283,22 @@ const startEditNote = () => {
 
 const saveNote = async () => {
   if (!isEditingNote.value) return
+  if (isSavingNote.value) return
+  if (editableNote.value === client.value.note) {
+    isEditingNote.value = false
+    editableNote.value = ''
+    return
+  }
   isEditingNote.value = false
-  // 调用API保存备注 (示例)
-  // await updateClientNote(client.value.uuid, editableNote.value);
-  client.value.note = editableNote.value
-  console.log('备注已保存:', editableNote.value)
+  isSavingNote.value = true
+  try {
+    await clientStore.updateClientNote(editableNote.value)
+    ElMessage.success('备注已保存')
+  } catch (e) {
+    ElMessage.error('备注保存失败')
+  } finally {
+    isSavingNote.value = false
+  }
 }
 
 // 当天未知U盘（模拟逻辑：取usbRecord中今天插入的，且usbId作为磁盘名）
@@ -359,39 +404,52 @@ const usbChartOption = computed(() => {
   const days = getLastThreeDays()
   const hours = Array.from({ length: 24 }, (_, i) => i)
 
-  // 收集近三天所有usb记录
+  // 1. 初始全零矩阵
+  const matrix = Array.from({ length: 24 }, () =>
+    Array.from({ length: 3 }, () => ({ count: 0, diskNames: [] })),
+  )
+
+  // 2. 统计近三天的 USB 插入次数（只累加计数，不记录 usbId）
   const recentUsbRecords = usbRecord.value.filter((r) => {
     const recDate = new Date(r.time)
     return days.some((d) => d.dateStr === formatDateStr(recDate))
   })
 
-  // 构建数据结构：每个记录转换为 [天索引, 小时, usbId, count?] 但热力图需要数值
-  // 我们展示usbId作为tooltip，数据值使用插入次数
-  const aggregatedMap = new Map() // key: "dayIndex-hour-usbId"
   recentUsbRecords.forEach((r) => {
     const date = new Date(r.time)
     const dayIndex = days.findIndex((d) => d.dateStr === formatDateStr(date))
     const hour = date.getHours()
-    const key = `${dayIndex}-${hour}-${r.usbId}`
-    if (!aggregatedMap.has(key)) {
-      aggregatedMap.set(key, { count: 0, usbId: r.usbId })
+    if (dayIndex !== -1 && hour >= 0 && hour < 24) {
+      matrix[hour][dayIndex].count += 1
+      if (!matrix[hour][dayIndex].diskNames.includes(r.usbId)) {
+        matrix[hour][dayIndex].diskNames.push(r.usbId)
+      }
     }
-    aggregatedMap.get(key).count += 1
   })
 
+  // 3. 将所有格子转为 [dayIndex, hourIndex, value] 格式
   const data = []
-  aggregatedMap.forEach((value, key) => {
-    const [dayIndex, hour] = key.split('-').slice(0, 2).map(Number)
-    data.push([dayIndex, hour, value.count, value.usbId])
-  })
+  const deviceMap = new Map()
+  for (let h = 0; h < 24; h++) {
+    for (let d = 0; d < 3; d++) {
+      //   console.log([d, h, matrix[h][d].count, matrix[h][d].diskNames.join(', ')])
+      const count = matrix[h][d].count
+      const devices = matrix[h][d].diskNames.join(', ')
+      const key = `${d},${h}`
+      deviceMap.set(key, devices)
+      data.push([d, h, count])
+    }
+  }
 
   return {
     tooltip: {
       position: 'top',
       formatter: (params) => {
-        const dayLabel = days[params.value[0]]?.label || ''
-        const usbName = params.value[3] || '未知磁盘'
-        return `${dayLabel} ${params.value[1]}:00<br/>磁盘: ${usbName}<br/>插入次数: ${params.value[2]}`
+        const [dayIndex, hour, count] = params.data
+        const dayLabel = days[dayIndex]?.label || ''
+        const key = `${dayIndex},${hour}`
+        const devices = deviceMap.get(key) || '无'
+        return `${dayLabel} ${hour}:00<br/>插入次数: ${count}<br/>设备: ${devices}`
       },
     },
     grid: {
@@ -420,17 +478,28 @@ const usbChartOption = computed(() => {
       orient: 'horizontal',
       left: 'center',
       bottom: 0,
-      inRange: { color: ['#fef3c7', '#b45309'] },
+      inRange: {
+        color: ['#fef3c7', '#f59e0b', '#b45309'],
+      },
       show: false,
     },
     series: [
       {
         type: 'heatmap',
         data: data,
-        label: { show: false },
-        emphasis: {
-          itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' },
+        label: {
+          show: false,
         },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(0, 0, 0, 0.5)',
+            borderWidth: 1,
+            borderColor: '#333',
+          },
+        },
+        progressive: 1000,
+        animation: false,
       },
     ],
   }
@@ -453,7 +522,7 @@ function getLastThreeDays() {
 }
 
 function formatDateStr(date) {
-  //   return $filters.formatDateTime(date, 'YYYY-MM-dd')
+  return $filters.formatDateTime(date, 'YYYY-MM-dd')
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
@@ -462,17 +531,18 @@ function formatDateStr(date) {
 }
 
 // ---------- 路由跳转占位方法 ----------
-const goToAuthConfig = () => console.log('跳转到联网授权配置页')
-const goToWhitelist = () => console.log('跳转到白名单配置页')
-const goToUsbRecords = () => console.log('跳转到U盘记录页')
-const goToUrlRecords = () => console.log('跳转到URL记录页')
-const goToUsbManagement = () => console.log('跳转到U盘管理页')
+const goToAuthConfig = () => router.push('/client/auth-config')
+const goToWhitelist = () => router.push('/client/whitelist')
+const goToUsbRecords = () => router.push('/client/usb-records')
+const goToUrlRecords = () => router.push('/client/url-records')
+const goToUsbManagement = () => router.push('/client/usb-management')
 </script>
 
 <style scoped>
 /* 全局变量风格遵循配置 */
 .client-overview {
-  max-width: 1200px;
+  flex: 1;
+  min-width: 0;
   margin: 0 auto;
   padding: 24px;
   display: flex;
@@ -590,7 +660,7 @@ const goToUsbManagement = () => console.log('跳转到U盘管理页')
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 0.9rem;
-  outline: none;
+  outline: null;
   transition: border 0.2s ease;
 }
 
@@ -600,7 +670,7 @@ const goToUsbManagement = () => console.log('跳转到U盘管理页')
 }
 
 .icon-btn {
-  background: none;
+  background: null;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 4px 8px;
@@ -609,11 +679,14 @@ const goToUsbManagement = () => console.log('跳转到U盘管理页')
   transition: all 0.2s ease;
 }
 
-.icon-btn:hover {
+.icon-btn:hover:not(:disabled) {
   background: #f3f4f6;
   border-color: #d1d5db;
 }
-
+.icon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
 /* 授权区域 */
 .auth-section {
   border-top: 1px solid #e5e7eb;
@@ -659,12 +732,16 @@ const goToUsbManagement = () => console.log('跳转到U盘管理页')
   font-size: 0.85rem;
   color: #6b7280;
 }
-
+.actions {
+  display: flex;
+  gap: 8px;
+}
 .auth-actions,
 .quick-actions {
   display: flex;
+  justify-content: space-around;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 /* 按钮系统 */
@@ -711,7 +788,7 @@ const goToUsbManagement = () => console.log('跳转到U盘管理页')
 
 .btn-text {
   background: transparent;
-  border: none;
+  border: null;
   color: #1e40af;
   padding: 4px 8px;
 }
@@ -734,7 +811,7 @@ const goToUsbManagement = () => console.log('跳转到U盘管理页')
 
 /* USB 列表 */
 .usb-list {
-  list-style: none;
+  list-style: null;
   padding: 0;
   margin: 0;
 }
@@ -747,7 +824,7 @@ const goToUsbManagement = () => console.log('跳转到U盘管理页')
 }
 
 .usb-row:last-child {
-  border-bottom: none;
+  border-bottom: null;
 }
 
 .usb-name {
@@ -790,6 +867,15 @@ const goToUsbManagement = () => console.log('跳转到U盘管理页')
   .auth-section {
     flex-direction: column;
     align-items: flex-start;
+  }
+  .actions {
+    flex-direction: column;
+  }
+  .btn-primary {
+    width: 45%;
+  }
+  .btn-outline {
+    width: 45%;
   }
 }
 </style>

@@ -20,6 +20,11 @@ export interface clientSettings {
   disableSystemSettings: boolean
   disableControlPanel: boolean
 }
+export interface clientRecord {
+  id: number
+  uuid: string
+  time: string
+}
 export interface clientSettingsRequest {
   netControlEnabled: boolean
   netPeriodEnabled: boolean
@@ -28,15 +33,19 @@ export interface clientSettingsRequest {
   disableSystemSettings: boolean
   disableControlPanel: boolean
 }
-export interface clientNetAllowedUntilResponse {
-  netAllowedUntil: string
-}
 export interface clientUDisk {
   id: number
   volName: string
   usbId: string
   allowed: boolean
   lastTime: string
+}
+export interface clientUDiskRecord {
+  id: number
+  uuid: string
+  usbId: string
+  time: string
+  volName: string
 }
 export interface clientWhiteListItem {
   id: number
@@ -47,15 +56,19 @@ export const useClientStore = defineStore('client', () => {
   const currentClientUuid = ref<string | null>(null)
   const currentClientInfo = ref<clientInfo | null>(null)
   const currentClientSettings = ref<clientSettings | string | null>(null)
+  const currentClientRecords = ref<clientRecord[] | null>(null)
   const currentClientWhiteList = ref<clientWhiteListItem[] | null>(null)
   const currentUDiskList = ref<clientUDisk[] | null>(null)
+  const currentUDiskRecords = ref<clientUDiskRecord[] | null>(null)
   const currentDNSUrl = ref<string | null>(null)
   // Getters
   const getCurrentClientUUID = computed(() => currentClientUuid.value)
   const getCurrentClientInfo = computed(() => currentClientInfo.value)
   const getCurrentClientSettings = computed(() => currentClientSettings.value)
+  const getCurrentClientRecords = computed(() => currentClientRecords.value)
   const getCurrentClientWhiteList = computed(() => currentClientWhiteList.value)
   const getCurrentUDiskList = computed(() => currentUDiskList.value)
+  const getCurrentUDiskRecords = computed(() => currentUDiskRecords.value)
   const getCurrentDNSUrl = computed(() => currentDNSUrl.value)
   // Actions
   const fetchClients = async (): Promise<clientInfo[]> => {
@@ -63,13 +76,25 @@ export const useClientStore = defineStore('client', () => {
     return data
   }
   const fetchClientByUUID = async () => {
+    currentClientInfo.value = null
     if (currentClientUuid.value !== null) {
-      const client = await clientApi.getClient(currentClientUuid.value)
-      if (client) {
-        currentClientInfo.value = client
+      try {
+        const client = await clientApi.getClient(currentClientUuid.value)
+        if (client) {
+          currentClientInfo.value = client
+        }
+      } catch (e) {
+        currentClientInfo.value = { uuid: 'error' }
+        console.error('error fetching client', e)
       }
     } else {
       console.error('currentClientUuid is null, cannot fetch client')
+    }
+  }
+  const updateClientNote = async (note: string) => {
+    if (currentClientUuid.value !== null) {
+      await clientApi.updateClientNote(currentClientUuid.value, note)
+      fetchClientByUUID()
     }
   }
   const fetchClientSettings = async () => {
@@ -96,6 +121,20 @@ export const useClientStore = defineStore('client', () => {
         fetchClientSettings()
       } catch (e) {
         console.error('error updating client settings', e)
+      }
+    }
+  }
+  const fetchClientRecords = async () => {
+    currentClientRecords.value = null
+    if (currentClientUuid.value !== null) {
+      try {
+        const records: clientRecord[] = await clientApi.getClientRecords(currentClientUuid.value)
+        if (records) {
+          currentClientRecords.value = records
+        }
+      } catch (e) {
+        console.error('error fetching client records', e)
+        currentClientRecords.value = [{ id: -1, uuid: 'error', time: 'error' }]
       }
     }
   }
@@ -158,6 +197,7 @@ export const useClientStore = defineStore('client', () => {
     }
   }
   const fetchUDiskList = async () => {
+    currentUDiskList.value = null
     if (currentClientUuid.value !== null) {
       try {
         const udiskList = await clientApi.getUDiskList(currentClientUuid.value)
@@ -184,28 +224,43 @@ export const useClientStore = defineStore('client', () => {
   }
   const allowUDisk = async (usbId: string) => {
     if (currentClientUuid.value !== null) {
-      try {
-        await clientApi.allowUDisk(currentClientUuid.value, usbId)
-        changeUDiskAllowed(usbId, true)
-      } catch (e) {
-        console.error('error allowing udisk', e)
-      }
+      await clientApi.allowUDisk(currentClientUuid.value, usbId)
+      changeUDiskAllowed(usbId, true)
     }
   }
   const denyUDisk = async (usbId: string) => {
     if (currentClientUuid.value !== null) {
+      await clientApi.denyUDisk(currentClientUuid.value, usbId)
+      changeUDiskAllowed(usbId, false)
+    }
+  }
+  const fetchUDiskRecords = async () => {
+    currentUDiskRecords.value = null
+    if (currentClientUuid.value !== null) {
       try {
-        await clientApi.denyUDisk(currentClientUuid.value, usbId)
-        changeUDiskAllowed(usbId, false)
+        const records: clientUDiskRecord[] = await clientApi.getUDiskRecords(
+          currentClientUuid.value,
+        )
+        if (records) {
+          currentUDiskRecords.value = records
+        }
       } catch (e) {
-        console.error('error denying udisk', e)
+        console.error('error fetching udisk records', e)
+        currentUDiskRecords.value = [
+          { id: -1, uuid: 'error', usbId: 'error', time: 'error', volName: 'error' },
+        ]
       }
     }
   }
   const fetchDNSUrl = async () => {
     // TODO: implement
   }
-
+  const getAllClientInfo = () => {
+    fetchClientByUUID()
+    fetchClientSettings()
+    fetchClientRecords()
+    fetchUDiskRecords()
+  }
   const setCurrentClient = async (uuid: string) => {
     if (currentClientUuid.value === uuid) {
       return
@@ -213,10 +268,12 @@ export const useClientStore = defineStore('client', () => {
     currentClientUuid.value = uuid
     currentClientInfo.value = null
     currentClientSettings.value = null
+    currentClientRecords.value = null
     currentClientWhiteList.value = null
     currentUDiskList.value = null
+    currentUDiskRecords.value = null
     currentDNSUrl.value = null
-    fetchClientByUUID()
+    getAllClientInfo()
     // fetchClientSettings()
   }
 
@@ -225,22 +282,28 @@ export const useClientStore = defineStore('client', () => {
     currentClientUuid,
     currentClientInfo,
     currentClientSettings,
+    currentClientRecords,
     currentClientWhiteList,
     currentUDiskList,
+    currentUDiskRecords,
     currentDNSUrl,
     // Getters
     getCurrentClientUUID,
     getCurrentClientInfo,
     getCurrentClientSettings,
+    getCurrentClientRecords,
     getCurrentClientWhiteList,
     getCurrentUDiskList,
+    getCurrentUDiskRecords,
     getCurrentDNSUrl,
     // Actions
     setCurrentClient,
     fetchClients,
     fetchClientByUUID,
+    updateClientNote,
     fetchClientSettings,
     updateClientSettings,
+    fetchClientRecords,
     updateClientNetAllowedUntil,
     clearClientNetAllowedUntil,
     fetchClientWhiteList,
@@ -249,6 +312,7 @@ export const useClientStore = defineStore('client', () => {
     fetchUDiskList,
     allowUDisk,
     denyUDisk,
+    fetchUDiskRecords,
     fetchDNSUrl,
   }
 })

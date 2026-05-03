@@ -21,7 +21,9 @@
         <span ref="targetRef" class="client-uuid">{{ displayUUID }}</span>
       </div>
     </div>
-
+    <div class="content">功能迁移中...</div>
+    <div class="content">开发中...</div>
+    <div class="content">当前为本地预览版</div>
     <!-- 主卡片 -->
     <div class="card">
       <!-- 标题栏 -->
@@ -810,7 +812,21 @@ onUnmounted(() => {
   padding: 24px;
   box-sizing: border-box;
 }
-
+.content {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px;
+  box-sizing: border-box;
+  border: #ef4444 1px solid;
+  border-radius: 8px;
+  background: #ffe5e5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  transition: all 0.2s ease;
+}
 .card {
   background: #ffffff;
   border-radius: 8px;

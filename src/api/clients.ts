@@ -4,8 +4,9 @@ import type {
   clientInfo,
   clientSettings,
   clientSettingsRequest,
-  clientNetAllowedUntilResponse,
+  clientRecord,
   clientUDisk,
+  clientUDiskRecord,
   clientWhiteListItem,
 } from '@/stores/clientStore'
 
@@ -16,11 +17,17 @@ export const clientApi = {
   getClient(uuid: string): Promise<clientInfo> {
     return request.authget('/clients/get_client', null, { params: { uuid } })
   },
+  updateClientNote(uuid: string, note: string): Promise<void> {
+    return request.authpost('/clients/update_client_note', { note }, { params: { uuid } })
+  },
   getClientSettings(uuid: string): Promise<clientSettings> {
     return request.authget('/clients/get_client_settings', null, { params: { uuid } })
   },
   updateClientSettings(uuid: string, data: clientSettingsRequest): Promise<void> {
     return request.authpost('/clients/update_client_settings', data, { params: { uuid } })
+  },
+  getClientRecords(uuid: string): Promise<clientRecord[]> {
+    return request.authget('/clients/get_client_record', null, { params: { uuid } })
   },
   updateClientNetAllowedUntil(uuid: string, netAllowedUntil: string): Promise<string> {
     return request.authpost(
@@ -46,5 +53,8 @@ export const clientApi = {
   },
   denyUDisk(uuid: string, usbId: string): Promise<void> {
     return request.authpost('/clients/deny_udisk', { usbId }, { params: { uuid } })
+  },
+  getUDiskRecords(uuid: string): Promise<clientUDiskRecord[]> {
+    return request.authget('/clients/get_udisk_record', null, { params: { uuid } })
   },
 }

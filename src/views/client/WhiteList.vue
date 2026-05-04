@@ -152,13 +152,13 @@ const newAppName = ref('')
 const addApplication = async () => {
   const filename = newAppName.value.trim()
   if (!filename) {
-    alert('请输入可执行文件名')
+    ElMessage.error('请输入可执行文件名')
     return
   }
   // 简单校验重复 (可扩展)
   const exists = appList.value.some((app) => app.appName.toLowerCase() === filename.toLowerCase())
   if (exists) {
-    alert('该应用已在白名单中')
+    ElMessage.error('该应用已在白名单中')
     return
   }
 

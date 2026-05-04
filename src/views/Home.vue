@@ -635,13 +635,16 @@ onUnmounted(() => {
     max-width: 280px;
     margin: 0 auto;
   }
-
+  .showcase-image {
+    max-width: 100vw;
+    min-width: 0;
+  }
   .carousel-container {
     max-width: 100%;
   }
 
   .carousel-slide {
-    height: 280px;
+    height: min-content;
   }
 
   .carousel-icon {

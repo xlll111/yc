@@ -153,7 +153,7 @@
           <h3 class="card-title">联系支持</h3>
           <p class="card-text">
             本页面目前为开源状态,项目地址:
-            <a class="card-link" href="https://github.com/your-company/your-project"
+            <a class="card-link" href="https://github.com/xlll111/yc"
               >https://github.com/xlll111/yc</a
             >
             <!-- <button class="contact-btn">联系我们</button> -->

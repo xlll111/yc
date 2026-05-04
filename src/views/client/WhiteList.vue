@@ -31,7 +31,7 @@
           <span v-if="loading" class="badge">{{ appList.length }}</span>
           <span v-else><Spinner inline size="tiny" /></span>
         </div>
-        <p class="subtitle">仅允许白名单内的应用在客户端运行</p>
+        <p class="subtitle">白名单中的应用不会被联网控制影响</p>
       </div>
       <!-- 加载状态 -->
       <div v-if="!loading" class="loading-state">

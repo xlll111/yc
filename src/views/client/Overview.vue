@@ -153,8 +153,8 @@
         <button class="btn btn-text" @click="goToUsbRecords">管理U盘 →</button>
       </div>
 
-      <div v-if="setting.disableControlPanel" class="warning-banner">
-        ⚠️ 控制面板已禁用，U盘检测功能可能受限。
+      <div v-if="!setting.usbControlEnabled" class="warning-banner">
+        ⚠️ U盘管控功能已禁用，状态设置无影响
       </div>
 
       <div v-if="todayUnknownUsbs.length === 0" class="empty-state">今日暂无未知U盘插入</div>

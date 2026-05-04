@@ -89,8 +89,8 @@
 
           <div class="toggle-item">
             <div class="toggle-label">
-              <span>启用 U 盘检测</span>
-              <p class="toggle-desc">监测并记录USB存储设备的接入</p>
+              <span>启用 U 盘管控</span>
+              <p class="toggle-desc">监测并阻止未经授权的USB存储设备的接入</p>
             </div>
             <label class="switch">
               <ToggleSwitch

@@ -117,16 +117,19 @@
     <section class="chart-card">
       <h2 class="card-title">在线记录（近三天）</h2>
       <LoadingState
-        :loading="!clientRecordsLoading"
-        :error="clientRecordsLoadingError"
+        v-if="clientRecordsLoadingError"
+        :error="true"
         @retry="clientStore.fetchClientRecords"
         errorText="客户端在线记录加载失败"
       />
+      <LoadingState v-else-if="!clientRecordsLoading || !chartReady" :loading="true" />
+      <!-- 使用 v-once 优化静态图表 -->
       <v-chart
-        v-if="clientRecordsLoading && !clientRecordsLoadingError"
+        v-else
         class="chart"
         :option="onlineChartOption"
         autoresize
+        :init-options="chartInitOptions"
       />
     </section>
 
@@ -180,13 +183,25 @@
         class="chart"
         :option="usbChartOption"
         autoresize
+        :init-options="chartInitOptions"
       />
     </section>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, inject } from 'vue'
+import {
+  ref,
+  computed,
+  shallowRef,
+  watch,
+  onMounted,
+  inject,
+  onBeforeUnmount,
+  onActivated,
+  nextTick,
+  onUnmounted,
+} from 'vue'
 import { useRouter } from 'vue-router'
 
 import { use } from 'echarts/core'
@@ -206,6 +221,14 @@ const $filters = inject('$filters')
 const router = useRouter()
 const clientStore = useClientStore()
 
+// ECharts 初始化配置
+const chartInitOptions = {
+  renderer: 'canvas',
+  devicePixelRatio: window.devicePixelRatio || 1,
+}
+// 图表是否准备好
+const chartReady = ref(false)
+
 const clientLoading = computed(() => clientStore.getCurrentClientInfo !== null)
 const clientLoadingError = computed(() => clientStore.getCurrentClientInfo?.uuid === 'error')
 const clientSettingsLoading = computed(() => clientStore.getCurrentClientSettings !== null)
@@ -217,13 +240,44 @@ const clientRecordsLoadingError = computed(
 const UDiskRecordsLoading = computed(() => clientStore.getCurrentUDiskRecords !== null)
 const UDiskRecordsLoadingError = computed(() => clientStore.getCurrentUDiskRecords?.[0]?.id === -1)
 
+onMounted(() => {
+  // 延迟标记图表准备好，确保DOM渲染完成
+  setTimeout(() => {
+    chartReady.value = true
+  }, 50)
+})
+
 // 注册必要的 ECharts 模块
 use([HeatmapChart, TooltipComponent, GridComponent, VisualMapComponent, CanvasRenderer])
 
 const client = computed(() => clientStore.getCurrentClientInfo || {})
 const setting = computed(() => clientStore.getCurrentClientSettings || {})
-const clientRecord = computed(() => clientStore.getCurrentClientRecords || [])
-const usbRecord = computed(() => clientStore.getCurrentUDiskRecords || [])
+// const clientRecord = computed(() => clientStore.getCurrentClientRecords || [])
+// const usbRecord = computed(() => clientStore.getCurrentUDiskRecords || [])
+
+// 使用 shallowRef 优化大数据
+const clientRecord = shallowRef([])
+const usbRecord = shallowRef([])
+// 监听 store 数据变化，使用 shallowRef 更新
+watch(
+  () => clientStore.getCurrentClientRecords,
+  (newVal) => {
+    if (newVal && Array.isArray(newVal) && !(newVal[0]?.id === -1)) {
+      clientRecord.value = newVal
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => clientStore.getCurrentUDiskRecords,
+  (newVal) => {
+    if (newVal && Array.isArray(newVal) && !(newVal[0]?.id === -1)) {
+      usbRecord.value = newVal
+    }
+  },
+  { immediate: true },
+)
 
 // ---------- 派生状态 ----------
 const isOnline = computed(() => {
@@ -242,9 +296,28 @@ const formattedLastSeen = computed(() => {
 const isLowVersion = computed(() => {
   const version = client.value.version
   if (!version) return false
-  // 简单比较版本号，低于B0.8.2则提醒
-  const num = parseFloat(version.replace(/[^0-9.]/g, ''))
-  return num < 0.82
+
+  // 提取 Bx.x.x 中的版本号
+  const match = version.match(/B([\d.]+)/)
+  if (!match) return false
+
+  const versionStr = match[1] // "0.10.1" 或 "0.8.2"
+
+  // 转为可比较的数字数组
+  const parts = versionStr.split('.').map(Number)
+
+  // 目标版本 [0, 8, 2]
+  const target = [0, 8, 2]
+
+  // 逐段比较
+  for (let i = 0; i < Math.max(parts.length, target.length); i++) {
+    const part = parts[i] || 0
+    const targetPart = target[i] || 0
+    if (part > targetPart) return false // 当前版本更高
+    if (part < targetPart) return true // 当前版本更低
+  }
+
+  return false // 版本相等
 })
 
 // 授权相关
@@ -301,7 +374,7 @@ const saveNote = async () => {
   }
 }
 
-// 当天未知U盘（模拟逻辑：取usbRecord中今天插入的，且usbId作为磁盘名）
+// 当天未知U盘
 const todayUnknownUsbs = computed(() => {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -330,30 +403,43 @@ const todayUnknownUsbs = computed(() => {
 
 // ---------- 图表数据准备 ----------
 // 在线记录热力图：横轴天，纵轴小时
+// 在线记录热力图（性能优化版）
 const onlineChartOption = computed(() => {
-  const days = getLastThreeDays()
+  const days = lastThreeDays.value
   const hours = Array.from({ length: 24 }, (_, i) => i)
+  const records = clientRecord.value
 
-  // 构建数据矩阵 [小时, 天索引, 计数]
-  const data = []
-  // 初始化所有格子为0
-  const matrix = Array(24)
-    .fill(0)
-    .map(() => Array(3).fill(0))
+  // 如果数据为空，返回基础配置
+  if (!records || records.length === 0) {
+    return getEmptyChartOption(days, hours)
+  }
 
-  clientRecord.value.forEach((record) => {
+  // 使用 Uint8Array 减少内存占用
+  const matrix = new Uint8Array(24 * 3)
+
+  // 使用 for 循环而非 forEach，减少函数调用开销
+  for (let i = 0, len = records.length; i < len; i++) {
+    const record = records[i]
     const date = $filters.utcToLocalDate(new Date(record.time))
-    const dayIndex = days.findIndex((d) => d.dateStr === formatDateStr(date))
+    const dateStr = formatDateStr(date)
+    const dayIndex = days.findIndex((d) => d.dateStr === dateStr)
     const hour = date.getHours()
-    if (dayIndex !== -1 && hour >= 0 && hour < 24) {
-      matrix[hour][dayIndex] += 1
-    }
-  })
 
-  // 转换为 [dayIndex, hour, value] 格式
+    if (dayIndex !== -1 && hour >= 0 && hour < 24) {
+      matrix[hour * 3 + dayIndex]++
+    }
+  }
+
+  // 构建数据数组，预分配大小
+  const dataLength = 24 * 3
+  const data = new Array(dataLength)
+  let maxValue = 0
+
   for (let h = 0; h < 24; h++) {
     for (let d = 0; d < 3; d++) {
-      data.push([d, h, matrix[h][d]])
+      const value = matrix[h * 3 + d]
+      data[h * 3 + d] = [d, h, value]
+      if (value > maxValue) maxValue = value
     }
   }
 
@@ -386,7 +472,7 @@ const onlineChartOption = computed(() => {
     },
     visualMap: {
       min: 0,
-      max: Math.max(...data.map((d) => d[2]), 1),
+      max: maxValue || 1,
       calculable: true,
       orient: 'horizontal',
       left: 'center',
@@ -400,52 +486,73 @@ const onlineChartOption = computed(() => {
         data: data,
         label: { show: false },
         emphasis: {
-          itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' },
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(0, 0, 0, 0.5)',
+            borderWidth: 1,
+            borderColor: '#333',
+          },
         },
+        progressive: 200, // 渐进渲染阈值
+        animation: false, // 关闭动画提升性能
       },
     ],
   }
 })
 
-// U盘记录热力图（显示磁盘名）
+// U盘记录热力图（性能优化版）
 const usbChartOption = computed(() => {
-  const days = getLastThreeDays()
+  const days = lastThreeDays.value
   const hours = Array.from({ length: 24 }, (_, i) => i)
+  const records = usbRecord.value
 
-  // 1. 初始全零矩阵
-  const matrix = Array.from({ length: 24 }, () =>
-    Array.from({ length: 3 }, () => ({ count: 0, diskNames: [] })),
-  )
+  if (!records) {
+    return getEmptyChartOption(days, hours)
+  }
 
-  // 2. 统计近三天的 USB 插入次数
-  const recentUsbRecords = usbRecord.value.filter((r) => {
-    const recDate = new Date(r.time)
-    return days.some((d) => d.dateStr === formatDateStr(recDate))
-  })
+  // 使用 TypedArray 优化
+  const counts = new Uint16Array(24 * 3)
+  // 使用字符串池避免重复字符串创建
+  const diskNamesMap = new Map()
 
-  recentUsbRecords.forEach((r) => {
-    const date = new Date(r.time)
-    const dayIndex = days.findIndex((d) => d.dateStr === formatDateStr(date))
+  for (let i = 0, len = records.length; i < len; i++) {
+    const record = records[i]
+    const date = new Date(record.time)
+    const dateStr = formatDateStr(date)
+    const dayIndex = days.findIndex((d) => d.dateStr === dateStr)
     const hour = date.getHours()
-    if (dayIndex !== -1 && hour >= 0 && hour < 24) {
-      matrix[hour][dayIndex].count += 1
-      if (!matrix[hour][dayIndex].diskNames.includes(r.volName)) {
-        matrix[hour][dayIndex].diskNames.push(r.volName)
-      }
-    }
-  })
 
-  // 3. 将所有格子转为 [dayIndex, hourIndex, value] 格式
-  const data = []
+    if (dayIndex !== -1 && hour >= 0 && hour < 24) {
+      const idx = hour * 3 + dayIndex
+      counts[idx]++
+
+      // 优化字符串拼接
+      const key = `${dayIndex},${hour}`
+      let names = diskNamesMap.get(key)
+      if (!names) {
+        names = new Set()
+        diskNamesMap.set(key, names)
+      }
+      names.add(record.volName)
+    }
+  }
+
+  // 构建数据
+  const dataLength = 24 * 3
+  const data = new Array(dataLength)
   const deviceMap = new Map()
+  let maxValue = 0
+
   for (let h = 0; h < 24; h++) {
     for (let d = 0; d < 3; d++) {
-      //   console.log([d, h, matrix[h][d].count, matrix[h][d].diskNames.join(', ')])
-      const count = matrix[h][d].count
-      const devices = matrix[h][d].diskNames.join(', ')
+      const idx = h * 3 + d
+      const count = counts[idx]
+      data[idx] = [d, h, count]
+      if (count > maxValue) maxValue = count
+
       const key = `${d},${h}`
-      deviceMap.set(key, devices)
-      data.push([d, h, count])
+      const names = diskNamesMap.get(key)
+      deviceMap.set(key, names ? Array.from(names).join(', ') : '无')
     }
   }
 
@@ -481,7 +588,7 @@ const usbChartOption = computed(() => {
     },
     visualMap: {
       min: 0,
-      max: Math.max(...data.map((d) => d[2]), 1),
+      max: maxValue || 1,
       calculable: true,
       orient: 'horizontal',
       left: 'center',
@@ -495,9 +602,7 @@ const usbChartOption = computed(() => {
       {
         type: 'heatmap',
         data: data,
-        label: {
-          show: false,
-        },
+        label: { show: false },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
@@ -506,15 +611,51 @@ const usbChartOption = computed(() => {
             borderColor: '#333',
           },
         },
-        progressive: 1000,
-        animation: false,
+        progressive: 200, // 设置合理的渐进渲染阈值
+        animation: false, // 关闭动画
       },
     ],
   }
 })
 
+// 空图表配置（避免重复创建）
+function getEmptyChartOption(days, hours) {
+  return {
+    tooltip: { position: 'top' },
+    grid: { left: 60, right: 20, top: 20, bottom: 30 },
+    xAxis: {
+      type: 'category',
+      data: days.map((d) => d.label),
+      splitArea: { show: true },
+      axisLabel: { color: '#374151' },
+    },
+    yAxis: {
+      type: 'category',
+      data: hours.map((h) => `${h}:00`),
+      splitArea: { show: true },
+      axisLabel: { color: '#374151' },
+      inverse: true,
+    },
+    visualMap: {
+      min: 0,
+      max: 1,
+      orient: 'horizontal',
+      left: 'center',
+      bottom: 0,
+      show: false,
+    },
+    series: [
+      {
+        type: 'heatmap',
+        data: [],
+        animation: false,
+      },
+    ],
+  }
+}
+
 // 辅助函数
-function getLastThreeDays() {
+const lastThreeDays = computed(() => {
   const days = []
   const today = new Date()
   for (let i = 2; i >= 0; i--) {
@@ -527,7 +668,7 @@ function getLastThreeDays() {
     })
   }
   return days
-}
+})
 
 function formatDateStr(date) {
   return $filters.formatDateTime(date, 'YYYY-MM-dd')

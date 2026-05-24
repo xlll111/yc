@@ -1,10 +1,13 @@
 <template>
   <div>BLANK</div>
+  <DatePicker />
 </template>
-<script setup></script>
+<script setup>
+import DatePicker from './DatePicker.vue'
+</script>
 
 <style scoped>
-div {
+/* div {
   width: 100%;
   color: red;
   font-size: 20px;
@@ -17,5 +20,5 @@ div {
   background-color: #f5f5f5;
   box-shadow: 0 0 5px #ccc;
   transition: all 0.3s ease;
-}
+} */
 </style>

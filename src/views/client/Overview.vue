@@ -264,6 +264,7 @@ watch(
   (newVal) => {
     if (newVal && Array.isArray(newVal) && !(newVal[0]?.id === -1)) {
       clientRecord.value = newVal
+      console.log('clientRecord', clientRecord.value)
     }
   },
   { immediate: true },
@@ -274,6 +275,7 @@ watch(
   (newVal) => {
     if (newVal && Array.isArray(newVal) && !(newVal[0]?.id === -1)) {
       usbRecord.value = newVal
+      console.log('usbRecord', usbRecord.value)
     }
   },
   { immediate: true },
@@ -409,11 +411,6 @@ const onlineChartOption = computed(() => {
   const hours = Array.from({ length: 24 }, (_, i) => i)
   const records = clientRecord.value
 
-  // 如果数据为空，返回基础配置
-  if (!records || records.length === 0) {
-    return getEmptyChartOption(days, hours)
-  }
-
   // 使用 Uint8Array 减少内存占用
   const matrix = new Uint8Array(24 * 3)
 
@@ -434,7 +431,6 @@ const onlineChartOption = computed(() => {
   const dataLength = 24 * 3
   const data = new Array(dataLength)
   let maxValue = 0
-
   for (let h = 0; h < 24; h++) {
     for (let d = 0; d < 3; d++) {
       const value = matrix[h * 3 + d]
@@ -505,10 +501,6 @@ const usbChartOption = computed(() => {
   const days = lastThreeDays.value
   const hours = Array.from({ length: 24 }, (_, i) => i)
   const records = usbRecord.value
-
-  if (!records) {
-    return getEmptyChartOption(days, hours)
-  }
 
   // 使用 TypedArray 优化
   const counts = new Uint16Array(24 * 3)
@@ -618,42 +610,6 @@ const usbChartOption = computed(() => {
   }
 })
 
-// 空图表配置（避免重复创建）
-function getEmptyChartOption(days, hours) {
-  return {
-    tooltip: { position: 'top' },
-    grid: { left: 60, right: 20, top: 20, bottom: 30 },
-    xAxis: {
-      type: 'category',
-      data: days.map((d) => d.label),
-      splitArea: { show: true },
-      axisLabel: { color: '#374151' },
-    },
-    yAxis: {
-      type: 'category',
-      data: hours.map((h) => `${h}:00`),
-      splitArea: { show: true },
-      axisLabel: { color: '#374151' },
-      inverse: true,
-    },
-    visualMap: {
-      min: 0,
-      max: 1,
-      orient: 'horizontal',
-      left: 'center',
-      bottom: 0,
-      show: false,
-    },
-    series: [
-      {
-        type: 'heatmap',
-        data: [],
-        animation: false,
-      },
-    ],
-  }
-}
-
 // 辅助函数
 const lastThreeDays = computed(() => {
   const days = []
@@ -671,7 +627,7 @@ const lastThreeDays = computed(() => {
 })
 
 function formatDateStr(date) {
-  return $filters.formatDateTime(date, 'YYYY-MM-dd')
+  return $filters.formatDateTime(date, 'YYYY-MM-DD')
 }
 
 // ---------- 路由跳转占位方法 ----------

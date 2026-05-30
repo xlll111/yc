@@ -46,8 +46,9 @@ watch(
   display: flex;
   flex: 50;
   overflow: auto;
-}
-#dash > div > div {
   z-index: 1;
 }
+/* #dash > div > div {
+  z-index: 1;
+} */
 </style>

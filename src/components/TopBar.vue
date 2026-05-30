@@ -295,7 +295,7 @@ export default {
   border-radius: 8px;
   min-width: 160px;
   padding: 8px 0;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .dropdown-menu a {
@@ -355,7 +355,7 @@ export default {
     opacity 0.2s ease,
     visibility 0.2s ease,
     transform 0.2s ease;
-  z-index: 100;
+  z-index: 1000;
 }
 
 /* 鼠标悬浮在菜单包装器上时显示下拉菜单 */

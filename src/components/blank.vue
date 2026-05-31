@@ -1,7 +1,7 @@
 <template>
   <div>BLANK</div>
-  <DatePicker v-model="date" mode="single" />
-  <DatePicker v-model="rangeDate" mode="range" :showThisWeek="true" :showThisMonth="true" />
+  <!-- <DatePicker v-model="date" mode="single" />
+  <DatePicker v-model="rangeDate" mode="range" :showThisWeek="true" :showThisMonth="true" /> -->
 </template>
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, inject } from 'vue'

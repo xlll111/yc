@@ -1,7 +1,12 @@
 <template>
-  <div class="date-picker-wrapper">
+  <div class="date-picker-wrapper" ref="wrapperRef">
     <!-- 触发器：展示当前选中日期范围 -->
-    <div class="date-picker-trigger" @click="toggleOpen" :class="{ 'is-open': isOpen }">
+    <div
+      class="date-picker-trigger"
+      ref="triggerRef"
+      @click="toggleOpen"
+      :class="{ 'is-open': isOpen }"
+    >
       <svg
         class="trigger-icon"
         width="16"
@@ -33,7 +38,16 @@
 
     <!-- 下拉面板 -->
     <transition name="picker-fade">
-      <div v-if="isOpen" class="date-picker-panel" @click.stop>
+      <div
+        v-if="isOpen"
+        class="date-picker-panel"
+        ref="panelRef"
+        :class="panelPositionClass"
+        :style="panelStyle"
+        @click.stop
+        @touchmove.stop.prevent
+        @scroll.sto
+      >
         <!-- 快捷操作按钮区域 -->
         <div
           v-if="showToday || showYesterday || showLastThreeDays || showThisWeek || showThisMonth"
@@ -178,7 +192,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted, inject } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, inject, nextTick } from 'vue'
 const $filters = inject('$filters')
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
@@ -228,6 +242,11 @@ const currentLeftMonth = ref(new Date()) // 左日历当前显示月份
 const currentRightMonth = ref(new Date()) // 右日历当前显示月份（连续模式）
 
 const weekDays = ['日', '一', '二', '三', '四', '五', '六']
+
+// 添加模板引用
+const wrapperRef = ref(null)
+const triggerRef = ref(null)
+const panelRef = ref(null)
 
 // 初始化内部临时值
 const initTempFromProps = () => {
@@ -468,7 +487,59 @@ const confirmSelection = () => {
   isOpen.value = false
 }
 
-const toggleOpen = () => {
+// 添加新的响应式变量
+const panelPositionClass = ref('panel-bottom-left')
+const panelStyle = ref({})
+
+// 计算面板位置
+const calculatePanelPosition = () => {
+  if (!isOpen.value) return
+
+  const trigger = triggerRef.value
+  const panel = panelRef.value
+
+  if (!trigger || !panel) return
+
+  const triggerRect = trigger.getBoundingClientRect()
+  const panelRect = panel.getBoundingClientRect()
+  console.log('panelRect:', panelRect)
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+
+  if (viewportWidth <= 768) {
+    panelStyle.value = {}
+    return
+  }
+
+  // 计算水平方向
+  let left = triggerRect.left
+  let right = null
+
+  if (left + panelRect.width > viewportWidth) {
+    // 右边空间不足，向右对齐
+    right = viewportWidth - triggerRect.right - 6
+    panelPositionClass.value = 'panel-bottom-right'
+  } else {
+    panelPositionClass.value = 'panel-bottom-left'
+  }
+
+  // 计算垂直方向
+  let top = triggerRect.bottom + 6
+  let bottom = null
+
+  if (top + panelRect.height > viewportHeight) {
+    // 下方空间不足，向上弹出
+    bottom = viewportHeight - top
+    panelPositionClass.value += ' panel-top'
+  }
+  panelStyle.value = {
+    right: left + panelRect.width > viewportWidth ? `-${right}px` : 'auto',
+    bottom: top + panelRect.height > viewportHeight ? `-${bottom}px` : 'auto',
+  }
+}
+
+// 修改 toggleOpen 方法
+const toggleOpen = async () => {
   isOpen.value = !isOpen.value
   if (isOpen.value) {
     initTempFromProps()
@@ -489,8 +560,39 @@ const toggleOpen = () => {
         1,
       )
     }
-  } else initTempFromProps()
+
+    // 等待 DOM 更新后计算位置
+    await nextTick()
+    calculatePanelPosition()
+  } else {
+    initTempFromProps()
+  }
 }
+
+// 监听窗口大小变化
+const handleResize = () => {
+  if (isOpen.value) {
+    calculatePanelPosition()
+  }
+}
+
+// 监听滚动事件
+const handleScroll = () => {
+  if (isOpen.value) {
+    calculatePanelPosition()
+  }
+}
+
+// 在生命周期中注册事件
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+  window.addEventListener('scroll', handleScroll, true)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  window.removeEventListener('scroll', handleScroll, true)
+})
 
 const prevMonth = () => {
   currentLeftMonth.value = new Date(
@@ -535,25 +637,23 @@ const isToday = (date) => {
   return isSameDay(date, today)
 }
 
-// 点击外部关闭
-// const handleClickOutside = (e) => {
-//   if (isOpen.value) {
-//     const wrapper = document.querySelector('.date-picker-wrapper')
-//     if (wrapper && !wrapper.contains(e.target)) {
-//       console.log('点击外部关闭')
-//       confirmSelection()
-//       // isOpen.value = false
-//     }
-//   }
-// }
+watch(isOpen, (newVal) => {
+  if (newVal) {
+    // 移动端和PC端都锁定滚动
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth
+    document.body.style.overflow = 'hidden'
+    document.body.style.paddingRight = `${scrollBarWidth}px` // 防止滚动条消失导致页面跳动
 
-// onMounted(() => {
-//   document.addEventListener('click', handleClickOutside)
-// })
+    const targetDiv = document.querySelector('#dash > div')
+    targetDiv.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+    document.body.style.paddingRight = ''
 
-// onUnmounted(() => {
-//   document.removeEventListener('click', handleClickOutside)
-// })
+    const targetDiv = document.querySelector('#dash > div')
+    targetDiv.style.overflow = ''
+  }
+})
 </script>
 
 <style scoped>
@@ -572,6 +672,8 @@ const isToday = (date) => {
 
 .date-picker-wrapper {
   position: relative;
+  padding: 0;
+  margin: 0;
   font-family:
     system-ui,
     -apple-system,
@@ -922,6 +1024,21 @@ const isToday = (date) => {
 @media (min-width: 769px) {
   .date-picker-panel {
     width: auto;
+  }
+  /* 面板位置样式 */
+  .date-picker-panel.panel-bottom-left {
+    left: 0;
+    right: auto;
+  }
+
+  .date-picker-panel.panel-bottom-right {
+    right: 0;
+    left: auto;
+  }
+
+  .date-picker-panel.panel-top {
+    /* bottom: calc(100% + 6px); */
+    top: auto;
   }
 }
 </style>

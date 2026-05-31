@@ -37,117 +37,9 @@
       <!-- 筛选与工具栏 -->
       <div class="toolbar">
         <div class="filter-group">
-          <div class="date-filter">
+          <div>
             <span class="filter-label">日期筛选</span>
-            <div class="modern-date-picker">
-              <button class="date-nav-btn" @click="navigateDate(-1)" :disabled="isMinDate">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="nav-icon"
-                >
-                  <polyline points="15 18 9 12 15 6"></polyline>
-                </svg>
-              </button>
-
-              <div class="date-display" @click="toggleDatePicker">
-                <svg
-                  class="calendar-icon"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-                <span class="date-text">{{ formattedSelectedDate }}</span>
-                <svg
-                  class="dropdown-icon"
-                  :class="{ rotated: showDatePicker }"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </div>
-
-              <button class="date-nav-btn" @click="navigateDate(1)" :disabled="isMaxDate">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="nav-icon"
-                >
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-              </button>
-            </div>
-
-            <!-- 日期选择器下拉面板 -->
-            <Teleport to="body">
-              <div v-if="showDatePicker" class="date-picker-overlay" @click="closeDatePicker">
-                <div class="date-picker-panel" @click.stop>
-                  <div class="picker-header">
-                    <button class="month-nav-btn" @click="changeMonth(-1)">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                      </svg>
-                    </button>
-                    <span class="month-year">{{ currentMonthYear }}</span>
-                    <button class="month-nav-btn" @click="changeMonth(1)">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                      </svg>
-                    </button>
-                  </div>
-
-                  <div class="weekday-header">
-                    <span v-for="day in weekDays" :key="day" class="weekday">{{ day }}</span>
-                  </div>
-
-                  <div class="calendar-grid">
-                    <button
-                      v-for="(day, index) in calendarDays"
-                      :key="index"
-                      class="calendar-day"
-                      :class="{
-                        'other-month': !day.isCurrentMonth,
-                        today: day.isToday,
-                        selected: day.isSelected,
-                        disabled: day.isDisabled,
-                      }"
-                      :disabled="day.isDisabled"
-                      @click="selectCalendarDay(day)"
-                    >
-                      <span class="day-number">{{ day.date }}</span>
-                      <span v-if="day.hasRecords" class="day-dot"></span>
-                    </button>
-                  </div>
-
-                  <div class="picker-footer">
-                    <button class="footer-btn" @click="selectToday">今天</button>
-                    <button class="footer-btn" @click="selectYesterday">昨天</button>
-                    <button class="footer-btn primary" @click="closeDatePicker">确定</button>
-                  </div>
-                </div>
-              </div>
-            </Teleport>
+            <DatePicker v-model="selectedDate" mode="single" />
           </div>
         </div>
         <div class="actions-group">
@@ -288,6 +180,7 @@ import Spinner from '@/components/Spinner.vue'
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 import { useMiddleEllipsis } from '@/composables/useMiddleEllipsis'
+import DatePicker from '@/components/DatePicker.vue'
 
 const router = useRouter()
 const clientStore = useClientStore()
@@ -298,19 +191,20 @@ const { displayUUID, bindElement } = useMiddleEllipsis(uuid)
 
 const goBack = () => router.back()
 
-// 模拟客户端UUID
-const truncatedUuid = ref('a1b2c3d4-...-e5f6')
-
 // 状态管理
 const records = ref([])
 const allRecords = ref([]) // 原始所有记录
-const selectedDate = ref('today')
+const selectedDate = ref(new Date())
 const alertOnly = ref(false)
 const loadingMore = ref(false)
 const currentPage = ref(1)
 const pageSize = 50
 const listContainer = ref(null)
 const hasMore = ref(true)
+console.log(selectedDate.value)
+console.log($filters.formatDateTime(selectedDate.value))
+console.log($filters.isoToTimestamp(selectedDate.value))
+console.log($filters.utcToLocalDate(selectedDate.value))
 
 // 截图查看器相关
 const viewerVisible = ref(false)
@@ -377,12 +271,8 @@ const filteredRecords = computed(() => {
   let result = [...allRecords.value]
 
   // 日期筛选
-  if (selectedDate.value !== 'today') {
-    result = result.filter((r) => r.time.startsWith(selectedDate.value))
-  } else {
-    const todayStr = new Date().toISOString().split('T')[0]
-    result = result.filter((r) => r.time.startsWith(todayStr))
-  }
+  const todayStr = selectedDate.value.toISOString().split('T')[0]
+  result = result.filter((r) => r.time.startsWith(todayStr))
 
   // 告警过滤
   if (alertOnly.value) {
@@ -545,245 +435,6 @@ const handleKeydown = (e) => {
     closeViewer()
   }
 }
-// 日期选择器相关状态
-const showDatePicker = ref(false)
-const calendarDate = ref(new Date()) // 日历显示的月份
-const tempSelectedDate = ref(null) // 临时选择的日期
-
-// 星期标题
-const weekDays = ['一', '二', '三', '四', '五', '六', '日']
-
-// 计算属性
-const formattedSelectedDate = computed(() => {
-  if (selectedDate.value === 'today') return '今天'
-  if (selectedDate.value === 'yesterday') {
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
-    return `昨天 (${formatDateShort(yesterday)})`
-  }
-  return formatDateShort(new Date(selectedDate.value))
-})
-
-const isMinDate = computed(() => {
-  const minDate = new Date()
-  minDate.setDate(minDate.getDate() - 30)
-  if (selectedDate.value === 'today') return true
-  const currentDate = new Date(selectedDate.value)
-  currentDate.setHours(0, 0, 0, 0)
-  minDate.setHours(0, 0, 0, 0)
-  return currentDate <= minDate
-})
-
-const isMaxDate = computed(() => {
-  if (selectedDate.value === 'today') return true
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const currentDate = new Date(selectedDate.value)
-  currentDate.setHours(0, 0, 0, 0)
-  return currentDate >= today
-})
-
-const currentMonthYear = computed(() => {
-  const year = calendarDate.value.getFullYear()
-  const month = calendarDate.value.getMonth() + 1
-  return `${year}年 ${month}月`
-})
-
-// 计算日历天数
-const calendarDays = computed(() => {
-  const year = calendarDate.value.getFullYear()
-  const month = calendarDate.value.getMonth()
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const minDate = new Date()
-  minDate.setDate(minDate.getDate() - 31)
-  minDate.setHours(0, 0, 0, 0)
-
-  const maxDate = new Date()
-  maxDate.setHours(23, 59, 59, 999)
-
-  // 当月第一天
-  const firstDay = new Date(year, month, 1)
-  // 当月最后一天
-  const lastDay = new Date(year, month + 1, 0)
-
-  // 获取当月第一天是周几 (0=周日, 调整为 1=周一)
-  let startDayOfWeek = firstDay.getDay()
-  startDayOfWeek = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1
-
-  const days = []
-
-  // 填充上月日期
-  for (let i = startDayOfWeek - 1; i >= 0; i--) {
-    const date = new Date(year, month, -i)
-    days.push({
-      date: date.getDate(),
-      fullDate: date.toISOString().split('T')[0],
-      isCurrentMonth: false,
-      isToday: date.getTime() === today.getTime(),
-      isSelected: tempSelectedDate.value
-        ? date.toISOString().split('T')[0] === tempSelectedDate.value
-        : selectedDate.value === 'today'
-          ? date.getTime() === today.getTime()
-          : selectedDate.value === date.toISOString().split('T')[0],
-      isDisabled: date < minDate || date > maxDate,
-      hasRecords: hasRecordsOnDate(date.toISOString().split('T')[0]),
-    })
-  }
-
-  // 填充当月日期
-  for (let i = 1; i <= lastDay.getDate(); i++) {
-    const date = new Date(year, month, i)
-    days.push({
-      date: i,
-      fullDate: date.toISOString().split('T')[0],
-      isCurrentMonth: true,
-      isToday: date.getTime() === today.getTime(),
-      isSelected: tempSelectedDate.value
-        ? date.toISOString().split('T')[0] === tempSelectedDate.value
-        : selectedDate.value === 'today'
-          ? date.getTime() === today.getTime()
-          : selectedDate.value === date.toISOString().split('T')[0],
-      isDisabled: date < minDate || date > maxDate,
-      hasRecords: hasRecordsOnDate(date.toISOString().split('T')[0]),
-    })
-  }
-
-  // 填充下月日期
-  const remainingDays = 42 - days.length
-  for (let i = 1; i <= remainingDays; i++) {
-    const date = new Date(year, month + 1, i)
-    days.push({
-      date: i,
-      fullDate: date.toISOString().split('T')[0],
-      isCurrentMonth: false,
-      isToday: date.getTime() === today.getTime(),
-      isSelected: tempSelectedDate.value
-        ? date.toISOString().split('T')[0] === tempSelectedDate.value
-        : selectedDate.value === 'today'
-          ? date.getTime() === today.getTime()
-          : selectedDate.value === date.toISOString().split('T')[0],
-      isDisabled: date < minDate || date > maxDate,
-      hasRecords: hasRecordsOnDate(date.toISOString().split('T')[0]),
-    })
-  }
-
-  return days
-})
-
-// 辅助函数
-const formatDateShort = (date) => {
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  return `${month}月${day}日`
-}
-
-// 检查某天是否有记录
-const hasRecordsOnDate = (dateStr) => {
-  return allRecords.value.some((r) => r.time.startsWith(dateStr))
-}
-
-// 日期选择器方法
-const toggleDatePicker = () => {
-  showDatePicker.value = !showDatePicker.value
-  if (showDatePicker.value) {
-    // 初始化临时选择日期和日历月份
-    if (selectedDate.value === 'today') {
-      tempSelectedDate.value = new Date().toISOString().split('T')[0]
-      calendarDate.value = new Date()
-    } else {
-      tempSelectedDate.value = selectedDate.value
-      calendarDate.value = new Date(selectedDate.value)
-    }
-  } else {
-    tempSelectedDate.value = null
-  }
-}
-
-const closeDatePicker = () => {
-  if (tempSelectedDate.value) {
-    selectedDate.value = tempSelectedDate.value
-    currentPage.value = 1
-    nextTick(() => {
-      if (listContainer.value) listContainer.value.scrollTop = 0
-    })
-  }
-  showDatePicker.value = false
-  tempSelectedDate.value = null
-}
-
-const navigateDate = (direction) => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const minDate = new Date()
-  minDate.setDate(minDate.getDate() - 30)
-
-  let targetDate
-  if (selectedDate.value === 'today') {
-    if (direction === -1) {
-      targetDate = new Date(today)
-      targetDate.setDate(targetDate.getDate() - 1)
-    } else {
-      console.log('不能往未来')
-      return // 不能往未来
-    }
-  } else {
-    const currentDate = new Date(selectedDate.value)
-    targetDate = new Date(currentDate)
-    targetDate.setDate(targetDate.getDate() + direction)
-  }
-
-  if (targetDate < minDate || targetDate > today) return
-
-  const dateStr = targetDate.toISOString().split('T')[0]
-  selectedDate.value = dateStr
-  currentPage.value = 1
-  nextTick(() => {
-    if (listContainer.value) listContainer.value.scrollTop = 0
-  })
-}
-
-const changeMonth = (direction) => {
-  const newDate = new Date(calendarDate.value)
-  newDate.setMonth(newDate.getMonth() + direction)
-
-  const minDate = new Date()
-  minDate.setDate(minDate.getDate() - 31)
-  const maxDate = new Date()
-
-  if (newDate >= minDate && newDate <= maxDate) {
-    calendarDate.value = newDate
-  }
-}
-
-const selectCalendarDay = (day) => {
-  if (day.isDisabled) return
-  tempSelectedDate.value = day.fullDate
-}
-
-const selectToday = () => {
-  tempSelectedDate.value = new Date().toISOString().split('T')[0]
-  calendarDate.value = new Date()
-}
-
-const selectYesterday = () => {
-  const yesterday = new Date()
-  yesterday.setDate(yesterday.getDate() - 1)
-  tempSelectedDate.value = yesterday.toISOString().split('T')[0]
-  calendarDate.value = yesterday
-}
-
-// 点击外部关闭日期选择器
-const handleClickOutside = (event) => {
-  if (
-    showDatePicker.value &&
-    !event.target.closest('.date-picker-panel') &&
-    !event.target.closest('.date-display')
-  ) {
-    closeDatePicker()
-  }
-}
 
 // 初始化数据
 onMounted(() => {
@@ -791,7 +442,6 @@ onMounted(() => {
   console.log(allRecords.value)
   records.value = allRecords.value
   window.addEventListener('keydown', handleKeydown)
-  document.addEventListener('click', handleClickOutside)
 })
 onMounted(() => {
   bindElement(targetRef.value)
@@ -799,7 +449,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
-  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -962,111 +611,6 @@ onUnmounted(() => {
   color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-}
-/* 现代日期选择器 */
-.modern-date-picker {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  position: relative;
-}
-
-.date-nav-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: white;
-  color: #374151;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.date-nav-btn:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #1e40af;
-  color: #1e40af;
-}
-
-.date-nav-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.nav-icon {
-  width: 16px;
-  height: 16px;
-}
-
-.date-display {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 16px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  cursor: pointer;
-  min-width: 160px;
-  justify-content: center;
-  transition: all 0.2s ease;
-  user-select: none;
-}
-
-.date-display:hover {
-  border-color: #1e40af;
-  box-shadow: 0 1px 3px rgba(30, 64, 175, 0.1);
-}
-
-.calendar-icon {
-  width: 16px;
-  height: 16px;
-  color: #6b7280;
-  flex-shrink: 0;
-}
-
-.date-text {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-  white-space: nowrap;
-}
-
-.dropdown-icon {
-  width: 14px;
-  height: 14px;
-  color: #9ca3af;
-  transition: transform 0.2s ease;
-}
-
-.dropdown-icon.rotated {
-  transform: rotate(180deg);
-}
-
-/* 日期选择器面板 */
-.date-picker-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1000;
-  background: rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.date-picker-panel {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  padding: 20px;
-  width: 320px;
-  animation: slideUp 0.2s ease;
 }
 
 @keyframes slideUp {
@@ -1648,20 +1192,6 @@ input:checked + .toggle-slider::after {
 
   .list-scroll-area {
     max-height: calc(100vh - 440px);
-  }
-  .modern-date-picker {
-    width: 100%;
-  }
-
-  .date-display {
-    flex: 1;
-    min-width: auto;
-  }
-
-  .date-picker-panel {
-    width: 90vw;
-    max-width: 320px;
-    padding: 16px;
   }
 }
 </style>

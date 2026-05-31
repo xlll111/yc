@@ -38,6 +38,18 @@ onMounted(async () => {
 })
 </script>
 <style>
+/* html {
+  font-size: 14px; 
+} 
+
+body {
+  font-family: 'SDK_SC_Web Heavy', '方正姚体';
+  font-weight: 400; 
+  font-size: 1rem; 
+  line-height: 1.5; 
+  -webkit-font-smoothing: antialiased;
+} */
+
 #app > div {
   min-height: 100vh;
   overflow: hidden;

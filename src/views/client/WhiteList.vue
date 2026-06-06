@@ -28,39 +28,20 @@
       <div class="card-header">
         <div class="title-section">
           <h2>应用白名单</h2>
-          <span v-if="loading" class="badge">{{ appList.length }}</span>
+          <span v-if="whiteList.loaded" class="badge">{{ whiteList.data.length }}</span>
           <span v-else><Spinner inline size="tiny" /></span>
         </div>
         <p class="subtitle">白名单中的应用不会被联网控制影响</p>
       </div>
       <!-- 加载状态 -->
-      <div v-if="!loading" class="loading-state">
-        <Spinner inline text="加载中..." />
-      </div>
-
-      <!-- 错误状态 -->
-      <div v-else-if="error" class="error-state">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="48"
-          height="48"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <line x1="12" y1="8" x2="12" y2="12" />
-          <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-        <p>加载数据失败，请重试</p>
-        <button class="retry-btn" @click="clientStore.fetchClientSettings">重试</button>
-      </div>
+      <LoadingState
+        :loading="!whiteList.loaded"
+        :error="whiteList.error"
+        @retry="clientStore.fetchClientSettings"
+      />
 
       <!-- 添加区域 -->
-      <div v-if="loading" class="add-section">
+      <div v-if="whiteList.loaded" class="add-section">
         <div class="input-group">
           <input
             v-model="newAppName"
@@ -77,8 +58,8 @@
       </div>
 
       <!-- 列表区域 / 空状态 -->
-      <div v-if="loading" class="list-section">
-        <div v-if="appList.length === 0" class="empty-state">
+      <div v-if="whiteList.loaded" class="list-section">
+        <div v-if="whiteList.data.length === 0" class="empty-state">
           <svg
             class="empty-icon"
             viewBox="0 0 24 24"
@@ -94,7 +75,7 @@
           <span>请在上方添加允许运行的应用</span>
         </div>
         <div v-else class="app-list">
-          <div v-for="app in appList" :key="app.id" class="app-item">
+          <div v-for="app in whiteList.data" :key="app.id" class="app-item">
             <div class="app-info">
               <div class="app-icon">
                 <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -125,9 +106,9 @@
 <script setup>
 import { ref, computed, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
-
 import { useClientStore } from '@/stores/clientStore'
 import Spinner from '@/components/Spinner.vue'
+import LoadingState from '@/components/LoadingState.vue'
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 import { useMiddleEllipsis } from '@/composables/useMiddleEllipsis'
@@ -136,12 +117,10 @@ const $filters = inject('$filters')
 const router = useRouter()
 const clientStore = useClientStore()
 const uuid = clientStore.getCurrentClientUUID
-const appList = computed(() => clientStore.getCurrentClientWhiteList || [])
+const whiteList = clientStore.getCurrentClientWhiteList
 const targetRef = ref(null)
 const { displayUUID, bindElement } = useMiddleEllipsis(uuid)
 // 白名单数据模型
-const loading = computed(() => clientStore.getCurrentClientWhiteList !== null)
-const error = computed(() => clientStore.getCurrentClientWhiteList?.[0]?.id === -1)
 const isAdding = ref(false) // 添加按钮防抖
 const removingIds = ref(new Set()) // 正在移除的id集合
 
@@ -156,7 +135,7 @@ const addApplication = async () => {
     return
   }
   // 简单校验重复 (可扩展)
-  const exists = appList.value.some((app) => app.appName.toLowerCase() === filename.toLowerCase())
+  const exists = whiteList.data.some((app) => app.appName.toLowerCase() === filename.toLowerCase())
   if (exists) {
     ElMessage.error('该应用已在白名单中')
     return
@@ -181,8 +160,6 @@ const removeApplication = async (id, appName) => {
   removingIds.value.add(id)
   try {
     await clientStore.removeAppFromWhiteList(appName)
-    // 前端删除对应项
-    // appList.value = appList.value.filter((app) => app.id !== id)
   } catch (error) {
     console.error('移除失败', error)
     ElMessage.error('移除应用失败，请稍后重试')
@@ -198,9 +175,8 @@ const goBack = () => {
   router.back()
 }
 const getClientWhiteList = async () => {
-  if (!clientStore.getCurrentClientWhiteList || clientStore.getCurrentClientWhiteList[0]?.id === -1)
-    await clientStore.fetchClientWhiteList()
-  console.log(' getClientWhiteList', clientStore.getCurrentClientWhiteList)
+  if (!whiteList.loaded || whiteList.error) await clientStore.fetchClientWhiteList()
+  console.log(' getClientWhiteList', whiteList.data)
 }
 onMounted(() => {
   bindElement(targetRef.value)

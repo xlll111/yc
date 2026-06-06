@@ -3,34 +3,15 @@
     <h1 class="page-title">设置</h1>
     <p class="page-subtitle">管理设备的安全策略与系统控制</p>
     <!-- 加载状态 -->
-    <div v-if="!clientStore.getCurrentClientSettings" class="loading-state">
-      <Spinner inline text="加载中..." />
-    </div>
-
-    <!-- 错误状态 -->
-    <div v-else-if="clientStore.getCurrentClientSettings === 'error'" class="error-state">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="48"
-        height="48"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="8" x2="12" y2="12" />
-        <line x1="12" y1="16" x2="12.01" y2="16" />
-      </svg>
-      <p>加载设置失败，请重试</p>
-      <button class="retry-btn" @click="clientStore.fetchClientSettings">重试</button>
-    </div>
+    <LoadingState
+      :loading="!clientSettings.loaded"
+      :error="clientSettings.error"
+      @retry="clientStore.fetchClientSettings"
+      loadingText="加载中..."
+      errorText="加载设置失败，请重试"
+    />
     <form
-      v-if="
-        clientStore.getCurrentClientSettings && clientStore.getCurrentClientSettings !== 'error'
-      "
+      v-if="clientSettings.loaded && !clientSettings.error"
       @submit.prevent="saveSettings"
       class="settings-form"
     >
@@ -173,12 +154,14 @@ import { reactive, ref, onMounted } from 'vue'
 import ToggleSwitch from '@/components/ToggleSwitch.vue'
 import { useClientStore } from '@/stores/clientStore'
 import Spinner from '@/components/Spinner.vue'
+import LoadingState from '@/components/LoadingState.vue'
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 
 const clientStore = useClientStore()
-const form = reactive({})
+const clientSettings = clientStore.getCurrentClientSettings
 
+const form = reactive({})
 const isSaving = ref(false)
 
 // 保存设置逻辑
@@ -197,10 +180,8 @@ const saveSettings = async () => {
   }
 }
 const getCurrentClientSettings = async () => {
-  if (!clientStore.getCurrentClientSettings || clientStore.getCurrentClientSettings === 'error')
-    await clientStore.fetchClientSettings()
-  if (clientStore.getCurrentClientSettings && clientStore.getCurrentClientSettings !== 'error')
-    Object.assign(form, clientStore.getCurrentClientSettings)
+  if (!clientSettings.loaded || clientSettings.error) await clientStore.fetchClientSettings()
+  if (clientSettings.loaded && !clientSettings.error) Object.assign(form, clientSettings.data)
   // console.log('设置已加载:', form)
 }
 onMounted(async () => {

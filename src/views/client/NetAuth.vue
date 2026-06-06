@@ -30,33 +30,14 @@
         <p class="subtitle">管理当前客户端的联网授权状态</p>
       </div>
       <!-- 加载状态 -->
-      <div v-if="!clientStore.getCurrentClientSettings" class="loading-state">
-        <Spinner inline text="加载中..." />
-      </div>
-
-      <!-- 错误状态 -->
-      <div v-else-if="clientStore.getCurrentClientSettings === 'error'" class="error-state">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="48"
-          height="48"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <line x1="12" y1="8" x2="12" y2="12" />
-          <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-        <p>加载数据失败，请重试</p>
-        <button class="retry-btn" @click="clientStore.fetchClientSettings">重试</button>
-      </div>
+      <LoadingState
+        :loading="!clientSettings.loaded"
+        :error="clientSettings.error"
+        @retry="clientStore.fetchClientSettings"
+      />
 
       <!-- 状态卡片 -->
-      <div class="status-section" v-if="loadingSettings">
+      <div class="status-section" v-if="clientSettings.loaded && !clientSettings.error">
         <div class="status-badge" :class="{ enabled: controlEnabled, disabled: !controlEnabled }">
           <span class="status-dot"></span>
           {{ controlEnabled ? '联网控制已启用' : '联网控制未启用' }}
@@ -65,7 +46,10 @@
       </div>
 
       <!-- 授权状态展示区 -->
-      <div class="info-panel" v-if="loadingSettings && controlEnabled">
+      <div
+        class="info-panel"
+        v-if="clientSettings.loaded && !clientSettings.error && controlEnabled"
+      >
         <div v-if="active" class="auth-active">
           <div class="info-row">
             <span class="info-label">授权状态</span>
@@ -105,7 +89,10 @@
       </div>
 
       <!-- 设置授权区（仅在未授权且控制启用时显示） -->
-      <div class="set-auth-section" v-if="loadingSettings && controlEnabled">
+      <div
+        class="set-auth-section"
+        v-if="clientSettings.loaded && !clientSettings.error && controlEnabled"
+      >
         <h3 class="section-title">设置联网授权</h3>
         <div class="preset-grid">
           <button
@@ -172,6 +159,7 @@ import { useRouter } from 'vue-router'
 
 import { useClientStore } from '@/stores/clientStore'
 import Spinner from '@/components/Spinner.vue'
+import LoadingState from '@/components/LoadingState.vue'
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 import { useMiddleEllipsis } from '@/composables/useMiddleEllipsis'
@@ -189,16 +177,12 @@ const submitError = ref('')
 const now = ref(Date.now())
 let timer = null
 const uuid = clientStore.getCurrentClientUUID
+const clientSettings = clientStore.getCurrentClientSettings
 const controlEnabled = computed(
-  () =>
-    clientStore.getCurrentClientSettings?.netControlEnabled ||
-    clientStore.getCurrentClientSettings?.netPeriodEnabled,
+  () => clientSettings.data.netControlEnabled || clientSettings.data.netPeriodEnabled,
 )
-const active = computed(() => !!clientStore.getCurrentClientSettings?.netAllowedUntil)
-const expireAt = computed(() => clientStore.getCurrentClientSettings?.netAllowedUntil)
-const loadingSettings = computed(
-  () => clientStore.getCurrentClientSettings && clientStore.getCurrentClientSettings !== 'error',
-)
+const active = computed(() => !!clientSettings.data.netAllowedUntil)
+const expireAt = computed(() => clientSettings.data.netAllowedUntil)
 const targetRef = ref(null)
 const { displayUUID, bindElement } = useMiddleEllipsis(uuid)
 // 表单有效性
@@ -304,8 +288,7 @@ const goBack = () => {
   router.back()
 }
 const getCurrentClientSettings = async () => {
-  if (!clientStore.getCurrentClientSettings || clientStore.getCurrentClientSettings === 'error')
-    await clientStore.fetchClientSettings()
+  if (!clientSettings.loaded || clientSettings.error) await clientStore.fetchClientSettings()
 }
 // 监听授权状态变化，自动重置表单
 watch(

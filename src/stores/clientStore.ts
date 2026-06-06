@@ -12,6 +12,7 @@ export interface clientInfo {
   version?: string
 }
 export interface clientSettings {
+  id?: number
   netAllowedUntil: string | null
   netControlEnabled: boolean
   netPeriodEnabled: boolean
@@ -51,11 +52,38 @@ export interface clientWhiteListItem {
   id: number
   appName: string
 }
+type AsyncStateType = 'uuid' | 'object' | 'list' | 'listLoadingAsNull'
+
+function defineAsyncState(ref: any, type: AsyncStateType) {
+  const errorCheck = {
+    uuid: (v: any) => v?.uuid === 'error',
+    object: (v: any) => v?.id === -1,
+    list: (v: any) => v?.[0]?.id === -1,
+    listLoadingAsNull: (v: any) => v?.[0]?.id === -1,
+  }[type]
+
+  const loadedCheck = (v: any) => v !== null
+
+  const daufaultValue = {
+    uuid: null,
+    object: {},
+    list: [],
+    listLoadingAsNull: [{ id: -1, uuid: 'error', time: 'error' }],
+  }[type]
+
+  return {
+    data: computed(() =>
+      loadedCheck(ref.value) && !errorCheck(ref.value) ? ref.value : daufaultValue,
+    ),
+    loaded: computed(() => loadedCheck(ref.value)),
+    error: computed(() => errorCheck(ref.value)),
+  }
+}
 export const useClientStore = defineStore('client', () => {
   // State
   const currentClientUuid = ref<string | null>(null)
   const currentClientInfo = ref<clientInfo | null>(null)
-  const currentClientSettings = ref<clientSettings | string | null>(null)
+  const currentClientSettings = ref<clientSettings | null>(null)
   const currentClientRecords = ref<clientRecord[] | null>(null)
   const currentClientWhiteList = ref<clientWhiteListItem[] | null>(null)
   const currentUDiskList = ref<clientUDisk[] | null>(null)
@@ -63,12 +91,12 @@ export const useClientStore = defineStore('client', () => {
   const currentDNSUrl = ref<string | null>(null)
   // Getters
   const getCurrentClientUUID = computed(() => currentClientUuid.value)
-  const getCurrentClientInfo = computed(() => currentClientInfo.value)
-  const getCurrentClientSettings = computed(() => currentClientSettings.value)
-  const getCurrentClientRecords = computed(() => currentClientRecords.value)
-  const getCurrentClientWhiteList = computed(() => currentClientWhiteList.value)
-  const getCurrentUDiskList = computed(() => currentUDiskList.value)
-  const getCurrentUDiskRecords = computed(() => currentUDiskRecords.value)
+  const getCurrentClientInfo = defineAsyncState(currentClientInfo, 'uuid')
+  const getCurrentClientSettings = defineAsyncState(currentClientSettings, 'object')
+  const getCurrentClientRecords = defineAsyncState(currentClientRecords, 'list')
+  const getCurrentClientWhiteList = defineAsyncState(currentClientWhiteList, 'list')
+  const getCurrentUDiskList = defineAsyncState(currentUDiskList, 'list')
+  const getCurrentUDiskRecords = defineAsyncState(currentUDiskRecords, 'list')
   const getCurrentDNSUrl = computed(() => currentDNSUrl.value)
   // Actions
   const fetchClients = async (): Promise<clientInfo[]> => {
@@ -108,7 +136,16 @@ export const useClientStore = defineStore('client', () => {
         }
       } catch (e) {
         console.error('error fetching client settings', e)
-        currentClientSettings.value = 'error'
+        currentClientSettings.value = {
+          id: -1,
+          netAllowedUntil: null,
+          netControlEnabled: false,
+          netPeriodEnabled: false,
+          usbControlEnabled: false,
+          disableTaskManager: false,
+          disableSystemSettings: false,
+          disableControlPanel: false,
+        }
       }
     } else {
       console.error('currentClientUuid is null, cannot fetch settings')

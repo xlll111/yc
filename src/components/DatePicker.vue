@@ -44,9 +44,6 @@
         ref="panelRef"
         :class="panelPositionClass"
         :style="panelStyle"
-        @click.stop
-        @touchmove.stop.prevent
-        @scroll.sto
       >
         <!-- 快捷操作按钮区域 -->
         <div
@@ -240,7 +237,12 @@ const tempStartDate = ref(null) // 临时起始日期
 const tempEndDate = ref(null) // 临时结束日期（连续模式）
 const currentLeftMonth = ref(new Date()) // 左日历当前显示月份
 const currentRightMonth = ref(new Date()) // 右日历当前显示月份（连续模式）
+const isMobile = ref(false)
 
+// 检测是否为移动端
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
 const weekDays = ['日', '一', '二', '三', '四', '五', '六']
 
 // 添加模板引用
@@ -502,7 +504,7 @@ const calculatePanelPosition = () => {
 
   const triggerRect = trigger.getBoundingClientRect()
   const panelRect = panel.getBoundingClientRect()
-  console.log('panelRect:', panelRect)
+  // console.log('panelRect:', panelRect)
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
 
@@ -564,16 +566,32 @@ const toggleOpen = async () => {
     // 等待 DOM 更新后计算位置
     await nextTick()
     calculatePanelPosition()
+
+    // PC 端：添加全局点击监听来关闭面板
+    if (!isMobile.value) {
+      document.addEventListener('click', handleOutsideClick)
+    }
   } else {
     initTempFromProps()
+    // 移除全局点击监听
+    document.removeEventListener('click', handleOutsideClick)
+  }
+}
+
+const handleOutsideClick = (e) => {
+  const wrapper = wrapperRef.value
+  if (wrapper && !wrapper.contains(e.target)) {
+    isOpen.value = false
+    document.removeEventListener('click', handleOutsideClick)
   }
 }
 
 // 监听窗口大小变化
 const handleResize = () => {
-  if (isOpen.value) {
-    calculatePanelPosition()
-  }
+  checkMobile()
+  // if (isOpen.value) {
+  //   calculatePanelPosition()
+  // }
 }
 
 // 监听滚动事件
@@ -584,15 +602,15 @@ const handleScroll = () => {
 }
 
 // 在生命周期中注册事件
-onMounted(() => {
-  window.addEventListener('resize', handleResize)
-  window.addEventListener('scroll', handleScroll, true)
-})
+// onMounted(() => {
+window.addEventListener('resize', handleResize)
+//   window.addEventListener('scroll', handleScroll, true)
+// })
 
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
-  window.removeEventListener('scroll', handleScroll, true)
-})
+// onUnmounted(() => {
+window.removeEventListener('resize', handleResize)
+//   window.removeEventListener('scroll', handleScroll, true)
+// })
 
 const prevMonth = () => {
   currentLeftMonth.value = new Date(
@@ -644,14 +662,14 @@ watch(isOpen, (newVal) => {
     document.body.style.overflow = 'hidden'
     document.body.style.paddingRight = `${scrollBarWidth}px` // 防止滚动条消失导致页面跳动
 
-    const targetDiv = document.querySelector('#dash > div')
-    targetDiv.style.overflow = 'hidden'
+    // const targetDiv = document.querySelector('#dash > div')
+    // targetDiv.style.overflow = 'hidden'
   } else {
     document.body.style.overflow = ''
     document.body.style.paddingRight = ''
 
-    const targetDiv = document.querySelector('#dash > div')
-    targetDiv.style.overflow = ''
+    // const targetDiv = document.querySelector('#dash > div')
+    // targetDiv.style.overflow = ''
   }
 })
 </script>
@@ -1039,6 +1057,9 @@ watch(isOpen, (newVal) => {
   .date-picker-panel.panel-top {
     /* bottom: calc(100% + 6px); */
     top: auto;
+  }
+  .picker-backdrop {
+    display: none;
   }
 }
 </style>

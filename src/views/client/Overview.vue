@@ -4,9 +4,9 @@
     <section class="info-card">
       <div class="card-header">
         <h2 class="card-title">客户端信息</h2>
-        <spinner v-if="!clientLoading" inline size="tiny" />
+        <spinner v-if="!clientInfo.loaded" inline size="tiny" />
         <span
-          v-else-if="!clientLoadingError"
+          v-else-if="!clientInfo.error"
           class="status-badge"
           :class="isOnline ? 'status-online' : 'status-offline'"
         >
@@ -14,28 +14,27 @@
         </span>
       </div>
       <LoadingState
-        :loading="!clientLoading"
-        :error="clientLoadingError"
+        :loading="!clientInfo.loaded"
+        :error="clientInfo.error"
         @retry="clientStore.fetchClientByUUID"
-        loadingText="加载中..."
         errorText="客户端信息加载失败"
       />
-      <div v-if="clientLoading && !clientLoadingError" class="info-grid">
+      <div v-if="clientInfo.loaded && !clientInfo.error" class="info-grid">
         <div class="info-item">
           <span class="label">主机名</span>
-          <span class="value">{{ client.hostname }}</span>
+          <span class="value">{{ clientInfo.data.hostname }}</span>
         </div>
         <div class="info-item">
           <span class="label">UUID</span>
-          <span class="value mono">{{ client.uuid }}</span>
+          <span class="value mono">{{ clientInfo.data.uuid }}</span>
         </div>
         <div class="info-item">
           <span class="label">IP 地址</span>
-          <span class="value mono">{{ client.ipAddress }}</span>
+          <span class="value mono">{{ clientInfo.data.ipAddress }}</span>
         </div>
         <div class="info-item">
           <span class="label">操作系统</span>
-          <span class="value">{{ client.osInfo }}</span>
+          <span class="value">{{ clientInfo.data.osInfo }}</span>
         </div>
         <div class="info-item">
           <span class="label">上次在线</span>
@@ -44,7 +43,7 @@
         <div class="info-item">
           <span class="label">客户端版本</span>
           <span class="value">
-            {{ client.version }}
+            {{ clientInfo.data.version }}
             <span v-if="isLowVersion" class="version-warning">
               ⚠️ 版本过低，请更新至 B0.8.2 以上
             </span>
@@ -64,7 +63,7 @@
               @blur="saveNote"
               @keyup.enter="saveNote"
             />
-            <span v-else class="value note-text">{{ client.note || '暂无备注' }}</span>
+            <span v-else class="value note-text">{{ clientInfo.data.note || '暂无备注' }}</span>
             <button
               class="icon-btn"
               title="编辑备注"
@@ -81,12 +80,14 @@
       <!-- 联网授权状态区域 -->
 
       <div class="auth-section">
-        <div v-if="!clientSettingsLoading" class="auth-status">
+        <div v-if="!clientSettings.loaded" class="auth-status">
           <span class="label">联网授权</span><spinner inline size="tiny" />
         </div>
-        <div v-else-if="!clientSettingsLoadingError" class="auth-status">
+        <div v-else-if="!clientSettings.error" class="auth-status">
           <span class="label">联网授权</span>
-          <span v-if="!setting.netControlEnabled" class="auth-tag tag-disabled">未启用</span>
+          <span v-if="!clientSettings.data.netControlEnabled" class="auth-tag tag-disabled"
+            >未启用</span
+          >
           <template v-else>
             <span v-if="isAuthExpired" class="auth-tag tag-expired">已过期</span>
             <span v-else class="auth-tag tag-active">
@@ -117,12 +118,12 @@
     <section class="chart-card">
       <h2 class="card-title">在线记录（近三天）</h2>
       <LoadingState
-        v-if="clientRecordsLoadingError"
+        v-if="clientRecords.error"
         :error="true"
         @retry="clientStore.fetchClientRecords"
         errorText="客户端在线记录加载失败"
       />
-      <LoadingState v-else-if="!clientRecordsLoading || !chartReady" :loading="true" />
+      <LoadingState v-else-if="!clientRecords.loaded || !chartReady" :loading="true" />
       <!-- 使用 v-once 优化静态图表 -->
       <v-chart
         v-else
@@ -136,7 +137,7 @@
     <!-- 三、U盘管控（当天新加入） -->
 
     <section
-      v-if="!UDiskRecordsLoading || UDiskRecordsLoadingError"
+      v-if="!UDiskRecords.loaded || UDiskRecords.error"
       class="info-card usb-control-section"
     >
       <div class="card-header">
@@ -144,8 +145,8 @@
         <button class="btn btn-text" @click="goToUsbRecords">管理U盘 →</button>
       </div>
       <LoadingState
-        :loading="!UDiskRecordsLoading"
-        :error="UDiskRecordsLoadingError"
+        :loading="!UDiskRecords.loaded"
+        :error="UDiskRecords.error"
         @retry="clientStore.fetchUDiskRecords"
         errorText="U盘记录加载失败"
       />
@@ -156,7 +157,7 @@
         <button class="btn btn-text" @click="goToUsbRecords">管理U盘 →</button>
       </div>
 
-      <div v-if="!setting.usbControlEnabled" class="warning-banner">
+      <div v-if="!clientSettings.data.usbControlEnabled" class="warning-banner">
         ⚠️ U盘管控功能已禁用，状态设置无影响
       </div>
 
@@ -173,13 +174,13 @@
     <section class="chart-card">
       <h2 class="card-title">U盘插入记录（近三天）</h2>
       <LoadingState
-        :loading="!UDiskRecordsLoading"
-        :error="UDiskRecordsLoadingError"
+        :loading="!UDiskRecords.loaded"
+        :error="UDiskRecords.error"
         @retry="clientStore.fetchUDiskRecords"
         errorText="U盘记录加载失败"
       />
       <v-chart
-        v-if="UDiskRecordsLoading && !UDiskRecordsLoadingError"
+        v-if="UDiskRecords.loaded && !UDiskRecords.error"
         class="chart"
         :option="usbChartOption"
         autoresize
@@ -228,17 +229,10 @@ const chartInitOptions = {
 }
 // 图表是否准备好
 const chartReady = ref(false)
-
-const clientLoading = computed(() => clientStore.getCurrentClientInfo !== null)
-const clientLoadingError = computed(() => clientStore.getCurrentClientInfo?.uuid === 'error')
-const clientSettingsLoading = computed(() => clientStore.getCurrentClientSettings !== null)
-const clientSettingsLoadingError = computed(() => clientStore.getCurrentClientSettings === 'error')
-const clientRecordsLoading = computed(() => clientStore.getCurrentClientRecords !== null)
-const clientRecordsLoadingError = computed(
-  () => clientStore.getCurrentClientRecords?.[0]?.id === -1,
-)
-const UDiskRecordsLoading = computed(() => clientStore.getCurrentUDiskRecords !== null)
-const UDiskRecordsLoadingError = computed(() => clientStore.getCurrentUDiskRecords?.[0]?.id === -1)
+const clientInfo = clientStore.getCurrentClientInfo
+const clientSettings = clientStore.getCurrentClientSettings
+const clientRecords = clientStore.getCurrentClientRecords
+const UDiskRecords = clientStore.getCurrentUDiskRecords
 
 onMounted(() => {
   // 延迟标记图表准备好，确保DOM渲染完成
@@ -250,53 +244,25 @@ onMounted(() => {
 // 注册必要的 ECharts 模块
 use([HeatmapChart, TooltipComponent, GridComponent, VisualMapComponent, CanvasRenderer])
 
-const client = computed(() => clientStore.getCurrentClientInfo || {})
-const setting = computed(() => clientStore.getCurrentClientSettings || {})
-// const clientRecord = computed(() => clientStore.getCurrentClientRecords || [])
-// const usbRecord = computed(() => clientStore.getCurrentUDiskRecords || [])
-
-// 使用 shallowRef 优化大数据
-const clientRecord = shallowRef([])
-const usbRecord = shallowRef([])
-// 监听 store 数据变化，使用 shallowRef 更新
-watch(
-  () => clientStore.getCurrentClientRecords,
-  (newVal) => {
-    if (newVal && Array.isArray(newVal) && !(newVal[0]?.id === -1)) {
-      clientRecord.value = newVal
-      console.log('clientRecord', clientRecord.value)
-    }
-  },
-  { immediate: true },
-)
-
-watch(
-  () => clientStore.getCurrentUDiskRecords,
-  (newVal) => {
-    if (newVal && Array.isArray(newVal) && !(newVal[0]?.id === -1)) {
-      usbRecord.value = newVal
-      console.log('usbRecord', usbRecord.value)
-    }
-  },
-  { immediate: true },
-)
+const clientRecord = computed(() => clientRecords.data)
+const usbRecord = computed(() => UDiskRecords.data)
 
 // ---------- 派生状态 ----------
 const isOnline = computed(() => {
-  if (!client.value.lastSeen) return false
-  const last = new Date(client.value.lastSeen).getTime()
+  if (!clientInfo.data.lastSeen) return false
+  const last = new Date(clientInfo.data.lastSeen).getTime()
   const now = Date.now()
   // 假设计算在线状态：最后在线时间在2分钟内
   return Math.abs(now - last) < 2 * 60 * 1000
 })
 
 const formattedLastSeen = computed(() => {
-  if (!client.value.lastSeen) return '--'
-  return new Date(client.value.lastSeen).toLocaleString('zh-CN')
+  if (!clientInfo.data.lastSeen) return '--'
+  return new Date(clientInfo.data.lastSeen).toLocaleString('zh-CN')
 })
 
 const isLowVersion = computed(() => {
-  const version = client.value.version
+  const version = clientInfo.data.version
   if (!version) return false
 
   // 提取 Bx.x.x 中的版本号
@@ -324,19 +290,19 @@ const isLowVersion = computed(() => {
 
 // 授权相关
 const isAuthExpired = computed(() => {
-  if (!setting.value.netControlEnabled) return false
-  const deadline = new Date(setting.value.netAllowedUntil).getTime()
+  if (!clientSettings.data.netControlEnabled) return false
+  const deadline = new Date(clientSettings.data.netAllowedUntil).getTime()
   return Date.now() > deadline
 })
 
 const formattedAuthDeadline = computed(() => {
-  if (!setting.value.netAllowedUntil) return '--'
-  return new Date(setting.value.netAllowedUntil).toLocaleString('zh-CN')
+  if (!clientSettings.data.netAllowedUntil) return '--'
+  return new Date(clientSettings.data.netAllowedUntil).toLocaleString('zh-CN')
 })
 
 const remainingMinutes = computed(() => {
-  if (!setting.value.netControlEnabled || isAuthExpired.value) return 0
-  const deadline = new Date(setting.value.netAllowedUntil).getTime()
+  if (!clientSettings.data.netControlEnabled || isAuthExpired.value) return 0
+  const deadline = new Date(clientSettings.data.netAllowedUntil).getTime()
   const diff = deadline - Date.now()
   return Math.max(0, Math.floor(diff / 60000))
 })
@@ -348,7 +314,7 @@ const editableNote = ref('')
 const noteInputRef = ref(null)
 
 const startEditNote = () => {
-  editableNote.value = client.value.note || ''
+  editableNote.value = clientInfo.data.note || ''
   isEditingNote.value = true
   // 下一个 tick 自动聚焦
   setTimeout(() => {
@@ -359,7 +325,7 @@ const startEditNote = () => {
 const saveNote = async () => {
   if (!isEditingNote.value) return
   if (isSavingNote.value) return
-  if (editableNote.value === client.value.note) {
+  if (editableNote.value === clientInfo.data.note) {
     isEditingNote.value = false
     editableNote.value = ''
     return
@@ -630,7 +596,7 @@ function formatDateStr(date) {
   return $filters.formatDateTime(date, 'YYYY-MM-DD')
 }
 
-// ---------- 路由跳转占位方法 ----------
+// ---------- 路由跳转方法 ----------
 const goToAuthConfig = () => router.push('/dash/client/authorize_net')
 const goToWhitelist = () => router.push('/dash/client/net_whitelist')
 const goToUsbRecords = () => router.push('/dash/client/udisk_records')

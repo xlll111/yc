@@ -51,7 +51,7 @@
       <!-- 记录列表滚动区域 -->
       <div class="list-scroll-area" ref="listContainer" @scroll="handleScroll">
         <div v-if="loading && displayRecords.length === 0" class="empty-state">
-          <Spinner />
+          <Spinner inline size="small" />
           <p>加载中...</p>
         </div>
         <div v-else-if="displayRecords.length === 0" class="empty-state">
@@ -70,6 +70,12 @@
             <line x1="16" y1="17" x2="8" y2="17"></line>
           </svg>
           <p>暂无相关DNS访问记录</p>
+          <button
+            class="screenshot-btn"
+            @click="openScreenshotViewer('', new Date().toISOString())"
+          >
+            查询截图
+          </button>
         </div>
         <template v-else>
           <div v-for="(group, hour) in groupedRecords" :key="hour" class="hour-group">
@@ -93,7 +99,7 @@
                   <button
                     v-if="record.isAlert"
                     class="screenshot-btn"
-                    @click="openScreenshotViewer(record)"
+                    @click="openScreenshotViewer(record.url, record.time)"
                   >
                     查询截图
                   </button>
@@ -108,6 +114,7 @@
         </div>
       </div>
     </div>
+    <div style="height: 1px"></div>
 
     <!-- 截图查看器模态框 (保持不变) -->
     <Teleport to="body">
@@ -117,7 +124,61 @@
         @click.self="closeViewer"
         @keydown.esc="closeViewer"
       >
-        <!-- ... 模态框内容保持不变 ... -->
+        <div class="modal-content">
+          <div class="modal-header">
+            <div class="modal-title-group">
+              <h3>截图追溯</h3>
+              <p class="modal-warning-info">{{ selectedAlert?.url }}</p>
+              <p class="modal-time-diff">警告时间: {{ selectedAlert?.time }}</p>
+            </div>
+            <button class="modal-close-btn" @click="closeViewer">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="close-icon"
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="modal-body" ref="screenshotContainer">
+            <div v-if="screenshots.length === 0 && !loadingScreenshots" class="no-screenshots">
+              <p>未找到相关截图</p>
+            </div>
+            <div
+              v-for="(shot, index) in screenshots"
+              :key="shot.id"
+              class="screenshot-card"
+              :class="{ 'best-match': shot.id === bestIndex }"
+              :ref="(el) => setScreenshotRef(el, shot.id)"
+              :data-screenshot-index="index"
+            >
+              <img
+                :src="shot.url"
+                :alt="shot.filename"
+                :fetchpriority="index === 0 ? 'high' : 'auto'"
+                width="1920"
+                height="1080"
+                loading="lazy"
+                class="screenshot-img"
+                @load="handleImageLoad(index)"
+              />
+              <div class="screenshot-info">
+                <span class="shot-filename">{{ shot.filename }}</span>
+                <span class="shot-time">{{ shot.time }}</span>
+                <span class="shot-diff" :class="{ urgent: shot.diffMinutes < 5 }">
+                  {{ formatTimeDiff(shot.diffMinutes) }}
+                </span>
+              </div>
+            </div>
+            <div v-if="loadingScreenshots" class="loading-screenshots">加载截图中...</div>
+          </div>
+        </div>
       </div>
     </Teleport>
   </div>
@@ -137,7 +198,7 @@ const router = useRouter()
 const clientStore = useClientStore()
 const $filters = inject('$filters')
 const uuid = clientStore.getCurrentClientUUID
-const UrlRecord = clientStore.currentDNSUrlRecord
+// const UrlRecord = clientStore.currentDNSUrlRecord
 const targetRef = ref(null)
 const { displayUUID, bindElement } = useMiddleEllipsis(uuid)
 
@@ -149,7 +210,7 @@ const alertOnly = ref(false)
 const loading = ref(false)
 const loadingMore = ref(false)
 const currentPage = ref(1)
-const pageSize = 150
+const pageSize = 99999
 const listContainer = ref(null)
 const hasMore = ref(true)
 const fetchError = ref(null)
@@ -161,6 +222,7 @@ const screenshots = ref([])
 const loadingScreenshots = ref(false)
 const screenshotContainer = ref(null)
 const screenshotRefs = ref({})
+const bestIndex = ref(0)
 
 // 从 store 获取 DNS 记录
 const storeRecords = computed(() => clientStore.getCurrentDNSUrlRecords || {})
@@ -184,7 +246,6 @@ const allRecords = computed(() => {
           time: record.time,
           formattedTime: new Date(record.time).toLocaleString('zh-CN', { hour12: false }),
           isAlert: record.detection === true,
-          alertReason: record.detection ? '检测到可疑DNS请求' : null,
           timestamp: new Date(record.time).getTime(),
         })
       })
@@ -251,9 +312,7 @@ const fetchDnsUrlRecords = async (isLoadMore = false) => {
   try {
     const page = isLoadMore ? currentPage.value + 1 : 1
 
-    const pageSize1 = alertOnly.value ? 99999 : pageSize
-
-    await clientStore.fetchDNSUrlRecords(selectedDate.value, page, pageSize1)
+    await clientStore.fetchDNSUrlRecords(selectedDate.value, page, pageSize)
 
     if (isLoadMore) {
       currentPage.value++
@@ -268,7 +327,6 @@ const fetchDnsUrlRecords = async (isLoadMore = false) => {
       const totalRecordsForDay = allRecords.value.filter((r) => {
         return new Date(r.time).toLocaleDateString('en-CA') === dayKey
       }).length
-      console.log('totalRecordsForDay:', totalRecordsForDay, currentPage.value, pageSize) // 添加日志
 
       hasMore.value = totalRecordsForDay >= currentPage.value * pageSize
     } else {
@@ -322,64 +380,81 @@ const loadMore = async () => {
 }
 
 // 模拟生成截图数据 (保持不变)
-const generateScreenshots = (alertRecord) => {
-  const alertTime = new Date(alertRecord.time)
+const generateScreenshots = async (alertRecordTime) => {
+  const alertTime = new Date(alertRecordTime)
   const shots = []
+  const screenshotsRes = await clientStore.fetchScreenshots(alertTime)
+  const screenshots = screenshotsRes?.screenshots || []
+  let minDiffShot = null
+  for (let i = 0; i < screenshots.length; i++) {
+    const shot = screenshots[i]
+    const shotTime = new Date(shot.time)
+    const diffMinutes = (shotTime.getTime() - alertTime.getTime()) / 60000
 
-  // 生成前后30分钟内的5-8张截图
-  const count = 5 + Math.floor(Math.random() * 4)
-  for (let i = 0; i < count; i++) {
-    const offsetMinutes = Math.random() * 60 - 30 // -30 到 +30 分钟
-    const shotTime = new Date(alertTime.getTime() + offsetMinutes * 60000)
-    const diffMinutes = Math.abs(offsetMinutes)
-
-    shots.push({
+    const shotObj = {
       id: `shot-${i}-${Date.now()}`,
-      url: `https://picsum.photos/800/450?random=${Math.random()}`,
-      filename: `screenshot_${shotTime.toISOString().replace(/:/g, '-').split('.')[0]}.png`,
-      time: shotTime.toLocaleString('zh-CN', { hour12: false }),
-      diffMinutes: Math.round(diffMinutes),
-      timestamp: shotTime.getTime(),
-    })
-  }
+      url: `https://class.xlll.dpdns.org${shot.url}`,
+      filename: shot.filename,
+      time: shot.time,
+      diffMinutes: diffMinutes,
+      timestamp: shot.timestamp,
+    }
 
+    shots.push(shotObj)
+    if (!minDiffShot || Math.abs(diffMinutes) < Math.abs(minDiffShot.diffMinutes)) {
+      minDiffShot = shotObj
+    }
+  }
   // 按与警告时间接近程度排序
-  return shots.sort((a, b) => a.diffMinutes - b.diffMinutes)
+  return {
+    minDiffShot: minDiffShot,
+    shots: shots.sort((a, b) => a.timestamp - b.timestamp),
+  }
 }
 
 // 格式化时间差
 const formatTimeDiff = (minutes) => {
+  const negative = minutes < 0 ? '-' : ''
+  minutes = Math.abs(minutes)
   if (minutes < 1) return '不到1分钟'
-  if (minutes < 60) return `${minutes} 分钟`
+  if (minutes < 60) return `${negative} ${Math.floor(minutes * 100) / 100} 分钟`
   const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  if (hours < 24) return `${hours} 小时 ${mins > 0 ? mins + '分钟' : ''}`
+  const mins = Math.floor((minutes % 60) * 100) / 100
+  if (hours < 24) return `${negative} ${hours} 小时 ${mins > 0 ? mins + '分钟' : ''}`
   const days = Math.floor(hours / 24)
-  return `${days} 天 ${hours % 24} 小时`
+  return `${negative} ${days} 天 ${hours % 24} 小时`
 }
 
 // 打开截图查看器
-const openScreenshotViewer = (record) => {
-  selectedAlert.value = record
+const openScreenshotViewer = async (url, time) => {
+  selectedAlert.value = {
+    url: url,
+    time: new Date(time).toLocaleString('zh-CN', { hour12: false }),
+  }
   viewerVisible.value = true
   loadingScreenshots.value = true
   screenshots.value = []
 
   // 模拟异步加载截图
-  setTimeout(() => {
-    screenshots.value = generateScreenshots(record)
-    loadingScreenshots.value = false
+  const { minDiffShot, shots } = await generateScreenshots(time)
+  loadingScreenshots.value = false
+  screenshots.value = shots
 
-    nextTick(() => {
-      // 自动滚动到最佳匹配截图 (第一张)
-      if (screenshotContainer.value && screenshots.value.length > 0) {
-        const firstCard = screenshotContainer.value.querySelector('[data-screenshot-index="0"]')
-        if (firstCard) {
-          firstCard.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  nextTick(() => {
+    // 自动滚动到最佳匹配截图
+    if (screenshotContainer.value && screenshots.value.length > 0) {
+      bestIndex.value = minDiffShot.id
+      const targetElement = screenshotRefs.value[bestIndex.value]
+      setTimeout(() => {
+        if (targetElement) {
+          targetElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          })
         }
-      }
-    })
-  }, 600)
+      }, 50)
+    }
+  })
 }
 
 // 关闭查看器
@@ -387,12 +462,13 @@ const closeViewer = () => {
   viewerVisible.value = false
   selectedAlert.value = null
   screenshots.value = []
+  bestIndex.value = 0
 }
 
 // 设置截图引用
-const setScreenshotRef = (el, index) => {
+const setScreenshotRef = (el, id) => {
   if (el) {
-    screenshotRefs.value[index] = el
+    screenshotRefs.value[id] = el
   }
 }
 
@@ -423,9 +499,7 @@ onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
 
   // 初始加载数据
-  if (clientStore.getCurrentClientUUID) {
-    fetchDnsUrlRecords(false)
-  }
+  fetchDnsUrlRecords(false)
 })
 
 onUnmounted(() => {
@@ -467,6 +541,7 @@ onUnmounted(() => {
   gap: 20px;
   transition: box-shadow 0.2s ease;
   max-height: calc(100vh - 140px);
+  margin-bottom: 30px;
 }
 
 .card:hover {
@@ -1056,14 +1131,13 @@ input:checked + .toggle-slider::after {
 .modal-body {
   padding: 20px 24px;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
   max-height: 70vh;
 }
 
 .screenshot-card {
   border: 1px solid #e5e7eb;
+  margin-bottom: 20px;
+
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.2s ease;

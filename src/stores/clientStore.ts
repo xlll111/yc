@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { clientApi } from '@/api/clients'
+import { fileApi } from '@/api/flie'
+import { formatDateTime, isoToTimestamp, utcToLocalDate } from '@/utils/dateFilters'
 
 export interface clientInfo {
   uuid: string
@@ -358,6 +360,16 @@ export const useClientStore = defineStore('client', () => {
       }
     }
   }
+  const fetchScreenshots = async (time: Date) => {
+    const formatTime = formatDateTime(time, 'YYYY-MM-DD HH:mm:ss')
+    if (currentClientUuid.value !== null) {
+      try {
+        return await fileApi.getScreenshots(currentClientUuid.value, formatTime)
+      } catch (e) {
+        console.error('error fetching screenshots', e)
+      }
+    }
+  }
   const getAllClientInfo = () => {
     fetchClientByUUID()
     fetchClientSettings()
@@ -417,5 +429,6 @@ export const useClientStore = defineStore('client', () => {
     denyUDisk,
     fetchUDiskRecords,
     fetchDNSUrlRecords,
+    fetchScreenshots,
   }
 })

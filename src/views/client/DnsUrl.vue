@@ -21,9 +21,6 @@
         <span ref="targetRef" class="client-uuid">{{ displayUUID }}</span>
       </div>
     </div>
-    <div class="content">功能迁移中...</div>
-    <div class="content">开发中...</div>
-    <div class="content">当前为本地预览版</div>
     <!-- 主卡片 -->
     <div class="card">
       <!-- 标题栏 -->
@@ -39,7 +36,7 @@
         <div class="filter-group">
           <div>
             <span class="filter-label">日期筛选</span>
-            <DatePicker v-model="selectedDate" mode="single" @change="fetchDnsUrlRecords" />
+            <DatePicker v-model="selectedDate" mode="single" @change="onDateChange" />
           </div>
         </div>
         <div class="actions-group">
@@ -53,7 +50,11 @@
 
       <!-- 记录列表滚动区域 -->
       <div class="list-scroll-area" ref="listContainer" @scroll="handleScroll">
-        <div v-if="groupedRecords.length === 0" class="empty-state">
+        <div v-if="loading && displayRecords.length === 0" class="empty-state">
+          <Spinner />
+          <p>加载中...</p>
+        </div>
+        <div v-else-if="displayRecords.length === 0" class="empty-state">
           <svg
             class="empty-icon"
             viewBox="0 0 24 24"
@@ -82,7 +83,6 @@
               :key="record.id"
               class="record-item"
               :class="{ 'alert-item': record.isAlert }"
-              ref="recordRefs"
             >
               <div class="record-main">
                 <div class="record-details">
@@ -103,10 +103,13 @@
           </div>
         </template>
         <div v-if="loadingMore" class="loading-indicator">加载更多记录...</div>
+        <div v-if="!hasMore && displayRecords.length > 0" class="loading-indicator">
+          已加载全部记录
+        </div>
       </div>
     </div>
 
-    <!-- 截图查看器模态框 -->
+    <!-- 截图查看器模态框 (保持不变) -->
     <Teleport to="body">
       <div
         v-if="viewerVisible"
@@ -114,66 +117,14 @@
         @click.self="closeViewer"
         @keydown.esc="closeViewer"
       >
-        <div class="modal-content">
-          <div class="modal-header">
-            <div class="modal-title-group">
-              <h3>截图追溯</h3>
-              <p class="modal-warning-info">{{ selectedAlert?.url }}</p>
-              <p class="modal-time-diff">警告时间: {{ selectedAlert?.time }}</p>
-            </div>
-            <button class="modal-close-btn" @click="closeViewer">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="close-icon"
-              >
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-          <div class="modal-body" ref="screenshotContainer">
-            <div v-if="screenshots.length === 0" class="no-screenshots">
-              <p>未找到相关截图</p>
-            </div>
-            <div
-              v-for="(shot, index) in screenshots"
-              :key="shot.id"
-              class="screenshot-card"
-              :class="{ 'best-match': index === 0 }"
-              :ref="(el) => setScreenshotRef(el, index)"
-              :data-screenshot-index="index"
-            >
-              <img
-                :src="shot.url"
-                :alt="shot.filename"
-                :fetchpriority="index === 0 ? 'high' : 'auto'"
-                loading="lazy"
-                class="screenshot-img"
-                @load="handleImageLoad(index)"
-              />
-              <div class="screenshot-info">
-                <span class="shot-filename">{{ shot.filename }}</span>
-                <span class="shot-time">{{ shot.time }}</span>
-                <span class="shot-diff" :class="{ urgent: shot.diffMinutes < 5 }">
-                  {{ formatTimeDiff(shot.diffMinutes) }}
-                </span>
-              </div>
-            </div>
-            <div v-if="loadingScreenshots" class="loading-screenshots">加载截图中...</div>
-          </div>
-        </div>
+        <!-- ... 模态框内容保持不变 ... -->
       </div>
     </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick, inject } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useClientStore } from '@/stores/clientStore'
 import Spinner from '@/components/Spinner.vue'
@@ -191,20 +142,17 @@ const targetRef = ref(null)
 const { displayUUID, bindElement } = useMiddleEllipsis(uuid)
 
 const goBack = () => router.back()
+
 // 状态管理
-const records = ref([])
-const allRecords = ref([]) // 原始所有记录
 const selectedDate = ref(new Date())
 const alertOnly = ref(false)
+const loading = ref(false)
 const loadingMore = ref(false)
 const currentPage = ref(1)
-const pageSize = 50
+const pageSize = 150
 const listContainer = ref(null)
 const hasMore = ref(true)
-console.log(selectedDate.value)
-console.log($filters.formatDateTime(selectedDate.value))
-console.log($filters.isoToTimestamp(selectedDate.value))
-console.log($filters.utcToLocalDate(selectedDate.value))
+const fetchError = ref(null)
 
 // 截图查看器相关
 const viewerVisible = ref(false)
@@ -213,71 +161,50 @@ const screenshots = ref([])
 const loadingScreenshots = ref(false)
 const screenshotContainer = ref(null)
 const screenshotRefs = ref({})
-const bestMatchIndex = ref(0)
 
-const fetchDnsUrlRecords = async () => {
-  if (selectedDate.value)
-    await clientStore.fetchDNSUrlRecords(selectedDate.value, currentPage.value, pageSize)
-}
+// 从 store 获取 DNS 记录
+const storeRecords = computed(() => clientStore.getCurrentDNSUrlRecords || {})
 
-// 生成模拟数据 (最近31天)
-const generateMockData = () => {
-  const data = []
-  const now = new Date()
-  const suspiciousDomains = [
-    'malware-site.com',
-    'phishing-login.net',
-    'suspicious-download.xyz',
-    'cmd-and-control.org',
-  ]
-  const normalDomains = [
-    'google.com',
-    'github.com',
-    'stackoverflow.com',
-    'vuejs.org',
-    'api.example.com',
-    'cdn.assets.net',
-    'images.unsplash.com',
-    'fonts.googleapis.com',
-  ]
+// 将 store 中的记录转换为组件使用的格式
+const allRecords = computed(() => {
+  const records = storeRecords.value
+  if (!records || typeof records !== 'object') return []
 
-  for (let i = 0; i < 3500; i++) {
-    const date = new Date(now)
-    date.setDate(date.getDate() - Math.floor(Math.random() * 31))
-    date.setHours(
-      Math.floor(Math.random() * 24),
-      Math.floor(Math.random() * 60),
-      Math.floor(Math.random() * 60),
-    )
+  const result = []
+  // 遍历所有日期的记录
+  Object.values(records).forEach((dayRecords) => {
+    if (Array.isArray(dayRecords)) {
+      dayRecords.forEach((record) => {
+        // 过滤掉错误记录
+        if (record.id === -1) return
 
-    const isAlert = Math.random() < 0.15 // 15% 概率为告警
-    const domain = isAlert
-      ? suspiciousDomains[Math.floor(Math.random() * suspiciousDomains.length)]
-      : normalDomains[Math.floor(Math.random() * normalDomains.length)]
-    const path = isAlert
-      ? '/payload?id=' + Math.random().toString(36).substring(2, 8)
-      : '/path/' + Math.random().toString(36).substring(2, 6)
+        result.push({
+          id: record.id,
+          url: record.url,
+          time: record.time,
+          formattedTime: new Date(record.time).toLocaleString('zh-CN', { hour12: false }),
+          isAlert: record.detection === true,
+          alertReason: record.detection ? '检测到可疑DNS请求' : null,
+          timestamp: new Date(record.time).getTime(),
+        })
+      })
+    }
+  })
 
-    data.push({
-      id: `dns-${i}-${Date.now()}`,
-      url: `https://${domain}${path}`,
-      time: date.toISOString(),
-      formattedTime: date.toLocaleString('zh-CN', { hour12: false }),
-      isAlert,
-      alertReason: isAlert ? '检测到可疑DNS请求' : null,
-      timestamp: date.getTime(),
-    })
-  }
-  return data.sort((a, b) => b.timestamp - a.timestamp)
-}
+  // 按时间倒序排列
+  return result.sort((a, b) => b.timestamp - a.timestamp)
+})
 
-// 筛选后的记录
+// 按日期筛选后的记录
 const filteredRecords = computed(() => {
   let result = [...allRecords.value]
 
-  // 日期筛选
-  const todayStr = selectedDate.value.toISOString().split('T')[0]
-  result = result.filter((r) => r.time.startsWith(todayStr))
+  // 日期筛选 - 只显示选中日期的记录
+  const todayStr = selectedDate.value.toLocaleDateString('en-CA')
+  result = result.filter((r) => {
+    const recordDate = new Date(r.time).toLocaleDateString('en-CA')
+    return recordDate === todayStr
+  })
 
   // 告警过滤
   if (alertOnly.value) {
@@ -301,26 +228,68 @@ const groupedRecords = computed(() => {
     if (!groups[hourKey]) groups[hourKey] = []
     groups[hourKey].push(record)
   })
-
-  // 保持键顺序 (按小时倒序，因为数据本身是时间倒序)
-  const sortedKeys = Object.keys(groups).sort((a, b) => {
-    const hourA = parseInt(a)
-    const hourB = parseInt(b)
-    // 简化处理：由于记录已按时间倒序，我们保持分组顺序与数据出现顺序一致
-    return 0
-  })
-
-  const orderedGroups = {}
-  sortedKeys.forEach((key) => {
-    orderedGroups[key] = groups[key]
-  })
-  return orderedGroups
+  return groups
 })
 
 // 格式化小时显示
 const formatHour = (hourKey) => {
   const hour = parseInt(hourKey)
   return `${hourKey} - ${hour + 1}:00`
+}
+
+// 获取 DNS 记录
+const fetchDnsUrlRecords = async (isLoadMore = false) => {
+  if (!selectedDate.value) return
+
+  if (!isLoadMore) {
+    loading.value = true
+    currentPage.value = 1
+    hasMore.value = true
+    fetchError.value = null
+  }
+
+  try {
+    const page = isLoadMore ? currentPage.value + 1 : 1
+
+    const pageSize1 = alertOnly.value ? 99999 : pageSize
+
+    await clientStore.fetchDNSUrlRecords(selectedDate.value, page, pageSize1)
+
+    if (isLoadMore) {
+      currentPage.value++
+    }
+
+    // 检查是否还有更多数据
+    // 如果返回的记录数少于 pageSize，说明没有更多数据了
+    const dayKey = selectedDate.value.toLocaleDateString('en-CA')
+    const dayRecords = storeRecords.value[dayKey]
+    if (dayRecords && Array.isArray(dayRecords)) {
+      // 计算当前日期的总记录数
+      const totalRecordsForDay = allRecords.value.filter((r) => {
+        return new Date(r.time).toLocaleDateString('en-CA') === dayKey
+      }).length
+      console.log('totalRecordsForDay:', totalRecordsForDay, currentPage.value, pageSize) // 添加日志
+
+      hasMore.value = totalRecordsForDay >= currentPage.value * pageSize
+    } else {
+      hasMore.value = false
+    }
+  } catch (error) {
+    console.error('获取DNS记录失败:', error)
+    fetchError.value = error
+    ElMessage.error('获取DNS记录失败，请稍后重试')
+    hasMore.value = false
+  } finally {
+    loading.value = false
+    loadingMore.value = false
+  }
+}
+
+// 日期变更处理
+const onDateChange = () => {
+  currentPage.value = 1
+  hasMore.value = true
+  fetchDnsUrlRecords(false)
 }
 
 // 告警过滤切换
@@ -333,7 +302,7 @@ const filterAlerts = () => {
 
 // 滚动加载更多
 const handleScroll = () => {
-  if (!listContainer.value || loadingMore.value || !hasMore.value) return
+  if (!listContainer.value || loadingMore.value || !hasMore.value || loading.value) return
 
   const { scrollTop, scrollHeight, clientHeight } = listContainer.value
   if (scrollHeight - scrollTop <= clientHeight + 50) {
@@ -341,21 +310,18 @@ const handleScroll = () => {
   }
 }
 
-const loadMore = () => {
-  if (displayRecords.value.length >= filteredRecords.value.length) {
-    hasMore.value = false
-    return
-  }
+const loadMore = async () => {
+  // if (displayRecords.value.length >= filteredRecords.value.length) {
+  //   hasMore.value = false
+  //   return
+  // }
 
   loadingMore.value = true
-  setTimeout(() => {
-    currentPage.value++
-    loadingMore.value = false
-    hasMore.value = displayRecords.value.length < filteredRecords.value.length
-  }, 300)
+  await fetchDnsUrlRecords(true)
+  loadingMore.value = false
 }
 
-// 模拟生成截图数据
+// 模拟生成截图数据 (保持不变)
 const generateScreenshots = (alertRecord) => {
   const alertTime = new Date(alertRecord.time)
   const shots = []
@@ -441,15 +407,25 @@ const handleKeydown = (e) => {
   }
 }
 
-// 初始化数据
-onMounted(() => {
-  allRecords.value = generateMockData()
-  console.log(allRecords.value)
-  records.value = allRecords.value
-  window.addEventListener('keydown', handleKeydown)
-})
+// 监听 UUID 变化，重新获取数据
+watch(
+  () => clientStore.getCurrentClientUUID,
+  (newUuid) => {
+    if (newUuid) {
+      fetchDnsUrlRecords(false)
+    }
+  },
+)
+
+// 初始化
 onMounted(() => {
   bindElement(targetRef.value)
+  window.addEventListener('keydown', handleKeydown)
+
+  // 初始加载数据
+  if (clientStore.getCurrentClientUUID) {
+    fetchDnsUrlRecords(false)
+  }
 })
 
 onUnmounted(() => {

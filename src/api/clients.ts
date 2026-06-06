@@ -8,6 +8,7 @@ import type {
   clientUDisk,
   clientUDiskRecord,
   clientWhiteListItem,
+  clientDnsUrlRecord,
   clientDnsUrlRecordRequest,
 } from '@/stores/clientStore'
 
@@ -58,7 +59,15 @@ export const clientApi = {
   getUDiskRecords(uuid: string): Promise<clientUDiskRecord[]> {
     return request.authget('/clients/get_udisk_record', null, { params: { uuid } })
   },
-  getDNSUrlRecords(uuid: string, query: clientDnsUrlRecordRequest): Promise<string[]> {
-    return request.authget('/clients/get_dns_url_records', query, { params: { uuid } })
+  getDNSUrlRecords(
+    uuid: string,
+    startTime: string,
+    endTime: string,
+    page: number,
+    pageSize: number,
+  ): Promise<clientDnsUrlRecord[]> {
+    return request.authget('/clients/get_dns_url_records', null, {
+      params: { uuid, startTime, endTime, page, pageSize },
+    })
   },
 }

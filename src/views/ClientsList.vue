@@ -174,7 +174,7 @@ const fetchClients = async () => {
       return new Date(b.lastSeen) - new Date(a.lastSeen)
     })
     clients.value = sortedData
-    console.log('Fetched clients:', sortedData)
+    // console.log('Fetched clients:', sortedData)
     ElMessage.success('客户端列表刷新成功')
   } catch (err) {
     error.value = err.message || '获取客户端列表失败，请稍后重试'

@@ -52,6 +52,12 @@ export interface clientWhiteListItem {
   id: number
   appName: string
 }
+export interface clientDnsUrlRecord {
+  id: number
+  url: string
+  time: string
+  detection: boolean
+}
 export interface clientDnsUrlRecordRequest {
   startTime: string
   endTime: string
@@ -94,7 +100,7 @@ export const useClientStore = defineStore('client', () => {
   const currentClientWhiteList = ref<clientWhiteListItem[] | null>(null)
   const currentUDiskList = ref<clientUDisk[] | null>(null)
   const currentUDiskRecords = ref<clientUDiskRecord[] | null>(null)
-  const currentDNSUrlRecords = ref<Record<string, any>>({})
+  const currentDNSUrlRecords = ref<Record<string, clientDnsUrlRecord[]>>({})
   // Getters
   const getCurrentClientUUID = computed(() => currentClientUuid.value)
   const getCurrentClientInfo = defineAsyncState(currentClientInfo, 'uuid')
@@ -334,19 +340,21 @@ export const useClientStore = defineStore('client', () => {
         // currentDNSUrlRecords.value[day] = null
         if (!currentDNSUrlRecords.value[day] || !Array.isArray(currentDNSUrlRecords.value[day]))
           currentDNSUrlRecords.value[day] = []
-        const query = {
-          startTime: isoTime,
-          endTime: isoTime,
-          page: page,
-          pageSize: pageSize,
-        }
-        const records = await clientApi.getDNSUrlRecords(currentClientUuid.value, query)
+        const records = await clientApi.getDNSUrlRecords(
+          currentClientUuid.value,
+          isoTime,
+          isoTime,
+          page,
+          pageSize,
+        )
         if (records) {
           currentDNSUrlRecords.value[day].push(...records)
         }
       } catch (e) {
         console.error('error fetching dns url records', e)
-        currentDNSUrlRecords.value[day] = [{ id: -1 }]
+        currentDNSUrlRecords.value[day] = [
+          { id: -1, url: 'error', time: 'error', detection: false },
+        ]
       }
     }
   }

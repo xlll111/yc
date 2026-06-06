@@ -52,6 +52,12 @@ export interface clientWhiteListItem {
   id: number
   appName: string
 }
+export interface clientDnsUrlRecordRequest {
+  startTime: string
+  endTime: string
+  page: number
+  pageSize: number
+}
 type AsyncStateType = 'uuid' | 'object' | 'list' | 'listLoadingAsNull'
 
 function defineAsyncState(ref: any, type: AsyncStateType) {
@@ -88,7 +94,7 @@ export const useClientStore = defineStore('client', () => {
   const currentClientWhiteList = ref<clientWhiteListItem[] | null>(null)
   const currentUDiskList = ref<clientUDisk[] | null>(null)
   const currentUDiskRecords = ref<clientUDiskRecord[] | null>(null)
-  const currentDNSUrl = ref<string | null>(null)
+  const currentDNSUrlRecords = ref<Record<string, any>>({})
   // Getters
   const getCurrentClientUUID = computed(() => currentClientUuid.value)
   const getCurrentClientInfo = defineAsyncState(currentClientInfo, 'uuid')
@@ -97,7 +103,7 @@ export const useClientStore = defineStore('client', () => {
   const getCurrentClientWhiteList = defineAsyncState(currentClientWhiteList, 'list')
   const getCurrentUDiskList = defineAsyncState(currentUDiskList, 'list')
   const getCurrentUDiskRecords = defineAsyncState(currentUDiskRecords, 'list')
-  const getCurrentDNSUrl = computed(() => currentDNSUrl.value)
+  const getCurrentDNSUrlRecords = computed(() => currentDNSUrlRecords.value)
   // Actions
   const fetchClients = async (): Promise<clientInfo[]> => {
     const data = clientApi.getClients()
@@ -289,8 +295,60 @@ export const useClientStore = defineStore('client', () => {
       }
     }
   }
-  const fetchDNSUrl = async () => {
-    // TODO: implement
+  const fetchDNSUrlRecords = async (
+    time: Date | [Date, Date],
+    page: number = 1,
+    pageSize: number = 100,
+  ) => {
+    if (currentClientUuid.value === null) currentDNSUrlRecords.value = {}
+    else if (Array.isArray(time)) {
+      // const startTime = time[0].toISOString()
+      // const endTime = time[1].toISOString()
+      // const startDay = time[0].toLocaleDateString('en-CA')
+      // const endDay = time[1].toLocaleDateString('en-CA')
+      // const startDate = new Date(startDay)
+      // const endDate = new Date(endDay)
+      // const currentDate = new Date(startDate)
+      // while (currentDate <= endDate) {
+      //   const dateKey = currentDate.toISOString().split('T')[0]!
+      //   currentDNSUrlRecords.value[dateKey] = null
+      //   currentDate.setDate(currentDate.getDate() + 1)
+      // }
+      // try {
+      //   currentDNSUrlRecords.value = {}
+      //   const records = await clientApi.getDNSUrlRecords(
+      //     currentClientUuid.value,
+      //     startTime,
+      //     endTime,
+      //   )
+      //   if (records) {
+      //     currentDNSUrlRecords.value = records
+      //   }
+      // } catch (e) {
+      //   console.error('error fetching dns url records', e)
+      // }
+    } else {
+      const isoTime = time.toISOString()
+      const day = time.toLocaleDateString('en-CA')
+      try {
+        // currentDNSUrlRecords.value[day] = null
+        if (!currentDNSUrlRecords.value[day] || !Array.isArray(currentDNSUrlRecords.value[day]))
+          currentDNSUrlRecords.value[day] = []
+        const query = {
+          startTime: isoTime,
+          endTime: isoTime,
+          page: page,
+          pageSize: pageSize,
+        }
+        const records = await clientApi.getDNSUrlRecords(currentClientUuid.value, query)
+        if (records) {
+          currentDNSUrlRecords.value[day].push(...records)
+        }
+      } catch (e) {
+        console.error('error fetching dns url records', e)
+        currentDNSUrlRecords.value[day] = [{ id: -1 }]
+      }
+    }
   }
   const getAllClientInfo = () => {
     fetchClientByUUID()
@@ -309,7 +367,7 @@ export const useClientStore = defineStore('client', () => {
     currentClientWhiteList.value = null
     currentUDiskList.value = null
     currentUDiskRecords.value = null
-    currentDNSUrl.value = null
+    currentDNSUrlRecords.value = {}
     getAllClientInfo()
     // fetchClientSettings()
   }
@@ -323,7 +381,7 @@ export const useClientStore = defineStore('client', () => {
     currentClientWhiteList,
     currentUDiskList,
     currentUDiskRecords,
-    currentDNSUrl,
+    currentDNSUrlRecords,
     // Getters
     getCurrentClientUUID,
     getCurrentClientInfo,
@@ -332,7 +390,7 @@ export const useClientStore = defineStore('client', () => {
     getCurrentClientWhiteList,
     getCurrentUDiskList,
     getCurrentUDiskRecords,
-    getCurrentDNSUrl,
+    getCurrentDNSUrlRecords,
     // Actions
     setCurrentClient,
     fetchClients,
@@ -350,6 +408,6 @@ export const useClientStore = defineStore('client', () => {
     allowUDisk,
     denyUDisk,
     fetchUDiskRecords,
-    fetchDNSUrl,
+    fetchDNSUrlRecords,
   }
 })

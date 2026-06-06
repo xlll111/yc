@@ -39,7 +39,7 @@
         <div class="filter-group">
           <div>
             <span class="filter-label">日期筛选</span>
-            <DatePicker v-model="selectedDate" mode="single" />
+            <DatePicker v-model="selectedDate" mode="single" @change="fetchDnsUrlRecords" />
           </div>
         </div>
         <div class="actions-group">
@@ -186,11 +186,11 @@ const router = useRouter()
 const clientStore = useClientStore()
 const $filters = inject('$filters')
 const uuid = clientStore.getCurrentClientUUID
+const UrlRecord = clientStore.currentDNSUrlRecord
 const targetRef = ref(null)
 const { displayUUID, bindElement } = useMiddleEllipsis(uuid)
 
 const goBack = () => router.back()
-
 // 状态管理
 const records = ref([])
 const allRecords = ref([]) // 原始所有记录
@@ -214,6 +214,11 @@ const loadingScreenshots = ref(false)
 const screenshotContainer = ref(null)
 const screenshotRefs = ref({})
 const bestMatchIndex = ref(0)
+
+const fetchDnsUrlRecords = async () => {
+  if (selectedDate.value)
+    await clientStore.fetchDNSUrlRecords(selectedDate.value, currentPage.value, pageSize)
+}
 
 // 生成模拟数据 (最近31天)
 const generateMockData = () => {

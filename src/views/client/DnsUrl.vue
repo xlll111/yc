@@ -171,7 +171,10 @@
               <div class="screenshot-info">
                 <span class="shot-filename">{{ shot.filename }}</span>
                 <span class="shot-time">{{ shot.time }}</span>
-                <span class="shot-diff" :class="{ urgent: shot.diffMinutes < 5 }">
+                <span
+                  class="shot-diff"
+                  :class="{ urgent: -5 < shot.diffMinutes && shot.diffMinutes < 5 }"
+                >
                   {{ formatTimeDiff(shot.diffMinutes) }}
                 </span>
               </div>

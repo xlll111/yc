@@ -43,6 +43,11 @@ const router = createRouter({
       component: Dash,
       children: [
         {
+          path: '',
+          name: 'Dash0',
+          redirect: '/dash/clients',
+        },
+        {
           path: 'clients',
           name: 'clients',
           component: ClientsList,

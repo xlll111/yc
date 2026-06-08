@@ -1248,6 +1248,12 @@ input:checked + .toggle-slider::after {
     margin: 10px;
   }
 
+  .screenshot-info {
+    flex-direction: column-reverse;
+    gap: 3px;
+    padding: 5px 10px;
+  }
+
   .list-scroll-area {
     max-height: calc(100vh - 440px);
   }

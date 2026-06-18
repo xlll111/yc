@@ -72,7 +72,7 @@
           <p>暂无相关DNS访问记录</p>
           <button
             class="screenshot-btn"
-            @click="openScreenshotViewer('', new Date().toISOString())"
+            @click="openScreenshotViewer('', selectedDate.toISOString())"
           >
             查询截图
           </button>

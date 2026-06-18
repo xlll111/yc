@@ -155,7 +155,7 @@ router.beforeEach((to, from) => {
   // 延迟显示loading，避免闪烁（页面加载很快时）
   loadingTimeout = setTimeout(() => {
     loadingStore.showLoading(`加载 ${to.meta.title || '页面中'}...`)
-  }, 200)
+  }, 400)
 
   return true
 })

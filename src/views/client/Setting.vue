@@ -40,7 +40,7 @@
           <div class="toggle-item">
             <div class="toggle-label">
               <span>宵禁</span>
-              <p class="toggle-desc">在指定时段内完全禁止联网</p>
+              <p class="toggle-desc">在 17:45 到 7:15 内完全禁止联网</p>
             </div>
             <label class="switch">
               <ToggleSwitch

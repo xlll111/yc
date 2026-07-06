@@ -675,6 +675,10 @@ watch(isOpen, (newVal) => {
 </script>
 
 <style scoped>
+span,
+button {
+  user-select: none;
+}
 /* 设计变量 */
 .date-picker-wrapper {
   --primary: #1e40af;

@@ -252,6 +252,7 @@ export const useClientStore = defineStore('client', () => {
     if (currentClientUuid.value !== null) {
       try {
         const udiskList = await clientApi.getUDiskList(currentClientUuid.value)
+        console.log('udisk list', udiskList) // Debugging statement
         if (udiskList) {
           currentUDiskList.value = udiskList
         }

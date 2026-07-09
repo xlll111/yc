@@ -148,17 +148,20 @@ class Request {
 
           switch (status) {
             case 400:
-              safeMessage.error('请求参数错误')
+              safeMessage.error(data?.detail || '请求参数错误')
               break
             case 401:
               const userStore = useUserStore()
               if (data && data.detail == 'Refresh token required') {
                 return
               }
-              const newToken = await userStore.refreshToken()
-              if (newToken) {
-                error.config.headers.Authorization = `Bearer ${newToken}`
-                return axios.request(error.config)
+              const getnewToken = await userStore.refreshToken()
+              if (getnewToken) {
+                error.config.headers.Authorization = `Bearer ${userStore.getToken}`
+                const result = await axios.request(error.config)
+                console.log('Result:', result)
+                // console.log('Result data:', result?.data?.data) // Result data: {data: {token: "newToken"}}
+                return result?.data?.data
               }
 
               safeMessage.error('登录已过期，请重新登录')
@@ -176,6 +179,9 @@ class Request {
               break
             case 404:
               safeMessage.error('请求资源不存在')
+              break
+            case 422:
+              safeMessage.error(data?.detail?.[0]?.msg || '请求参数错误')
               break
             case 500:
               safeMessage.error('服务器内部错误')
@@ -199,7 +205,6 @@ class Request {
   }
 
   post<T = any>(url: string, data?: any, config?: RequestConfig): Promise<T> {
-    console.log('Post request:', url, data, config) // Post request: /auth/refresh null {withCredentials: true}
     return this.instance.post(url, data, config)
   }
 

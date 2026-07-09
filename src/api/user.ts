@@ -1,12 +1,12 @@
 // api/user.ts
 import { request } from '@/utils/request'
-import type { LoginRequest, LoginResponse, UserInfo } from '@/stores/userStore'
+import type { LoginRequest, LoginResponse, UserInfo, RegisterRequest } from '@/stores/userStore'
 
 // 用户相关 API
 export const userApi = {
   // 登录
   login(data: LoginRequest): Promise<LoginResponse> {
-    return request.post('/auth/login', data)
+    return request.post('/auth/login', data, { withCredentials: true })
   },
 
   // 登出
@@ -21,6 +21,10 @@ export const userApi = {
       null,
       { headers: { Authorization: `Bearer ${token}` } }, // 第三个参数是 config
     )
+  },
+
+  register(data: RegisterRequest) {
+    return request.post('/auth/register', data)
   },
 
   // 更新用户信息

@@ -19,6 +19,16 @@ export interface LoginParams {
   password: string
   rememberMe: boolean
 }
+export interface RegisterParams {
+  username: string
+  password: string
+  email: string
+}
+export interface RegisterRequest {
+  username: string
+  passwordhash: string
+  email: string
+}
 export interface LoginRequest {
   username: string
   passwordhash: string
@@ -92,14 +102,28 @@ export const useUserStore = defineStore('user', () => {
       // 调用登出 API（可选）
       // await api.post('/logout')
       // 清除本地存储
-      localStorage.removeItem('token')
+      localStorage.removeItem('access_token')
       token.value = ''
       userInfo.value = null
       isLoggedIn.value = false
+      clearAllCookies()
       return Promise.resolve()
     } catch (error) {
       console.error('Logout failed:', error)
       return Promise.reject(error)
+    }
+  }
+  function clearAllCookies() {
+    const cookies = document.cookie.split(';')
+    for (let i = 0; i < cookies.length; i++) {
+      let cookie = cookies[i]
+      if (cookie) {
+        // 检查 cookie 是否为空字符串
+        const eqPos = cookie.indexOf('=')
+        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim()
+        // 设置过期时间为过去，并指定 path 为 /
+        document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+      }
     }
   }
 
@@ -118,6 +142,21 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  const register = async (params: RegisterParams): Promise<boolean> => {
+    try {
+      const requestData: RegisterRequest = {
+        username: params.username,
+        passwordhash: await hashPassword(params.password),
+        email: params.email,
+      }
+      await userApi.register(requestData)
+      return true
+    } catch (error) {
+      console.error('Register failed:', error)
+      return false
+    }
+  }
+
   // 更新用户信息
   const updateUserInfo = (info: Partial<UserInfo>) => {
     if (userInfo.value) {
@@ -129,6 +168,7 @@ export const useUserStore = defineStore('user', () => {
   const refreshToken = async (): Promise<boolean> => {
     try {
       const refreshResponse = await userApi.refreshToken()
+      console.log('Refresh token response:', refreshResponse) // 打印刷新 token 的响应
       const newToken = refreshResponse.access_token
 
       // 更新存储的 token
@@ -157,6 +197,7 @@ export const useUserStore = defineStore('user', () => {
     login,
     logout,
     fetchUserInfo,
+    register,
     updateUserInfo,
     refreshToken,
   }

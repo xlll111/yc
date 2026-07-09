@@ -183,7 +183,7 @@ const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value
 }
 
-// 登录处理（模拟登录管理）
+// 登录处理
 const handleLogin = async () => {
   // 简单的前端验证
   if (!formData.username.trim()) {
@@ -217,7 +217,7 @@ const handleForgotPassword = () => {
 
 // 注册处理
 const handleSignup = () => {
-  ElMessage.info('跳转至注册页面（演示功能）')
+  router.push('/register')
 }
 </script>
 

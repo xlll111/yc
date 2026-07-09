@@ -22,6 +22,7 @@ interface RequestConfig extends AxiosRequestConfig {
   showLoading?: boolean
   showError?: boolean
   params?: Record<string, any>
+  withCredentials?: boolean
 }
 
 // 安全的消息提示（避免组件未挂载时的错误）
@@ -128,7 +129,7 @@ class Request {
           return Promise.reject(new Error(data.message))
         }
       },
-      (error: any) => {
+      async (error: any) => {
         if (error.response) {
           console.error('Error Response Data:', error.response.data)
           console.error('Error Response Status:', error.response.status)
@@ -142,14 +143,25 @@ class Request {
         // HTTP 状态码错误处理
         if (error.response) {
           const { status } = error.response
+          const data = error.response.data
+          console.error('Error Response Data:', data)
 
           switch (status) {
             case 400:
               safeMessage.error('请求参数错误')
               break
             case 401:
-              safeMessage.error('登录已过期，请重新登录')
               const userStore = useUserStore()
+              if (data && data.detail == 'Refresh token required') {
+                return
+              }
+              const newToken = await userStore.refreshToken()
+              if (newToken) {
+                error.config.headers.Authorization = `Bearer ${newToken}`
+                return axios.request(error.config)
+              }
+
+              safeMessage.error('登录已过期，请重新登录')
               userStore.logout()
               // 避免在初始化时跳转导致问题
               setTimeout(() => {
@@ -158,6 +170,7 @@ class Request {
                 }
               }, 100)
               break
+
             case 403:
               safeMessage.error('拒绝访问')
               break
@@ -186,6 +199,7 @@ class Request {
   }
 
   post<T = any>(url: string, data?: any, config?: RequestConfig): Promise<T> {
+    console.log('Post request:', url, data, config) // Post request: /auth/refresh null {withCredentials: true}
     return this.instance.post(url, data, config)
   }
 

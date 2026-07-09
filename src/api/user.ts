@@ -34,8 +34,8 @@ export const userApi = {
   },
 
   // 刷新 token
-  refreshToken(): Promise<{ token: string }> {
-    return request.post('/auth/refresh-token')
+  refreshToken(): Promise<{ access_token: string }> {
+    return request.post('/auth/refresh', null, { withCredentials: true })
   },
 
   // 获取用户列表（管理员）

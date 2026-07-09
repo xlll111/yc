@@ -32,7 +32,7 @@ export interface LoginResponse {
 
 export const useUserStore = defineStore('user', () => {
   // State
-  const token = ref<string>(localStorage.getItem('token') || '')
+  const token = ref<string>(localStorage.getItem('access_token') || '')
   const userInfo = ref<UserInfo | null>(null)
   const isLoggedIn = ref<boolean>(!!token.value)
 
@@ -67,7 +67,7 @@ export const useUserStore = defineStore('user', () => {
       const { token: newToken, userInfo: newUserInfo } = response
 
       // 保存 token 到 localStorage
-      localStorage.setItem('token', newToken)
+      localStorage.setItem('access_token', newToken)
       token.value = newToken
       userInfo.value = newUserInfo
       isLoggedIn.value = true
@@ -128,9 +128,12 @@ export const useUserStore = defineStore('user', () => {
   // 刷新 token
   const refreshToken = async (): Promise<boolean> => {
     try {
-      // const response = await api.post<{ token: string }>('/token/refresh')
-      // token.value = response.token
-      // localStorage.setItem('token', response.token)
+      const refreshResponse = await userApi.refreshToken()
+      const newToken = refreshResponse.access_token
+
+      // 更新存储的 token
+      token.value = newToken
+      localStorage.setItem('access_token', newToken)
       return true
     } catch (error) {
       console.error('Refresh token failed:', error)

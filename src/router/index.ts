@@ -3,6 +3,7 @@ import { useLoadingStore } from '@/stores/loading'
 
 const Home = () => import('@/views/Home.vue')
 const Login = () => import('@/views/Login.vue')
+const Register = () => import('@/views/Register.vue')
 const About = () => import('@/views/AboutView.vue')
 const Dash = () => import('@/views/Dash.vue')
 const ClientsList = () => import('@/views/ClientsList.vue')
@@ -35,6 +36,14 @@ const router = createRouter({
       component: Login,
       meta: {
         title: '登录',
+      },
+    },
+    {
+      path: '/register',
+      name: 'Register',
+      component: Register,
+      meta: {
+        title: '注册',
       },
     },
     {

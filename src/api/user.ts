@@ -1,6 +1,13 @@
 // api/user.ts
 import { request } from '@/utils/request'
-import type { LoginRequest, LoginResponse, UserInfo, RegisterRequest } from '@/stores/userStore'
+import type {
+  LoginRequest,
+  LoginResponse,
+  UserInfo,
+  RegisterRequest,
+  UserInfoChangeRequest,
+  UserInfoChangePasswordRequest,
+} from '@/stores/userStore'
 
 // 用户相关 API
 export const userApi = {
@@ -28,25 +35,21 @@ export const userApi = {
   },
 
   // 更新用户信息
-  updateUserInfo(data: Partial<UserInfo>): Promise<void> {
-    return request.put('/user/info', data)
+  updateUserInfo(data: Partial<UserInfoChangeRequest>): Promise<void> {
+    return request.authpost('/user/update_user_info', data)
   },
 
   // 修改密码
-  changePassword(oldPassword: string, newPassword: string): Promise<void> {
-    return request.post('/user/change-password', { oldPassword, newPassword })
+  changePassword(data: UserInfoChangePasswordRequest): Promise<void> {
+    return request.authpost('/user/change_password', data)
   },
 
   // 刷新 token
   refreshToken(): Promise<{ access_token: string }> {
     return request.post('/auth/refresh', null, { withCredentials: true })
   },
-
-  // 获取用户列表（管理员）
-  getUserList(params: { page: number; pageSize: number; keyword?: string }): Promise<{
-    list: UserInfo[]
-    total: number
-  }> {
-    return request.get('/user/list', params)
+  // 验证邮箱
+  sendEmailVerification(): Promise<void> {
+    return request.authpost('/user/send_email_verification')
   },
 }

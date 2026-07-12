@@ -6,6 +6,7 @@ const Login = () => import('@/views/Login.vue')
 const Register = () => import('@/views/Register.vue')
 const About = () => import('@/views/AboutView.vue')
 const Dash = () => import('@/views/Dash.vue')
+const User = () => import('@/views/User.vue')
 const ClientsList = () => import('@/views/ClientsList.vue')
 
 const Client = () => import('@/views/Client.vue')
@@ -119,6 +120,14 @@ const router = createRouter({
       component: About,
       meta: {
         title: '关于',
+      },
+    },
+    {
+      path: '/user',
+      name: 'User',
+      component: User,
+      meta: {
+        title: '个人中心',
       },
     },
     {

@@ -7,10 +7,19 @@ import { userApi } from '@/api/user'
 export interface UserInfo {
   id: number
   username: string
-  email?: string
+  email: string
+  emailVerified: boolean
   avatar?: string
-  role?: string
+  role: number
   permissions?: string[]
+}
+export interface UserInfoChangeRequest {
+  username?: string
+  email?: string
+}
+export interface UserInfoChangePasswordRequest {
+  oldPassword: string
+  newPassword: string
 }
 
 // 登录请求参数类型
@@ -134,6 +143,7 @@ export const useUserStore = defineStore('user', () => {
     try {
       userApi.getUserInfo(getToken.value).then((response) => {
         userInfo.value = response
+        console.log('User info fetched:', userInfo.value) // 打印用户信息
       })
       return true
     } catch (error) {
@@ -158,10 +168,33 @@ export const useUserStore = defineStore('user', () => {
   }
 
   // 更新用户信息
-  const updateUserInfo = (info: Partial<UserInfo>) => {
-    if (userInfo.value) {
-      userInfo.value = { ...userInfo.value, ...info }
+  const updateUserName = async (username: string) => {
+    if (!userInfo.value) return false
+    const requestData: Partial<UserInfoChangeRequest> = {
+      username: username,
     }
+    await userApi.updateUserInfo(requestData)
+    userInfo.value.username = username
+  }
+  const updateEmail = async (email: string) => {
+    if (!userInfo.value) return false
+    const requestData: Partial<UserInfoChangeRequest> = {
+      email: email,
+    }
+    await userApi.updateUserInfo(requestData)
+    userInfo.value.email = email
+    userInfo.value.emailVerified = false
+  }
+
+  // 更改用户密码
+  const updateUserPassword = async (oldPassword: string, newPassword: string) => {
+    if (!userInfo.value) return false
+    const requestData: UserInfoChangePasswordRequest = {
+      oldPassword: await hashPassword(oldPassword),
+      newPassword: await hashPassword(newPassword),
+    }
+    await userApi.changePassword(requestData)
+    console.log('User password updated:', newPassword) // 打印更新的密码
   }
 
   // 刷新 token
@@ -179,6 +212,13 @@ export const useUserStore = defineStore('user', () => {
       console.error('Refresh token failed:', error)
       return false
     }
+  }
+
+  const sendEmailVerification = async (): Promise<boolean> => {
+    if (!userInfo.value) return false
+    // await userApi.sendEmailVerification()
+    userInfo.value.emailVerified = true
+    return true
   }
   return {
     // State
@@ -198,7 +238,10 @@ export const useUserStore = defineStore('user', () => {
     logout,
     fetchUserInfo,
     register,
-    updateUserInfo,
+    updateUserName,
+    updateEmail,
+    updateUserPassword,
     refreshToken,
+    sendEmailVerification,
   }
 })

@@ -175,7 +175,7 @@ class Request {
               break
 
             case 403:
-              safeMessage.error('拒绝访问')
+              safeMessage.error(data?.detail || '拒绝访问')
               break
             case 404:
               safeMessage.error('请求资源不存在')

@@ -211,13 +211,13 @@ const validateForm = async () => {
   // 昵称校验
   const usernameRegex = /^[a-zA-Z0-9_]{2,}$/
   if (!form.username.trim()) {
-    errors.username = '请输入昵称'
+    errors.username = '请输入用户名'
     isValid = false
   } else if (form.username.trim().length < 2) {
-    errors.username = '昵称至少需要2个字符'
+    errors.username = '用户名至少需要2个字符'
     isValid = false
   } else if (!usernameRegex.test(form.username.trim())) {
-    errors.username = '昵称只能包含字母、数字和下划线'
+    errors.username = '用户名只能包含字母、数字和下划线'
     isValid = false
   } else {
     errors.username = ''

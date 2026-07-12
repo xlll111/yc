@@ -104,7 +104,7 @@ const computedColor = computed(() => {
 .spinner-inline {
   position: relative;
   /* min-height: 120px; */
-  /* width: 100%; */
+  width: max-content;
   background: transparent;
 }
 

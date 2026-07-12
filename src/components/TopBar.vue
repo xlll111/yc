@@ -21,6 +21,7 @@
         <a href="/docs" class="nav-link">文档</a>
         <router-link to="/dash" class="nav-link">控制台</router-link>
         <router-link to="/about" class="nav-link">关于</router-link>
+        <router-link to="/user" class="nav-link" v-if="isLoggedIn">个人中心</router-link>
         <div class="dropdown-wrapper">
           <button class="dropdown-trigger" @click="toggleDropdown">
             换源 <span class="arrow" :class="{ rotate: dropdownOpen }">▼</span>
@@ -40,6 +41,7 @@
           <span v-if="userName" class="user-name-trigger">{{ userName }}</span>
           <Spinner v-else class="user-name-trigger" inline size="tiny" />
           <div class="logout-dropdown">
+            <button class="logout-btn" @click="user" v-if="isLoggedIn">个人中心</button>
             <button class="logout-btn" @click="logout">退出登录</button>
           </div>
         </div>
@@ -60,6 +62,9 @@
             <a href="/docs" @click="closeMobileMenu">文档</a>
             <router-link to="/dash" @click="closeMobileMenu">控制台</router-link>
             <router-link to="/about" @click="closeMobileMenu">关于</router-link>
+            <router-link to="/user" @click="closeMobileMenu" v-if="isLoggedIn"
+              >个人中心</router-link
+            >
             <div class="mobile-dropdown">
               <div class="mobile-dropdown-header" @click="toggleMobileDropdown">
                 换源 <span class="arrow" :class="{ rotate: mobileDropdownOpen }">▼</span>
@@ -147,6 +152,9 @@ export default {
       if (window.innerWidth >= 768 && this.mobileMenuOpen) {
         this.closeMobileMenu()
       }
+    },
+    user() {
+      this.router.push('/user')
     },
     async logout() {
       try {

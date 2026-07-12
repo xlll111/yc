@@ -130,21 +130,21 @@ class Request {
         }
       },
       async (error: any) => {
-        if (error.response) {
-          console.error('Error Response Data:', error.response.data)
-          console.error('Error Response Status:', error.response.status)
-          console.error('Error Response Headers:', error.response.headers)
-        } else if (error.request) {
-          console.error('No response received:', error.request)
-        } else {
-          console.error('Error message:', error.message)
-        }
+        // if (error.response) {
+        //   console.error('Error Response Data:', error.response.data)
+        //   console.error('Error Response Status:', error.response.status)
+        //   console.error('Error Response Headers:', error.response.headers)
+        // } else if (error.request) {
+        //   console.error('No response received:', error.request)
+        // } else {
+        //   console.error('Error message:', error.message)
+        // }
 
         // HTTP 状态码错误处理
         if (error.response) {
           const { status } = error.response
           const data = error.response.data
-          console.error('Error Response Data:', data)
+          console.error('Error Response response:', error.response)
 
           switch (status) {
             case 400:
@@ -152,14 +152,13 @@ class Request {
               break
             case 401:
               const userStore = useUserStore()
-              if (data && data.detail == 'Refresh token required') {
-                return
-              }
+              console.log('error config url: ', error?.config?.url)
+              if (error?.config?.url === '/auth/refresh') return
               const getnewToken = await userStore.refreshToken()
               if (getnewToken) {
                 error.config.headers.Authorization = `Bearer ${userStore.getToken}`
                 const result = await axios.request(error.config)
-                console.log('Result:', result)
+                // console.log('Result:', result)
                 // console.log('Result data:', result?.data?.data) // Result data: {data: {token: "newToken"}}
                 return result?.data?.data
               }

@@ -96,8 +96,10 @@
                 stroke="currentColor"
                 stroke-width="2"
               >
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
+                <path
+                  d="M22 6.5L12 13 2 6.5M2 6.5L12 3l10 3.5M22 6.5V18a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6.5"
+                />
+                <polyline points="2,6.5 12,13 22,6.5" />
               </svg>
               修改邮箱
             </span>

@@ -18,7 +18,7 @@ export const userApi = {
 
   // 登出
   logout(): Promise<void> {
-    return request.post('/auth/logout')
+    return request.post('/auth/logout', null, { withCredentials: true })
   },
 
   // 获取用户信息

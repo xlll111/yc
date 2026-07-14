@@ -152,8 +152,8 @@ class Request {
               break
             case 401:
               const userStore = useUserStore()
-              console.log('error config url: ', error?.config?.url)
               if (error?.config?.url === '/auth/refresh') return
+              if (data?.detail === '用户名或密码错误') return
               const getnewToken = await userStore.refreshToken()
               if (getnewToken) {
                 error.config.headers.Authorization = `Bearer ${userStore.getToken}`

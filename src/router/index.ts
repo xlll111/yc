@@ -8,6 +8,7 @@ const About = () => import('@/views/AboutView.vue')
 const Dash = () => import('@/views/Dash.vue')
 const User = () => import('@/views/User.vue')
 const ClientsList = () => import('@/views/ClientsList.vue')
+const EmailVerify = () => import('@/views/EmailVerify.vue')
 
 const Client = () => import('@/views/Client.vue')
 const Overview = () => import('@/views/client/Overview.vue')
@@ -137,6 +138,14 @@ const router = createRouter({
         window.location.replace('/docs')
       },
       component: Home,
+    },
+    {
+      path: '/email_verify',
+      name: 'EmailVerify',
+      component: EmailVerify,
+      meta: {
+        title: '邮箱验证',
+      },
     },
     {
       path: '/d',

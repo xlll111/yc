@@ -216,10 +216,14 @@ export const useUserStore = defineStore('user', () => {
 
   const sendEmailVerification = async (): Promise<boolean> => {
     if (!userInfo.value) return false
-    // await userApi.sendEmailVerification()
-    userInfo.value.emailVerified = true
+    await userApi.sendEmailVerification()
     return true
   }
+  const emailVerify = async (token: string) => {
+    await userApi.emailVerify(token)
+    return true
+  }
+
   return {
     // State
     token,
@@ -243,5 +247,6 @@ export const useUserStore = defineStore('user', () => {
     updateUserPassword,
     refreshToken,
     sendEmailVerification,
+    emailVerify,
   }
 })

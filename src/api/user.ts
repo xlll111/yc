@@ -52,4 +52,8 @@ export const userApi = {
   sendEmailVerification(): Promise<void> {
     return request.authpost('/user/send_email_verification')
   },
+  // 验证邮箱
+  emailVerify(token: string): Promise<void> {
+    return request.post('/user/verify_email', { token })
+  },
 }

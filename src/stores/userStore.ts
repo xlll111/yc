@@ -111,11 +111,11 @@ export const useUserStore = defineStore('user', () => {
       // 调用登出 API（可选）
       // await api.post('/logout')
       // 清除本地存储
+      await userApi.logout()
       localStorage.removeItem('access_token')
       token.value = ''
       userInfo.value = null
       isLoggedIn.value = false
-      clearAllCookies()
       return Promise.resolve()
     } catch (error) {
       console.error('Logout failed:', error)

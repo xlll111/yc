@@ -56,4 +56,7 @@ export const userApi = {
   emailVerify(token: string): Promise<void> {
     return request.post('/user/verify_email', { token })
   },
+  getDingtalkVerificationToken(): Promise<{ dingtalk_verification_token: string }> {
+    return request.authget('/user/get_dingtalk_verification_token')
+  },
 }

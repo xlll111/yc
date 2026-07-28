@@ -122,19 +122,6 @@ export const useUserStore = defineStore('user', () => {
       return Promise.reject(error)
     }
   }
-  function clearAllCookies() {
-    const cookies = document.cookie.split(';')
-    for (let i = 0; i < cookies.length; i++) {
-      let cookie = cookies[i]
-      if (cookie) {
-        // 检查 cookie 是否为空字符串
-        const eqPos = cookie.indexOf('=')
-        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim()
-        // 设置过期时间为过去，并指定 path 为 /
-        document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-      }
-    }
-  }
 
   // 获取用户信息
   const fetchUserInfo = async (): Promise<boolean> => {
@@ -143,7 +130,7 @@ export const useUserStore = defineStore('user', () => {
     try {
       userApi.getUserInfo(getToken.value).then((response) => {
         userInfo.value = response
-        console.log('User info fetched:', userInfo.value) // 打印用户信息
+        // console.log('User info fetched:', userInfo.value) // 打印用户信息
       })
       return true
     } catch (error) {
@@ -224,6 +211,13 @@ export const useUserStore = defineStore('user', () => {
     return true
   }
 
+  const fetchDingtalkVerificationToken = async () => {
+    if (!userInfo.value) return false
+    const response = await userApi.getDingtalkVerificationToken()
+    console.log('Dingtalk verification token:', response) // 打印钉钉验证 token
+    return response.dingtalk_verification_token
+  }
+
   return {
     // State
     token,
@@ -248,5 +242,6 @@ export const useUserStore = defineStore('user', () => {
     refreshToken,
     sendEmailVerification,
     emailVerify,
+    fetchDingtalkVerificationToken,
   }
 })

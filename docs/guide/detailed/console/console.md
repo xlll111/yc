@@ -1,10 +1,10 @@
 # 控制台
 
-https://yc.xlll.dpdns.org/dash/clients
+<https://yc.xlll.dpdns.org/dash/clients>
 
 ::: warning 注意
 
-无法在运行着客户端的设备上登录控制台
+~~无法在运行着客户端的设备上登录控制台~~
 
 :::
 

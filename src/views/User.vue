@@ -313,7 +313,6 @@
               >
                 获取绑定指令
               </button>
-
               <!-- 复制命令按钮 -->
               <button
                 class="modal-btn secondary"

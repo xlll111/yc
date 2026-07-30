@@ -299,13 +299,20 @@
           </div>
           <div v-else-if="modalType === 'dingtalk'">
             <p class="modal-hint">点击获取绑定指令，指令有效期为5分钟</p>
+            <p class="modal-hint">需要完成邮箱验证且权限等级1级及以上</p>
             <!-- 显示命令区域 -->
             <div class="command-display" v-if="bindCommand">
               <pre class="command-text">{{ bindCommand }}</pre>
             </div>
             <div class="modal-row">
               <!-- 获取绑定命令按钮 -->
-              <button class="modal-btn primary" @click="fetchBindCommand">获取绑定指令</button>
+              <button
+                class="modal-btn primary"
+                @click="fetchBindCommand"
+                :disabled="isHandlingConfirm"
+              >
+                获取绑定指令
+              </button>
 
               <!-- 复制命令按钮 -->
               <button
@@ -429,6 +436,7 @@ const sendCaptcha = (phone) => {
 }
 
 const fetchBindCommand = async () => {
+  isHandlingConfirm.value = true
   try {
     const dingtalkToken = await userStore.fetchDingtalkVerificationToken()
     const payload = {
@@ -436,8 +444,12 @@ const fetchBindCommand = async () => {
     }
     const jsonString = JSON.stringify(payload)
     bindCommand.value = `#绑定用户 ${jsonString}`
+    ElMessage.success('绑定指令获取成功')
   } catch (error) {
+    ElMessage.error('获取绑定指令失败')
     console.error('获取绑定指令失败:', error)
+  } finally {
+    isHandlingConfirm.value = false
   }
 }
 
@@ -1073,6 +1085,7 @@ const checkMxRecord = async (domain) => {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 .captcha-row {
   display: flex;
@@ -1161,11 +1174,8 @@ const checkMxRecord = async (domain) => {
   background: #1e40af;
   color: #ffffff;
 }
-.modal-btn.primary:hover {
+.modal-btn.primary:hover:not(:disabled) {
   background: #1a3a9e;
-}
-.modal-btn.primary:active {
-  background: #0958d9;
 }
 
 .modal-btn.secondary {

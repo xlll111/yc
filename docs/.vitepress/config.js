@@ -122,6 +122,16 @@ export default defineConfig({
               link: '/guide/detailed/console/console',
               items: [{ text: '联网控制', link: '/guide/nan' }],
             },
+            {
+              text: '个人中心',
+              collapsed: true,
+              items: [
+                {
+                  text: '绑定钉钉',
+                  link: '/guide/detailed/user/dingtalkbind',
+                },
+              ],
+            },
           ],
         },
       ],

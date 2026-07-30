@@ -183,7 +183,7 @@ class Request {
               safeMessage.error(data?.detail?.[0]?.msg || '请求参数错误')
               break
             case 500:
-              safeMessage.error('服务器内部错误')
+              safeMessage.error(data?.detail || '服务器内部错误')
               break
             default:
               safeMessage.error(`连接错误: ${error.message}`)

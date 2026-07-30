@@ -8,6 +8,7 @@ const About = () => import('@/views/AboutView.vue')
 const Dash = () => import('@/views/Dash.vue')
 const User = () => import('@/views/User.vue')
 const ClientsList = () => import('@/views/ClientsList.vue')
+const GlobalSetting = () => import('@/views/GlobalSetting.vue')
 const EmailVerify = () => import('@/views/EmailVerify.vue')
 
 const Client = () => import('@/views/Client.vue')
@@ -104,6 +105,11 @@ const router = createRouter({
               component: Blank,
             },
           ],
+        },
+        {
+          path: 'global_settings',
+          name: 'GlobalSetting',
+          component: GlobalSetting,
         },
         {
           path: ':pathMatch(.*)*',

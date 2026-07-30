@@ -324,7 +324,9 @@
                 复制命令
               </button>
               <!-- 查看完整教程链接按钮 -->
-              <a href="//yc.xlll.dpdns.org/docs/" class="modal-link">查看完整教程</a>
+              <a href="//yc.xlll.dpdns.org/docs/guide/detailed/user/dingtalkbind" class="modal-link"
+                >查看完整教程</a
+              >
             </div>
           </div>
           <div v-else-if="modalType === 'wechat'">

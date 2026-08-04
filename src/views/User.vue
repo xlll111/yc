@@ -714,6 +714,7 @@ const handleModalConfirm = async () => {
           if (data?.captcha_id) {
             tempShxzhyCaptchaId.value = data.captcha_id
             shxzhyCaptchaImageBase64.value = data.captcha_image_base64
+            tempShxzhyCaptchaValue.value = ''
           }
           ElMessage.error(result?.details || '慧云认证失败')
         }

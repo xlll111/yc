@@ -333,7 +333,7 @@ const checkMxRecord = async (domain) => {
 /* 全局变量定义来自父组件约束，这里仅使用 */
 .register-page {
   width: 100%;
-  max-width: 1200px;
+  /* max-width: 1200px; */
   margin: 0 auto;
   padding: 24px;
   box-sizing: border-box;

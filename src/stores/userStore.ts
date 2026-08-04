@@ -193,7 +193,7 @@ export const useUserStore = defineStore('user', () => {
 
       // 更新存储的 token
       token.value = newToken
-      localStorage.setItem('access_token', newToken)
+      // localStorage.setItem('access_token', newToken)
       return true
     } catch (error) {
       console.error('Refresh token failed:', error)
@@ -211,10 +211,22 @@ export const useUserStore = defineStore('user', () => {
     return true
   }
 
+  const shxzhyVerify = async (
+    userName: string,
+    password: string,
+    captchaId: string,
+    captchaValue: string,
+  ) => {
+    if (!userInfo.value) return false
+    const result = await userApi.shxzhyVerify(userName, password, captchaId, captchaValue)
+    // console.log('shxzhyVerify result:', result) // 打印验证结果
+    return result
+  }
+
   const fetchDingtalkVerificationToken = async () => {
     if (!userInfo.value) return false
     const response = await userApi.getDingtalkVerificationToken()
-    console.log('Dingtalk verification token:', response) // 打印钉钉验证 token
+    // console.log('Dingtalk verification token:', response) // 打印钉钉验证 token
     return response.dingtalk_verification_token
   }
 
@@ -242,6 +254,7 @@ export const useUserStore = defineStore('user', () => {
     refreshToken,
     sendEmailVerification,
     emailVerify,
+    shxzhyVerify,
     fetchDingtalkVerificationToken,
   }
 })

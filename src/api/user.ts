@@ -56,6 +56,23 @@ export const userApi = {
   emailVerify(token: string): Promise<void> {
     return request.post('/user/verify_email', { token })
   },
+  shxzhyVerify(
+    userName: string,
+    password: string,
+    captchaId: string,
+    captchaValue: string,
+  ): Promise<Object> {
+    if (captchaId && captchaValue) {
+      return request.authpost('/user/shxzhy_verify', {
+        userName,
+        password,
+        captchaId,
+        captchaValue,
+      })
+    } else {
+      return request.authpost('/user/shxzhy_verify', { userName, password })
+    }
+  },
   getDingtalkVerificationToken(): Promise<{ dingtalk_verification_token: string }> {
     return request.authget('/user/get_dingtalk_verification_token')
   },

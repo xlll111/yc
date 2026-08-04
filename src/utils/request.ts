@@ -124,6 +124,8 @@ class Request {
         } else if (data.code === 403) {
           safeMessage.error('没有权限访问')
           return Promise.reject(new Error(data.message))
+        } else if (data.code === 429) {
+          return data.data
         } else {
           safeMessage.error(data.message || '请求失败')
           return Promise.reject(new Error(data.message))

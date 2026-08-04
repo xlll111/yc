@@ -13,6 +13,6 @@ import { request } from '@/utils/request1'
 // } from '@/stores/clientStore'
 export const fileApi = {
   getScreenshots(uuid: string, warn_time: string): Promise<Record<any, any>> {
-    return request.get('/api/get_screenshots', null, { params: { uuid, warn_time } })
+    return request.authget('/api/get_screenshots', null, { params: { uuid, warn_time } })
   },
 }

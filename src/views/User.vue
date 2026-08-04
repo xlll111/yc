@@ -170,6 +170,33 @@
             </svg>
           </div>
 
+          <div class="action-item highlight" @click="handleshxzhyVerify" v-if="userRole < 1">
+            <span class="action-label">
+              <svg
+                class="action-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M22 6.5L12 13 2 6.5M2 6.5L12 3l10 3.5M22 6.5V18a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6.5"
+                />
+                <polyline points="2,6.5 12,13 22,6.5" />
+              </svg>
+              慧云认证
+            </span>
+            <svg
+              class="arrow-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </div>
+
           <div class="action-item" @click="handleBindDingtalk">
             <span class="action-label">
               <svg
@@ -297,6 +324,27 @@
             <p class="modal-hint">点击确认，验证邮件将发送至您的邮箱，请查收并点击链接完成验证。</p>
             <p class="modal-hint small">邮箱：{{ userInfo.email }}</p>
           </div>
+          <div v-else-if="modalType === 'shxzhy'">
+            <p class="modal-hint">我们将调用行知·慧云的登录接口验证您的身份</p>
+            <p class="modal-hint">您的数据只将用于验证身份，您无法使用行知·慧云账号登录YCService</p>
+            <label class="modal-label">慧云账号</label>
+            <input v-model="tempShxzhyUsername" class="modal-input" placeholder="请输入慧云账号" />
+            <label class="modal-label">慧云密码</label>
+            <input
+              v-model="tempShxzhyPassword"
+              class="modal-input password-mask"
+              placeholder="请输入慧云密码"
+            />
+            <label class="modal-label" v-if="tempShxzhyCaptchaId">验证码</label>
+            <input
+              v-model="tempShxzhyCaptchaValue"
+              class="modal-input"
+              placeholder="请输入验证码"
+              v-if="tempShxzhyCaptchaId"
+            />
+            <img v-if="tempShxzhyCaptchaId" :src="shxzhyCaptchaImageBase64" alt="" />
+          </div>
+
           <div v-else-if="modalType === 'dingtalk'">
             <p class="modal-hint">点击获取绑定指令，指令有效期为5分钟</p>
             <p class="modal-hint">需要完成邮箱验证且权限等级1级及以上</p>
@@ -376,6 +424,7 @@ if (!userStore.isLoggedIn) {
 }
 const userInfo = computed(() => userStore.userInfo)
 const userInfoLoaded = computed(() => userInfo.value !== null)
+const userRole = computed(() => userInfo.value?.role || 0)
 console.log('User info:', userInfo.value)
 
 const modalVisible = ref(false)
@@ -386,6 +435,11 @@ const tempEMail = ref('')
 const oldPassword = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
+const tempShxzhyUsername = ref('')
+const tempShxzhyPassword = ref('')
+const tempShxzhyCaptchaId = ref('')
+const tempShxzhyCaptchaValue = ref('')
+const shxzhyCaptchaImageBase64 = ref('')
 const tempPhone = ref('')
 const tempCaptcha = ref('')
 const bindCommand = ref('')
@@ -468,6 +522,11 @@ const openModal = (type, title) => {
   oldPassword.value = ''
   newPassword.value = ''
   confirmPassword.value = ''
+  tempShxzhyUsername.value = ''
+  tempShxzhyPassword.value = ''
+  tempShxzhyCaptchaId.value = ''
+  tempShxzhyCaptchaValue.value = ''
+  shxzhyCaptchaImageBase64.value = ''
   tempPhone.value = ''
   tempCaptcha.value = ''
 }
@@ -491,6 +550,10 @@ const handleChangePassword = () => {
 const handleVerifyEmail = async () => {
   openModal('emailverify', '邮箱验证')
 }
+const handleshxzhyVerify = async () => {
+  openModal('shxzhy', '慧云认证')
+}
+
 const handleBindDingtalk = async () => {
   openModal('dingtalk', '绑定钉钉')
 }
@@ -574,6 +637,25 @@ const handleModalFormatCheck = async () => {
       case 'emailverify': {
         break
       }
+      case 'shxzhy': {
+        if (!tempShxzhyUsername.value.trim()) {
+          ElMessage.error('账号不能为空')
+          return
+        } else if (!tempShxzhyPassword.value.trim()) {
+          ElMessage.error('密码不能为空')
+          return
+        } else if (tempShxzhyPassword.value.trim().length < 6) {
+          ElMessage.error('密码长度至少为6个字符')
+          return
+        } else if (tempShxzhyCaptchaId.value && !tempShxzhyCaptchaValue.value.trim()) {
+          ElMessage.error('请输入验证码')
+          return
+        }
+        break
+      }
+      case 'dingtalk': {
+        break
+      }
       case 'wechat': {
         break
       }
@@ -614,6 +696,27 @@ const handleModalConfirm = async () => {
         await userStore.sendEmailVerification()
         ElMessage.success('验证邮件已发送')
         closeModal()
+        break
+      }
+      case 'shxzhy': {
+        const result = await userStore.shxzhyVerify(
+          tempShxzhyUsername.value,
+          tempShxzhyPassword.value,
+          tempShxzhyCaptchaId.value,
+          tempShxzhyCaptchaValue.value,
+        )
+        if (result.success) {
+          await userStore.fetchUserInfo()
+          ElMessage.success('慧云认证成功')
+          closeModal()
+        } else {
+          const data = result.data
+          if (data?.captcha_id) {
+            tempShxzhyCaptchaId.value = data.captcha_id
+            shxzhyCaptchaImageBase64.value = data.captcha_image_base64
+          }
+          ElMessage.error(result?.details || '慧云认证失败')
+        }
         break
       }
       case 'wechat': {
@@ -1122,7 +1225,10 @@ const checkMxRecord = async (domain) => {
 .captcha-btn:hover {
   background: #1a3a9e;
 }
-
+.password-mask {
+  -webkit-text-security: disc; /* Chrome, Safari, Edge */
+  text-security: disc; /* 标准属性 */
+}
 .modal-footer {
   display: flex;
   justify-content: flex-end;

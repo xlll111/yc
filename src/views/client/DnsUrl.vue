@@ -304,7 +304,6 @@ const formatHour = (hourKey) => {
 // 获取 DNS 记录
 const fetchDnsUrlRecords = async (isLoadMore = false) => {
   if (!selectedDate.value) return
-
   if (!isLoadMore) {
     loading.value = true
     currentPage.value = 1

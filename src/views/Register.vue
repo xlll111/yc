@@ -231,9 +231,6 @@ const validateForm = async () => {
   } else if (!emailRegex.test(form.email.trim())) {
     errors.email = '请输入有效的邮箱地址'
     isValid = false
-  } else if (!(await checkMxRecord(form.email.trim().split('@')[1]))) {
-    errors.email = '域名无效，请检查邮箱地址'
-    isValid = false
   } else {
     errors.email = ''
   }

@@ -188,7 +188,7 @@ export const useUserStore = defineStore('user', () => {
   const refreshToken = async (): Promise<boolean> => {
     try {
       const refreshResponse = await userApi.refreshToken()
-      console.log('Refresh token response:', refreshResponse) // 打印刷新 token 的响应
+      // console.log('Refresh token response:', refreshResponse) // 打印刷新 token 的响应
       const newToken = refreshResponse.access_token
 
       // 更新存储的 token

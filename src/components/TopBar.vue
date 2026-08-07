@@ -30,6 +30,7 @@
             <a href="https://yc-g.xlll.dpdns.org/" @click="closeMobileMenu">Github</a>
             <a href="https://yc-c.xlll.dpdns.org/" @click="closeMobileMenu">Cloudflare</a>
             <a href="https://yc-v.xlll.dpdns.org/" @click="closeMobileMenu">Vercel</a>
+            <a href="https://yc-o.xlll.dpdns.org/" @click="closeMobileMenu">EdgeOne</a>
           </div>
         </div>
       </nav>
@@ -73,6 +74,7 @@
                 <a href="https://yc-g.xlll.dpdns.org/" @click="closeMobileMenu">Github</a>
                 <a href="https://yc-c.xlll.dpdns.org/" @click="closeMobileMenu">Cloudflare</a>
                 <a href="https://yc-v.xlll.dpdns.org/" @click="closeMobileMenu">Vercel</a>
+                <a href="https://yc-o.xlll.dpdns.org/" @click="closeMobileMenu">EdgeOne</a>
               </div>
             </div>
           </div>

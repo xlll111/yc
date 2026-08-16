@@ -552,14 +552,14 @@ input:focus-visible + .slider {
   }
 
   .toggle-item {
-    flex-direction: column;
-    align-items: flex-start;
+    /* flex-direction: column; */
+    /* align-items: flex-start; */
     gap: 12px;
   }
 
   .switch {
     margin-left: 0;
-    align-self: flex-start;
+    /* align-self: flex-start; */
   }
 
   .curfew-time-picker {

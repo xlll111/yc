@@ -7,6 +7,7 @@ import type {
   RegisterRequest,
   UserInfoChangeRequest,
   UserInfoChangePasswordRequest,
+  USerGlobalSettings,
 } from '@/stores/userStore'
 
 // 用户相关 API
@@ -75,5 +76,14 @@ export const userApi = {
   },
   getDingtalkVerificationToken(): Promise<{ dingtalk_verification_token: string }> {
     return request.authget('/user/get_dingtalk_verification_token')
+  },
+  getGlobalSettings(): Promise<USerGlobalSettings> {
+    return request.authget('/user/get_global_settings')
+  },
+  getDingtalkFileTransferClients(): Promise<string[]> {
+    return request.authget('/user/get_dingtalk_file_transfer_clients')
+  },
+  updateGlobalSettings(userGlobalSettings: Partial<USerGlobalSettings>): Promise<void> {
+    return request.authpost('/user/update_global_settings', { userGlobalSettings })
   },
 }

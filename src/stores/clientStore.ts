@@ -114,7 +114,8 @@ export const useClientStore = defineStore('client', () => {
   const getCurrentDNSUrlRecords = computed(() => currentDNSUrlRecords.value)
   // Actions
   const fetchClients = async (): Promise<clientInfo[]> => {
-    const data = clientApi.getClients()
+    const data = await clientApi.getClients()
+    console.log('fetching clients', data)
     return data
   }
   const fetchClientByUUID = async () => {

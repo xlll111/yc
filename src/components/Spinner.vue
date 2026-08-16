@@ -141,24 +141,32 @@ const computedColor = computed(() => {
 .spinner-tiny .spinner-text {
   font-size: 11px;
 }
+.spinner-tiny .spinner-wrapper {
+  gap: 4px;
+}
+/* small */
 .spinner-small .spinner-svg {
   width: 32px;
   height: 32px;
 }
-
 .spinner-small .spinner-text {
   font-size: 13px;
 }
-
+.spinner-small .spinner-wrapper {
+  gap: 8px;
+}
+/* medium */
 .spinner-medium .spinner-svg {
   width: 48px;
   height: 48px;
 }
-
 .spinner-medium .spinner-text {
   font-size: 15px;
 }
-
+.spinner-medium .spinner-wrapper {
+  gap: 12px;
+}
+/* large */
 .spinner-large .spinner-svg {
   width: 64px;
   height: 64px;
@@ -167,7 +175,9 @@ const computedColor = computed(() => {
 .spinner-large .spinner-text {
   font-size: 17px;
 }
-
+.spinner-large .spinner-wrapper {
+  gap: 16px;
+}
 /* 文本样式 */
 .spinner-text {
   margin: 0;

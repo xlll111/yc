@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { userApi } from '@/api/user'
-
+import { defineAsyncState } from './AsyncState'
 // 用户信息类型定义
 export interface UserInfo {
   id: number
@@ -12,6 +12,11 @@ export interface UserInfo {
   avatar?: string
   role: number
   permissions?: string[]
+}
+export interface USerGlobalSettings {
+  id: number
+  dingtalkFileTransfer: boolean
+  dingtalkFileTransferClientList?: string[]
 }
 export interface UserInfoChangeRequest {
   username?: string
@@ -53,11 +58,13 @@ export const useUserStore = defineStore('user', () => {
   // State
   const token = ref<string>(localStorage.getItem('access_token') || '')
   const userInfo = ref<UserInfo | null>(null)
+  const globalSettings = ref<USerGlobalSettings | null>(null)
   const isLoggedIn = ref<boolean>(!!token.value)
 
   // Getters
   const getUserInfo = computed(() => userInfo.value)
   const getToken = computed(() => token.value)
+  const getGlobalSettings = defineAsyncState(globalSettings, 'object')
   const getIsLoggedIn = computed(() => isLoggedIn.value)
   const getUserRole = computed(() => userInfo.value?.role || '')
   const getUserPermissions = computed(() => userInfo.value?.permissions || [])
@@ -115,6 +122,7 @@ export const useUserStore = defineStore('user', () => {
       localStorage.removeItem('access_token')
       token.value = ''
       userInfo.value = null
+      globalSettings.value = null
       isLoggedIn.value = false
       return Promise.resolve()
     } catch (error) {
@@ -193,7 +201,7 @@ export const useUserStore = defineStore('user', () => {
 
       // 更新存储的 token
       token.value = newToken
-      // localStorage.setItem('access_token', newToken)
+      localStorage.setItem('access_token', newToken)
       return true
     } catch (error) {
       console.error('Refresh token failed:', error)
@@ -224,20 +232,50 @@ export const useUserStore = defineStore('user', () => {
   }
 
   const fetchDingtalkVerificationToken = async () => {
-    if (!userInfo.value) return false
+    if (!token.value) return false
     const response = await userApi.getDingtalkVerificationToken()
     // console.log('Dingtalk verification token:', response) // 打印钉钉验证 token
     return response.dingtalk_verification_token
+  }
+
+  const fetchGlobalSettings = async () => {
+    if (!token.value) return false
+    try {
+      const response: USerGlobalSettings = await userApi.getGlobalSettings()
+      globalSettings.value = response
+      console.log('Global settings:', response) // 打印全局设置
+    } catch (error) {
+      console.error('Fetch global settings failed:', error)
+      globalSettings.value = {
+        id: -1,
+        dingtalkFileTransfer: false,
+      }
+      return false
+    }
+  }
+  const fetchDingtalkFileTransferClients = async () => {
+    if (!token.value) return false
+    const result: string[] = await userApi.getDingtalkFileTransferClients()
+    return result
+  }
+  const updateUerGlobalSettings = async (settings: USerGlobalSettings) => {
+    if (!token.value) return false
+    await userApi.updateGlobalSettings(settings)
+    globalSettings.value = settings
+    // console.log('Global settings updated:', settings) // 打印更新后的全局设置
+    return true
   }
 
   return {
     // State
     token,
     userInfo,
+    globalSettings,
     isLoggedIn,
     // Getters
     getUserInfo,
     getToken,
+    getGlobalSettings,
     getIsLoggedIn,
     getUserRole,
     getUserPermissions,
@@ -256,5 +294,8 @@ export const useUserStore = defineStore('user', () => {
     emailVerify,
     shxzhyVerify,
     fetchDingtalkVerificationToken,
+    fetchGlobalSettings,
+    fetchDingtalkFileTransferClients,
+    updateUerGlobalSettings,
   }
 })

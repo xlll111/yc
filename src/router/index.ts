@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useLoadingStore } from '@/stores/loading'
-
+import { useUserStore } from '@/stores/userStore'
+import { ElMessage } from 'element-plus'
+import 'element-plus/es/components/message/style/css'
 const Home = () => import('@/views/Home.vue')
 const Login = () => import('@/views/Login.vue')
 const Register = () => import('@/views/Register.vue')
@@ -191,6 +193,41 @@ router.beforeEach((to, from) => {
   }, 400)
 
   return true
+})
+
+router.beforeEach(async (to, from) => {
+  const userStore = useUserStore()
+  const checkLogin = async () => {
+    if (!userStore.getIsLoggedIn) {
+      ElMessage.error('请先登录')
+      router.push('/login')
+      return false
+    }
+    return true
+  }
+  const checkUserRole = async () => {
+    try {
+      if (!(await userStore.checkUserRole(1))) {
+        ElMessage.warning('您没有权限查看控制台')
+        ElMessage.warning('请完成用户验证')
+        router.push('/user')
+        return false
+      }
+      return true
+    } catch (error) {
+      ElMessage.error(`用户验证失败: ${error}`)
+      return false
+    }
+  }
+  const newPath = to.path
+  const oldPath = from.path
+  if (newPath === oldPath) return
+  if (newPath === '/dash') {
+    if ((await checkLogin()) && (await checkUserRole())) router.push('/dash/clients')
+  } else if (newPath.startsWith('/dash')) {
+    await checkLogin()
+    await checkUserRole()
+  }
 })
 
 router.afterEach((to, from) => {

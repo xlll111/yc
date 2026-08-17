@@ -142,11 +142,7 @@ import 'element-plus/es/components/message/style/css'
 import Spinner from '@/components/Spinner.vue'
 
 import { useClientStore } from '@/stores/clientStore'
-
-// 模拟 API 调用 - 请在实际项目中替换为真实的 API 请求
-const mockFetchClients = async () => {
-  return await clientStore.fetchClients()
-}
+import { useUserStore } from '@/stores/userStore'
 
 const router = useRouter()
 const $filters = inject('$filters')
@@ -154,6 +150,7 @@ const clients = ref([])
 const loading = ref(false)
 const error = ref(null)
 const clientStore = useClientStore()
+const userStore = useUserStore()
 
 // 截取 UUID 显示 (前8位 + ... + 后4位)
 const truncateUuid = (uuid) => {
@@ -168,7 +165,7 @@ const fetchClients = async () => {
   clients.value = []
 
   try {
-    const data = await mockFetchClients()
+    const data = await clientStore.fetchClients()
     // 按 lastSeen 从新到旧排序
     const sortedData = [...data].sort((a, b) => {
       return new Date(b.lastSeen) - new Date(a.lastSeen)
@@ -196,7 +193,7 @@ const isOnline = (lastSeen) => {
   const diff = new Date().getTime() - new Date(lastSeen).getTime()
   return Math.abs(diff) < 120000 // 2分钟内视为在线
 }
-onMounted(() => {
+onMounted(async () => {
   fetchClients()
 })
 </script>

@@ -14,26 +14,36 @@ import 'element-plus/es/components/message/style/css'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
-const checkLogin = () => {
-  if (!userStore.getIsLoggedIn) {
-    ElMessage.error('请先登录')
-    router.push('/login')
-    return false
-  }
-  return true
-}
-watch(
-  () => route.path,
-  (newPath, oldPath) => {
-    if (newPath === oldPath) return
-    if (newPath === '/dash') {
-      if (checkLogin()) router.push('/dash/clients')
-    } else if (newPath.startsWith('/dash')) {
-      checkLogin()
-    }
-  },
-  { immediate: true },
-)
+// const checkLogin = async () => {
+//   if (!userStore.getIsLoggedIn) {
+//     ElMessage.error('请先登录')
+//     router.push('/login')
+//     return false
+//   }
+//   return true
+// }
+// const checkUserRole = async () => {
+//   if (!(await userStore.checkUserRole(1))) {
+//     ElMessage.warning('您没有权限查看控制台')
+//     ElMessage.warning('请完成用户验证')
+//     router.push('/user')
+//     return false
+//   }
+//   return true
+// }
+// watch(
+//   () => route.path,
+//   async (newPath, oldPath) => {
+//     if (newPath === oldPath) return
+//     if (newPath === '/dash') {
+//       if ((await checkLogin()) && (await checkUserRole())) router.push('/dash/clients')
+//     } else if (newPath.startsWith('/dash')) {
+//       await checkLogin()
+//       await checkUserRole()
+//     }
+//   },
+//   { immediate: true },
+// )
 </script>
 <style>
 #dash {

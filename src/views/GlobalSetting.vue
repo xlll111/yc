@@ -29,7 +29,7 @@
             <label class="switch">
               <ToggleSwitch
                 :model-value="form.dingtalkFileTransfer"
-                @update:model-value="form.dingtalkFileTransfer = $event"
+                @update:model-value="dingtalkFileTransferToggle($event)"
                 aria-label="启用钉钉文件推送"
               />
             </label>
@@ -136,8 +136,6 @@ import 'element-plus/dist/index.css'
 import { ElInput, ElButton, ElCheckboxGroup, ElCheckbox } from 'element-plus'
 
 const clientStore = useClientStore()
-const clientSettings = clientStore.getCurrentClientSettings
-
 const userStore = useUserStore()
 const globalSettings = userStore.getGlobalSettings
 
@@ -163,6 +161,13 @@ const saveSettings = async () => {
   } finally {
     isSaving.value = false
   }
+}
+const dingtalkFileTransferToggle = async (value) => {
+  if (value && !userStore.getUserInfo.dingtalkFileTransfer) {
+    ElMessage.error('该功能需要绑定钉钉账号')
+    return
+  }
+  form.dingtalkFileTransfer = value
 }
 // ---------- 客户端选择相关状态 ----------
 const clientList = ref([]) // 所有客户端
@@ -242,10 +247,9 @@ const fetchDingTalkFileTransferClients = async () => {
 }
 
 const getCurrentGlobalSettings = async () => {
-  console.log(globalSettings.loaded, globalSettings.error, globalSettings.data)
   if (!globalSettings.loaded || globalSettings.error) await userStore.fetchGlobalSettings()
   if (globalSettings.loaded && !globalSettings.error) Object.assign(form, globalSettings.data)
-  console.log('设置已加载:', form)
+  // console.log('设置已加载:', form)
 }
 const fetchAllData = async () => {
   await Promise.all([

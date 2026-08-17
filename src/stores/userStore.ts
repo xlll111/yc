@@ -11,6 +11,7 @@ export interface UserInfo {
   emailVerified: boolean
   avatar?: string
   role: number
+  dingtalkFileTransfer: boolean
   permissions?: string[]
 }
 export interface USerGlobalSettings {
@@ -66,7 +67,7 @@ export const useUserStore = defineStore('user', () => {
   const getToken = computed(() => token.value)
   const getGlobalSettings = defineAsyncState(globalSettings, 'object')
   const getIsLoggedIn = computed(() => isLoggedIn.value)
-  const getUserRole = computed(() => userInfo.value?.role || '')
+  const getUserRole = computed(() => userInfo.value?.role || 0)
   const getUserPermissions = computed(() => userInfo.value?.permissions || [])
 
   // 检查是否有某个权限
@@ -91,7 +92,8 @@ export const useUserStore = defineStore('user', () => {
       }
       const response = await userApi.login(requestData)
       const { token: newToken, userInfo: newUserInfo } = response
-
+      // console.log('Login response:', response) // 打印登录响应
+      // 更新 token 和用户信息到本地存储和状态
       // 保存 token 到 localStorage
       localStorage.setItem('access_token', newToken)
       token.value = newToken
@@ -130,13 +132,18 @@ export const useUserStore = defineStore('user', () => {
       return Promise.reject(error)
     }
   }
+  const checkUserRole = async (role: number): Promise<boolean> => {
+    if (!userInfo.value) await fetchUserInfo()
+    if (!userInfo.value) return Promise.reject('User info not fetched')
+    return (userInfo.value?.role || 0) >= role
+  }
 
   // 获取用户信息
   const fetchUserInfo = async (): Promise<boolean> => {
     if (!token.value) return false
 
     try {
-      userApi.getUserInfo(getToken.value).then((response) => {
+      await userApi.getUserInfo(getToken.value).then((response) => {
         userInfo.value = response
         // console.log('User info fetched:', userInfo.value) // 打印用户信息
       })
@@ -189,7 +196,7 @@ export const useUserStore = defineStore('user', () => {
       newPassword: await hashPassword(newPassword),
     }
     await userApi.changePassword(requestData)
-    console.log('User password updated:', newPassword) // 打印更新的密码
+    // console.log('User password updated:', newPassword) // 打印更新的密码
   }
 
   // 刷新 token
@@ -243,7 +250,7 @@ export const useUserStore = defineStore('user', () => {
     try {
       const response: USerGlobalSettings = await userApi.getGlobalSettings()
       globalSettings.value = response
-      console.log('Global settings:', response) // 打印全局设置
+      // console.log('Global settings:', response) // 打印全局设置
     } catch (error) {
       console.error('Fetch global settings failed:', error)
       globalSettings.value = {
@@ -284,6 +291,7 @@ export const useUserStore = defineStore('user', () => {
     // Actions
     login,
     logout,
+    checkUserRole,
     fetchUserInfo,
     register,
     updateUserName,

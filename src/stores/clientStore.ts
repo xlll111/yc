@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { clientApi } from '@/api/clients'
 import { fileApi } from '@/api/flie'
 import { formatDateTime, isoToTimestamp, utcToLocalDate } from '@/utils/dateFilters'
+import { defineAsyncState } from './AsyncState'
 
 export interface clientInfo {
   uuid: string
@@ -66,33 +67,6 @@ export interface clientDnsUrlRecordRequest {
   page: number
   pageSize: number
 }
-type AsyncStateType = 'uuid' | 'object' | 'list' | 'listLoadingAsNull'
-
-function defineAsyncState(ref: any, type: AsyncStateType) {
-  const errorCheck = {
-    uuid: (v: any) => v?.uuid === 'error',
-    object: (v: any) => v?.id === -1,
-    list: (v: any) => v?.[0]?.id === -1,
-    listLoadingAsNull: (v: any) => v?.[0]?.id === -1,
-  }[type]
-
-  const loadedCheck = (v: any) => v !== null
-
-  const daufaultValue = {
-    uuid: null,
-    object: {},
-    list: [],
-    listLoadingAsNull: [{ id: -1, uuid: 'error', time: 'error' }],
-  }[type]
-
-  return {
-    data: computed(() =>
-      loadedCheck(ref.value) && !errorCheck(ref.value) ? ref.value : daufaultValue,
-    ),
-    loaded: computed(() => loadedCheck(ref.value)),
-    error: computed(() => errorCheck(ref.value)),
-  }
-}
 export const useClientStore = defineStore('client', () => {
   // State
   const currentClientUuid = ref<string | null>(null)
@@ -115,7 +89,7 @@ export const useClientStore = defineStore('client', () => {
   // Actions
   const fetchClients = async (): Promise<clientInfo[]> => {
     const data = await clientApi.getClients()
-    console.log('fetching clients', data)
+    // console.log('fetching clients', data)
     return data
   }
   const fetchClientByUUID = async () => {
@@ -253,7 +227,7 @@ export const useClientStore = defineStore('client', () => {
     if (currentClientUuid.value !== null) {
       try {
         const udiskList = await clientApi.getUDiskList(currentClientUuid.value)
-        console.log('udisk list', udiskList) // Debugging statement
+        // console.log('udisk list', udiskList) // Debugging statement
         if (udiskList) {
           currentUDiskList.value = udiskList
         }

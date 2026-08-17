@@ -706,6 +706,7 @@ const handleModalConfirm = async () => {
           tempShxzhyCaptchaValue.value,
         )
         if (result.success) {
+          await userStore.refreshToken()
           await userStore.fetchUserInfo()
           ElMessage.success('慧云认证成功')
           closeModal()

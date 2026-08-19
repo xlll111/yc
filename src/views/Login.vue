@@ -221,212 +221,137 @@ const handleSignup = () => {
 }
 </script>
 
-<style scoped>
-/* 重置与基础 */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+<style lang="scss" scoped>
+@import '@/styles/variables.scss';
+@import '@/styles/mixins.scss';
 
-/* 登录容器 - 使用主色作为背景点缀 */
 .login-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include flex-center;
   background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  padding: 16px;
+  padding: $spacing-8;
   flex: auto;
 }
 
-/* 登录卡片 - 符合规范 */
 .login-card {
   max-width: 480px;
   width: 100%;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  padding: 32px 24px;
-  transition:
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
+  @include card-base;
+  padding: $spacing-13 $spacing-11;
+
+  &:hover {
+    box-shadow: $shadow-card-hover;
+  }
 }
 
-.login-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* 品牌区域 */
 .brand-section {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: $spacing-13;
 }
 
 .logo-wrapper {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  @include flex-center;
   width: 56px;
   height: 56px;
-  background: rgba(30, 64, 175, 0.1);
-  border-radius: 9999px;
-  margin-bottom: 20px;
+  background: $color-primary-alpha-10;
+  border-radius: $radius-lg;
+  margin-bottom: $spacing-10;
 }
 
 .logo-icon {
   width: 32px;
   height: 32px;
-  color: #1e40af;
+  color: $color-primary;
 }
 
 .brand-title {
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
+  @include font-family-base;
   font-weight: 500;
   font-size: 28px;
-  color: #1e40af;
-  margin-bottom: 8px;
+  color: $color-primary;
+  margin-bottom: $spacing-4;
   letter-spacing: -0.3px;
 }
 
 .brand-subtitle {
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
-  font-size: 14px;
-  color: #374151;
+  @include font-family-base;
+  font-size: $font-size-base;
+  color: $color-text-base;
   font-weight: 400;
 }
 
-/* 表单样式 */
 .login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  @include flex-column;
+  gap: $spacing-11;
 }
 
 .input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  @include flex-column;
+  gap: $spacing-4;
 }
 
 .input-label {
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
-  font-size: 14px;
+  @include font-family-base;
+  font-size: $font-size-base;
   font-weight: 500;
-  color: #374151;
+  color: $color-text-base;
 }
 
 .input-wrapper {
   position: relative;
-  display: flex;
-  align-items: center;
+  @include flex-center;
 }
 
 .input-icon {
   position: absolute;
-  left: 14px;
+  left: $spacing-7;
   width: 18px;
   height: 18px;
-  color: #9ca3af;
+  color: $color-text-tertiary;
   pointer-events: none;
-  transition: color 0.2s ease;
+  transition: color $transition-base;
 }
 
 .form-input {
-  width: 100%;
-  padding: 12px 14px 12px 42px;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
-  font-size: 14px;
-  color: #1f2937;
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  outline: none;
+  @include input-base;
+  padding: $spacing-6 $spacing-7 $spacing-6 42px;
+
+  &::placeholder {
+    color: $color-text-tertiary;
+  }
 }
 
-.form-input:focus {
-  border-color: #1e40af;
-  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
-}
-
-.form-input::placeholder {
-  color: #9ca3af;
-}
-
-/* 密码可见性切换按钮 */
 .password-toggle {
   position: absolute;
-  right: 14px;
+  right: $spacing-7;
   background: none;
   border: none;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  @include flex-center;
   padding: 0;
-  color: #9ca3af;
-  transition: color 0.2s ease;
+  color: $color-text-tertiary;
+  transition: color $transition-base;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    color: $color-text-base;
+  }
 }
 
-.password-toggle svg {
-  width: 18px;
-  height: 18px;
-}
-
-.password-toggle:hover {
-  color: #374151;
-}
-
-/* 表单选项行 */
 .form-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
+  @include flex-between;
+  font-size: $font-size-base;
 }
 
 .checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  @include flex-center;
+  gap: $spacing-4;
   cursor: pointer;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
-  color: #374151;
+  @include font-family-base;
+  color: $color-text-base;
 }
 
 .checkbox-input {
@@ -439,154 +364,99 @@ const handleSignup = () => {
 .checkbox-custom {
   width: 18px;
   height: 18px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 4px;
-  background: white;
-  transition: all 0.2s ease;
+  border: 1.5px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-bg-white;
+  transition: all $transition-base;
   position: relative;
 }
 
 .checkbox-input:checked + .checkbox-custom {
-  background-color: #1e40af;
-  border-color: #1e40af;
-}
+  background-color: $color-primary;
+  border-color: $color-primary;
 
-.checkbox-input:checked + .checkbox-custom::after {
-  content: '';
-  position: absolute;
-  left: 5px;
-  top: 2px;
-  width: 4px;
-  height: 8px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
+  &::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
 }
 
 .checkbox-text {
-  font-size: 14px;
+  font-size: $font-size-base;
   user-select: none;
 }
 
 .forgot-link,
 .signup-link {
-  color: #1e40af;
-  text-decoration: none;
-  font-size: 14px;
+  color: $color-primary;
+  font-size: $font-size-base;
   font-weight: 500;
-  transition: opacity 0.2s ease;
-}
+  transition: opacity $transition-base;
 
-.forgot-link:hover,
-.signup-link:hover {
-  opacity: 0.8;
-  text-decoration: underline;
-}
-
-/* 登录按钮 */
-.login-button {
-  width: 100%;
-  padding: 12px 20px;
-  background-color: #1e40af;
-  border: none;
-  border-radius: 9999px;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
-  font-weight: 500;
-  font-size: 16px;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 48px;
-}
-
-.login-button:hover:not(:disabled) {
-  background-color: #1e3a8a;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
-}
-
-.login-button:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.login-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-/* 加载动画 */
-.loading-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+  &:hover {
+    opacity: 0.8;
+    text-decoration: underline;
   }
 }
 
-/* 注册提示 */
-.signup-prompt {
-  text-align: center;
-  font-size: 14px;
-  color: #374151;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
-  margin-top: 8px;
+.login-button {
+  width: 100%;
+  @include btn-primary;
+  padding: $spacing-6 $spacing-10;
+  font-size: $font-size-2xl;
+  min-height: 48px;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: $shadow-primary-hover;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
 }
 
-/* 演示提示条 */
+.loading-spinner {
+  @include loading-spinner(20px, 2px);
+  border-top-color: white;
+}
+
+.signup-prompt {
+  text-align: center;
+  font-size: $font-size-base;
+  color: $color-text-base;
+  @include font-family-base;
+  margin-top: $spacing-4;
+}
+
 .demo-hint {
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid #e5e7eb;
+  margin-top: $spacing-11;
+  padding-top: $spacing-8;
+  border-top: 1px solid $color-border;
 }
 
 .demo-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background-color: #f9fafb;
-  padding: 10px 16px;
-  border-radius: 9999px;
+  @include flex-center;
+  gap: $spacing-4;
+  background: $color-bg-card;
+  padding: $spacing-5 $spacing-8;
+  border-radius: $radius-lg;
   font-size: 13px;
-  color: #374151;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
+  color: $color-text-base;
+  @include font-family-base;
 }
 
 .demo-icon {
   width: 16px;
   height: 16px;
-  color: #1e40af;
+  color: $color-primary;
 }
 
 .demo-close {
@@ -594,24 +464,23 @@ const handleSignup = () => {
   border: none;
   font-size: 18px;
   cursor: pointer;
-  color: #9ca3af;
-  margin-left: 8px;
-  transition: color 0.2s ease;
+  color: $color-text-tertiary;
+  margin-left: $spacing-4;
+  transition: color $transition-base;
   line-height: 1;
+
+  &:hover {
+    color: $color-text-base;
+  }
 }
 
-.demo-close:hover {
-  color: #374151;
-}
-
-/* 响应式断点 768px */
-@media (max-width: 768px) {
+@include mobile {
   .login-container {
-    padding: 16px;
+    padding: $spacing-8;
   }
 
   .login-card {
-    padding: 24px 20px;
+    padding: $spacing-11 $spacing-10;
   }
 
   .brand-title {
@@ -629,17 +498,17 @@ const handleSignup = () => {
   }
 
   .form-input {
-    padding: 10px 12px 10px 38px;
+    padding: $spacing-5 $spacing-6 $spacing-5 38px;
   }
 
   .input-icon {
-    left: 12px;
+    left: $spacing-6;
     width: 16px;
     height: 16px;
   }
 
   .login-button {
-    padding: 10px 16px;
+    padding: $spacing-5 $spacing-8;
     font-size: 15px;
   }
 
@@ -647,6 +516,4 @@ const handleSignup = () => {
     font-size: 13px;
   }
 }
-
-/* 最大宽度 1200px 居中已通过容器自然居中实现，内边距已包含 */
 </style>

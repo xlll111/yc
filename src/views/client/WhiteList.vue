@@ -270,7 +270,7 @@ onMounted(() => {
   background: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  padding: 28px 24px;
+  padding: 24px;
   transition: box-shadow 0.2s ease;
 }
 .whitelist-card:hover {
@@ -578,7 +578,7 @@ onMounted(() => {
   }
 
   .whitelist-card {
-    padding: 20px 16px;
+    padding: 16px;
   }
 
   .title-section h2 {

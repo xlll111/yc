@@ -1,0 +1,92 @@
+@import './variables.scss';
+
+/* ==========================================
+   通用 Reset - 基于现代 normalize + 项目需求
+   ========================================== */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: $font-stack;
+  color: $color-text-base;
+  background: $color-bg-page;
+  line-height: 1.5;
+}
+
+a {
+  color: $color-primary;
+  text-decoration: none;
+  transition:
+    color $transition-base,
+    opacity $transition-base;
+
+  &:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+  }
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  outline: none;
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+  outline: none;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+/* ==========================================
+   全局滚动条美化
+   ========================================== */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $color-border-dark;
+  border-radius: $radius-lg;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b0b8c4;
+}

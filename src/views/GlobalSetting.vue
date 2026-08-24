@@ -163,7 +163,7 @@ const saveSettings = async () => {
   }
 }
 const dingtalkFileTransferToggle = async (value) => {
-  if (value && !userStore.getUserInfo.dingtalkFileTransfer) {
+  if (value && !userStore.getUserInfo.dingtalkBind) {
     ElMessage.error('该功能需要绑定钉钉账号')
     return
   }

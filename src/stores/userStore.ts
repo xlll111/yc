@@ -11,7 +11,7 @@ export interface UserInfo {
   emailVerified: boolean
   avatar?: string
   role: number
-  dingtalkFileTransfer: boolean
+  dingtalkBind: boolean
   permissions?: string[]
 }
 export interface USerGlobalSettings {

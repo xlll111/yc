@@ -189,166 +189,105 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-/* 全局变量定义 */
-.root {
-  --primary: #1e40af;
-  --text-color: #374151;
-  --border-color: #e5e7eb;
-  --card-radius: 8px;
-  --btn-radius: 9999px;
-  --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --transition: 0.2s ease;
-}
-
-/* 容器布局 */
+<style lang="scss" scoped>
 .settings-container {
-  display: flex;
-  flex-direction: column;
+  @include container;
+  @include flex-column;
   flex: auto;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px;
-  font-family: var(--font-family);
-  color: var(--text-color);
-  box-sizing: border-box;
-}
-/* 状态卡片 */
-.loading-state,
-.error-state,
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-  color: #6b7280;
-  background-color: #f9fafb;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-}
-.retry-btn {
-  padding: 8px 20px;
-  background-color: #1e40af;
-  color: white;
-  border: none;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .page-title {
-  font-size: 1.8rem;
+  font-size: $font-size-9xl;
   font-weight: 500;
-  margin: 0 0 6px 0;
+  margin: 0 0 $spacing-3 0;
   color: #111827;
   letter-spacing: -0.3px;
 }
 
 .page-subtitle {
-  font-size: 0.95rem;
-  color: #6b7280;
-  margin: 0 0 32px 0;
+  font-size: $font-size-xl;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-13 0;
   font-weight: 400;
 }
 
-/* 表单布局 */
 .settings-form {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  @include flex-column;
+  gap: $spacing-11;
 }
 
-/* 卡片样式 */
 .setting-card {
-  background: #ffffff;
-  border: 1px solid var(--border-color);
-  border-radius: var(--card-radius);
-  box-shadow: var(--shadow-light);
-  transition: box-shadow var(--transition);
-  overflow: hidden;
-}
+  @include card-bordered;
 
-.setting-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  &:hover {
+    box-shadow: $shadow-card-hover;
+  }
 }
 
 .card-header {
-  padding: 18px 24px;
-  border-bottom: 1px solid #f3f4f6;
-  background-color: #fafbfc;
+  padding: $spacing-7 $spacing-11;
+  border-bottom: 1px solid $color-border-light;
+  background: $color-bg-light;
 }
 
 .card-title {
-  font-size: 1.1rem;
+  font-size: $font-size-4xl;
   font-weight: 500;
   margin: 0;
-  color: #1f2937;
-  display: flex;
-  align-items: center;
-}
-
-.card-title::before {
-  content: '';
-  display: inline-block;
-  width: 4px;
-  height: 18px;
-  background-color: var(--primary);
-  border-radius: 4px;
-  margin-right: 12px;
+  color: $color-text-heading;
+  @include flex-center;
+  justify-content: normal;
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 18px;
+    background-color: $color-primary;
+    border-radius: $radius-sm;
+    margin-right: $spacing-6;
+  }
 }
 
 .card-body {
-  padding: 12px 24px;
+  padding: $spacing-6 $spacing-11;
 }
 
-/* 每个开关项 */
 .toggle-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 0;
+  @include flex-between;
+  padding: $spacing-8 0;
 }
 
 .toggle-label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+  @include flex-column;
+  gap: $spacing-2;
 
-.toggle-label span {
-  font-weight: 500;
-  font-size: 0.95rem;
-  color: #1f2937;
+  span {
+    font-weight: 500;
+    font-size: $font-size-xl;
+    color: $color-text-heading;
+  }
 }
 
 .toggle-desc {
   margin: 0;
-  font-size: 0.8rem;
-  color: #6b7280;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
   line-height: 1.4;
 }
 
-/* 分割线 */
 .divider {
   height: 1px;
-  background-color: #f3f4f6;
+  background: $color-border-light;
   margin: 0;
 }
 
-/* 自定义开关样式 */
 .switch {
   position: relative;
   display: inline-block;
   width: 44px;
   height: 24px;
   flex-shrink: 0;
-  margin-left: 16px;
+  margin-left: $spacing-8;
 }
 
 .switch input {
@@ -364,206 +303,173 @@ onMounted(async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #d1d5db;
-  transition: var(--transition);
-  border-radius: 9999px;
-}
+  background-color: $color-border-dark;
+  transition: $transition-base;
+  border-radius: $radius-lg;
 
-.slider:before {
-  position: absolute;
-  content: '';
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: var(--transition);
-  border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  &::before {
+    position: absolute;
+    content: '';
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: $color-bg-white;
+    transition: $transition-base;
+    border-radius: 50%;
+    box-shadow: $shadow-inset;
+  }
 }
 
 input:checked + .slider {
-  background-color: var(--primary);
-}
+  background-color: $color-primary;
 
-input:checked + .slider:before {
-  transform: translateX(20px);
+  &::before {
+    transform: translateX(20px);
+  }
 }
 
 input:focus-visible + .slider {
-  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.25);
+  box-shadow: 0 0 0 3px $color-primary-alpha-25;
 }
 
-/* 宵禁时间选择器 */
 .curfew-time-picker {
-  display: flex;
-  align-items: center;
+  @include flex-center;
   flex-wrap: wrap;
-  gap: 12px;
-  padding: 12px 0 16px;
-  background-color: #f9fafb;
-  border-radius: 8px;
-  margin-top: 4px;
-  padding-left: 16px;
-  padding-right: 16px;
-  border: 1px dashed #e5e7eb;
+  gap: $spacing-6;
+  padding: $spacing-6 0 $spacing-8;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  margin-top: $spacing-2;
+  padding-left: $spacing-8;
+  padding-right: $spacing-8;
+  border: 1px dashed $color-border;
 }
 
 .time-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+  @include flex-column;
+  gap: $spacing-2;
 
-.time-field label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  label {
+    font-size: $font-size-xs;
+    font-weight: 500;
+    color: $color-text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
 }
 
 .time-input {
-  padding: 8px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-family: var(--font-family);
-  font-size: 0.9rem;
-  color: var(--text-color);
-  background: white;
-  transition: border-color var(--transition);
+  padding: $spacing-6 $spacing-7;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  font-family: $font-stack;
+  font-size: $font-size-lg;
+  color: $color-text-base;
+  background: $color-bg-white;
+  transition: border-color $transition-base;
   outline: none;
   width: 120px;
-}
 
-.time-input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.15);
+  &:focus {
+    border-color: $color-primary;
+    box-shadow: 0 0 0 2px $color-primary-alpha-15;
+  }
 }
 
 .time-separator {
   font-weight: 400;
-  color: #9ca3af;
-  margin-top: 20px;
+  color: $color-text-tertiary;
+  margin-top: $spacing-10;
 }
 
 .time-hint {
   width: 100%;
-  margin: 4px 0 0;
-  font-size: 0.75rem;
-  color: #9ca3af;
+  margin: $spacing-3 0 0;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
   font-style: italic;
 }
 
-/* 保存区域 */
 .save-section {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-top: 8px;
-  padding: 8px 0;
+  @include flex-center;
+  justify-content: flex-end;
+  gap: $spacing-10;
+  margin-top: $spacing-4;
+  padding: $spacing-4 0;
   flex-wrap: wrap;
 }
 
 .save-btn {
-  background-color: var(--primary);
-  color: white;
-  border: none;
-  padding: 12px 32px;
-  border-radius: var(--btn-radius);
-  font-size: 0.95rem;
-  font-weight: 500;
-  font-family: var(--font-family);
-  cursor: pointer;
-  transition: all var(--transition);
-  box-shadow: 0 4px 6px rgba(30, 64, 175, 0.2);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  letter-spacing: 0.2px;
-  min-width: 130px;
-}
+  @include btn-primary;
+  padding: $spacing-7 $spacing-13;
+  box-shadow: $shadow-primary;
 
-.save-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 12px rgba(30, 64, 175, 0.25);
-}
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: $shadow-primary-hover;
+  }
 
-.save-btn:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(30, 64, 175, 0.2);
-}
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: $shadow-primary-sm;
+  }
 
-.save-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  box-shadow: none;
+  &:disabled {
+    opacity: 0.7;
+    box-shadow: none;
+  }
 }
 
 .saving-spinner {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  @include flex-center;
+  gap: $spacing-3;
 }
 
 .save-message {
-  font-size: 0.9rem;
+  font-size: $font-size-lg;
   margin: 0;
-  color: #059669;
+  color: $color-success;
   font-weight: 500;
   background: #ecfdf5;
-  padding: 8px 16px;
+  padding: $spacing-5 $spacing-8;
   border-radius: 20px;
-  transition: opacity var(--transition);
+  transition: opacity $transition-base;
 }
 
-/* 过渡动画 */
-.fade-enter-active,
-.fade-leave-active {
-  transition:
-    opacity 0.25s ease,
-    max-height 0.3s ease;
-  max-height: 120px;
+.loading-state,
+.error-state,
+.empty-state {
+  @include empty-state-base;
 }
 
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  max-height: 0;
-  overflow: hidden;
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
+@include mobile {
   .settings-container {
-    padding: 16px;
+    padding: $spacing-8;
   }
 
   .page-title {
-    font-size: 1.5rem;
+    font-size: $font-size-8xl;
   }
 
   .card-body {
-    padding: 12px 16px;
+    padding: $spacing-6 $spacing-8;
   }
 
   .card-header {
-    padding: 16px 16px;
+    padding: $spacing-8;
   }
 
   .toggle-item {
-    /* flex-direction: column; */
-    /* align-items: flex-start; */
-    gap: 12px;
+    gap: $spacing-6;
   }
 
   .switch {
     margin-left: 0;
-    /* align-self: flex-start; */
   }
 
   .curfew-time-picker {
-    flex-direction: column;
+    @include flex-column;
     align-items: flex-start;
   }
 
@@ -573,11 +479,11 @@ input:focus-visible + .slider {
 
   .time-separator {
     margin-top: 0;
-    margin: 4px 0;
+    margin: $spacing-3 0;
   }
 
   .save-section {
-    flex-direction: column;
+    @include flex-column;
     align-items: stretch;
   }
 

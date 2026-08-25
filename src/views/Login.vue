@@ -222,9 +222,6 @@ const handleSignup = () => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/variables.scss';
-@import '@/styles/mixins.scss';
-
 .login-container {
   @include flex-center;
   background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
@@ -250,6 +247,7 @@ const handleSignup = () => {
 
 .logo-wrapper {
   @include flex-center;
+  display: inline-flex;
   width: 56px;
   height: 56px;
   background: $color-primary-alpha-10;
@@ -377,6 +375,7 @@ const handleSignup = () => {
 
   &::after {
     content: '';
+    box-sizing: content-box;
     position: absolute;
     left: 5px;
     top: 2px;
@@ -425,6 +424,7 @@ const handleSignup = () => {
 
 .loading-spinner {
   @include loading-spinner(20px, 2px);
+  border: 2px solid #e5e7eb29;
   border-top-color: white;
 }
 

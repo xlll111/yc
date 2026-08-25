@@ -1,4 +1,4 @@
-@import './variables.scss';
+@use 'variables.scss';
 
 // ==========================================
 // Flex 布局
@@ -65,11 +65,11 @@
 }
 
 @mixin font-family-base {
-  font-family: $font-stack;
+  font-family: variables.$font-stack;
 }
 
 @mixin font-family-mono {
-  font-family: $font-mono;
+  font-family: variables.$font-mono;
 }
 
 // ==========================================
@@ -77,26 +77,26 @@
 // ==========================================
 
 @mixin card-base {
-  background: $color-bg-white;
-  border-radius: $radius-md;
-  box-shadow: $shadow-card;
-  transition: box-shadow $transition-base;
+  background: variables.$color-bg-white;
+  border-radius: variables.$radius-md;
+  box-shadow: variables.$shadow-card;
+  transition: box-shadow variables.$transition-base;
 }
 
 @mixin card-bordered {
   @include card-base;
-  border: 1px solid $color-border;
+  border: 1px solid variables.$color-border;
 }
 
 @mixin card-hover {
   &:hover {
-    box-shadow: $shadow-card-hover;
+    box-shadow: variables.$shadow-card-hover;
   }
 }
 
 @mixin card-float-hover {
   &:hover {
-    box-shadow: $shadow-card-float;
+    box-shadow: variables.$shadow-card-float;
     transform: translateY(-2px);
   }
 }
@@ -109,30 +109,30 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: $spacing-4;
+  gap: variables.$spacing-4;
   font-weight: 500;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: all $transition-base;
-  font-family: $font-stack;
+  transition: all variables.$transition-base;
+  font-family: variables.$font-stack;
 }
 
 @mixin btn-pill {
   @include btn-base;
-  border-radius: $radius-lg;
-  padding: $spacing-6 $spacing-8;
-  font-size: $font-size-base;
+  border-radius: variables.$radius-lg;
+  padding: variables.$spacing-6 variables.$spacing-8;
+  font-size: variables.$font-size-base;
 }
 
 @mixin btn-primary {
   @include btn-pill;
-  background: $color-primary;
-  color: $color-text-white;
-  border-color: $color-primary;
+  background: variables.$color-primary;
+  color: variables.$color-text-white;
+  border-color: variables.$color-primary;
 
   &:hover:not(:disabled) {
-    background: $color-primary-dark;
-    border-color: $color-primary-dark;
+    background: variables.$color-primary-dark;
+    border-color: variables.$color-primary-dark;
   }
 
   &:disabled {
@@ -143,36 +143,45 @@
 
 @mixin btn-secondary {
   @include btn-pill;
-  background: $color-bg-white;
-  color: $color-text-base;
-  border-color: $color-border;
+  background: variables.$color-bg-white;
+  color: variables.$color-text-base;
+  border-color: variables.$color-border;
 
   &:hover {
-    background: $color-bg-card;
-    border-color: $color-border-dark;
+    background: variables.$color-bg-card;
+    border-color: variables.$color-border-dark;
   }
 }
 
 @mixin btn-outline {
   @include btn-pill;
-  background: $color-bg-white;
-  color: $color-primary;
-  border-color: $color-border;
+  background: variables.$color-bg-white;
+  color: variables.$color-primary;
+  border-color: variables.$color-border;
 
   &:hover {
-    background: $color-primary-light;
-    border-color: $color-primary;
+    background: variables.$color-primary-light;
+    border-color: variables.$color-primary;
+  }
+}
+@mixin btn-text {
+  @include btn-pill;
+  background: transparent;
+  color: variables.$color-primary;
+  border-color: transparent;
+  &:hover {
+    background: variables.$color-primary-light;
   }
 }
 
 @mixin btn-danger {
   @include btn-pill;
-  background: $color-bg-white;
-  color: $color-danger;
-  border-color: $color-danger-border;
+  background: variables.$color-bg-white;
+  color: variables.$color-danger;
+  border-color: variables.$color-danger-border;
 
   &:hover:not(:disabled) {
-    background: $color-danger-bg;
+    background: variables.$color-danger-bg;
     border-color: #fca5a5;
   }
 
@@ -189,10 +198,10 @@
 @mixin status-badge {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-3;
-  padding: $spacing-2 $spacing-5;
-  border-radius: $radius-lg;
-  font-size: $font-size-xs;
+  gap: variables.$spacing-3;
+  padding: variables.$spacing-2 variables.$spacing-5;
+  border-radius: variables.$radius-lg;
+  font-size: variables.$font-size-xs;
   font-weight: 500;
 }
 
@@ -205,13 +214,13 @@
 }
 
 @mixin status-online {
-  background: $color-success-bg;
-  color: $color-success-text;
+  background: variables.$color-success-bg;
+  color: variables.$color-success-text;
 }
 
 @mixin status-offline {
-  background: $color-danger-bg;
-  color: $color-danger-text;
+  background: variables.$color-danger-bg;
+  color: variables.$color-danger-text;
 }
 
 // ==========================================
@@ -220,31 +229,31 @@
 
 @mixin input-base {
   width: 100%;
-  font-family: $font-stack;
-  font-size: $font-size-base;
-  color: $color-text-base;
-  background: $color-bg-input;
-  border: 1px solid $color-border;
-  border-radius: $radius-md;
+  font-family: variables.$font-stack;
+  font-size: variables.$font-size-base;
+  color: variables.$color-text-base;
+  background: variables.$color-bg-input;
+  border: 1px solid variables.$color-border;
+  border-radius: variables.$radius-md;
   outline: none;
   transition:
-    border-color $transition-base,
-    box-shadow $transition-base;
+    border-color variables.$transition-base,
+    box-shadow variables.$transition-base;
 
   &:focus {
-    border-color: $color-primary;
-    box-shadow: 0 0 0 3px $color-primary-alpha-10;
+    border-color: variables.$color-primary;
+    box-shadow: 0 0 0 3px variables.$color-primary-alpha-10;
   }
 
   &::placeholder {
-    color: $color-text-tertiary;
+    color: variables.$color-text-tertiary;
   }
 }
 
 @mixin input-pill {
   @include input-base;
-  border-radius: $radius-lg;
-  padding: $spacing-6 $spacing-8;
+  border-radius: variables.$radius-lg;
+  padding: variables.$spacing-6 variables.$spacing-8;
 }
 
 // ==========================================
@@ -258,16 +267,16 @@
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.7);
-  z-index: $z-modal;
+  z-index: variables.$z-modal;
   @include flex-center;
-  padding: $spacing-8;
+  padding: variables.$spacing-8;
   box-sizing: border-box;
 }
 
 @mixin modal-card {
-  background: $color-bg-white;
-  border-radius: $radius-md;
-  box-shadow: $shadow-modal-lg;
+  background: variables.$color-bg-white;
+  border-radius: variables.$radius-md;
+  box-shadow: variables.$shadow-modal-lg;
   width: 100%;
   max-width: 900px;
   max-height: 85vh;
@@ -281,20 +290,20 @@
 
 @mixin empty-state-base {
   @include flex-column-center;
-  padding: $spacing-15 $spacing-10;
+  padding: variables.$spacing-15 variables.$spacing-10;
   text-align: center;
-  color: $color-text-secondary;
-  background: $color-bg-card;
-  border-radius: $radius-md;
-  border: 1px solid $color-border;
+  color: variables.$color-text-secondary;
+  background: variables.$color-bg-card;
+  border-radius: variables.$radius-md;
+  border: 1px solid variables.$color-border;
 }
 
 @mixin loading-spinner($size: 40px, $border-width: 3px) {
   width: $size;
   height: $size;
-  border: $border-width solid $color-border;
-  border-top-color: $color-primary;
+  border: $border-width solid variables.$color-border;
   border-radius: 50%;
+  border-top-color: variables.$color-primary;
   animation: spin 0.8s linear infinite;
 }
 
@@ -312,8 +321,8 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: $color-border-dark;
-    border-radius: $radius-lg;
+    background: variables.$color-border-dark;
+    border-radius: variables.$radius-lg;
   }
 }
 
@@ -372,14 +381,15 @@
 // ==========================================
 
 @mixin container {
-  max-width: $container-max-width;
+  max-width: variables.$container-max-width;
   width: 100%;
   margin: 0 auto;
-  padding: $container-padding;
+  padding: variables.$container-padding;
   box-sizing: border-box;
+  font-family: variables.$font-stack;
 
-  @media (max-width: $breakpoint-mobile) {
-    padding: $container-padding-mobile;
+  @media (max-width: variables.$breakpoint-mobile) {
+    padding: variables.$container-padding-mobile;
   }
 }
 
@@ -388,19 +398,19 @@
 // ==========================================
 
 @mixin mobile {
-  @media (max-width: $breakpoint-mobile) {
+  @media (max-width: variables.$breakpoint-mobile) {
     @content;
   }
 }
 
 @mixin tablet {
-  @media (max-width: $breakpoint-tablet) {
+  @media (max-width: variables.$breakpoint-tablet) {
     @content;
   }
 }
 
 @mixin small-screen {
-  @media (max-width: $breakpoint-small) {
+  @media (max-width: variables.$breakpoint-small) {
     @content;
   }
 }

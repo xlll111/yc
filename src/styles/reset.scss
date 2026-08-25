@@ -1,4 +1,4 @@
-@import './variables.scss';
+@use 'variables.scss';
 
 /* ==========================================
    通用 Reset - 基于现代 normalize + 项目需求
@@ -19,18 +19,18 @@ html {
 }
 
 body {
-  font-family: $font-stack;
-  color: $color-text-base;
-  background: $color-bg-page;
+  font-family: variables.$font-stack;
+  color: variables.$color-text-base;
+  background: variables.$color-bg-page;
   line-height: 1.5;
 }
 
 a {
-  color: $color-primary;
+  color: variables.$color-primary;
   text-decoration: none;
   transition:
-    color $transition-base,
-    opacity $transition-base;
+    color variables.$transition-base,
+    opacity variables.$transition-base;
 
   &:hover {
     opacity: 0.8;
@@ -83,8 +83,8 @@ table {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: $color-border-dark;
-  border-radius: $radius-lg;
+  background: variables.$color-border-dark;
+  border-radius: variables.$radius-lg;
 }
 
 ::-webkit-scrollbar-thumb:hover {

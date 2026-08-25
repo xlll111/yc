@@ -1,23 +1,23 @@
-@import './variables.scss';
-@import './mixins.scss';
+@use 'variables.scss';
+@use 'mixins.scss';
 
 // ==========================================
 // 基础容器
 // ==========================================
 
 .container {
-  @include container;
+  @include mixins.container;
 }
 
 .container-narrow {
-  max-width: $container-max-width;
+  max-width: variables.$container-max-width;
   width: 100%;
   margin: 0 auto;
-  padding: $spacing-8 $spacing-11;
+  padding: variables.$spacing-8 variables.$spacing-11;
   box-sizing: border-box;
 
-  @include mobile {
-    padding: $spacing-8;
+  @include mixins.mobile {
+    padding: variables.$spacing-8;
   }
 }
 
@@ -30,19 +30,19 @@
 }
 
 .flex-center {
-  @include flex-center;
+  @include mixins.flex-center;
 }
 
 .flex-between {
-  @include flex-between;
+  @include mixins.flex-between;
 }
 
 .flex-column {
-  @include flex-column;
+  @include mixins.flex-column;
 }
 
 .flex-column-center {
-  @include flex-column-center;
+  @include mixins.flex-column-center;
 }
 
 .flex-wrap {
@@ -74,126 +74,126 @@
 // ==========================================
 
 .m-0 {
-  margin: $spacing-0;
+  margin: variables.$spacing-0;
 }
 .m-1 {
-  margin: $spacing-1;
+  margin: variables.$spacing-1;
 }
 .m-2 {
-  margin: $spacing-2;
+  margin: variables.$spacing-2;
 }
 .m-3 {
-  margin: $spacing-3;
+  margin: variables.$spacing-3;
 }
 .m-4 {
-  margin: $spacing-4;
+  margin: variables.$spacing-4;
 }
 .m-5 {
-  margin: $spacing-5;
+  margin: variables.$spacing-5;
 }
 .m-6 {
-  margin: $spacing-6;
+  margin: variables.$spacing-6;
 }
 .m-8 {
-  margin: $spacing-8;
+  margin: variables.$spacing-8;
 }
 .m-10 {
-  margin: $spacing-10;
+  margin: variables.$spacing-10;
 }
 .m-11 {
-  margin: $spacing-11;
+  margin: variables.$spacing-11;
 }
 .m-12 {
-  margin: $spacing-12;
+  margin: variables.$spacing-12;
 }
 .m-13 {
-  margin: $spacing-13;
+  margin: variables.$spacing-13;
 }
 
 .mt-0 {
-  margin-top: $spacing-0;
+  margin-top: variables.$spacing-0;
 }
 .mt-1 {
-  margin-top: $spacing-1;
+  margin-top: variables.$spacing-1;
 }
 .mt-2 {
-  margin-top: $spacing-2;
+  margin-top: variables.$spacing-2;
 }
 .mt-3 {
-  margin-top: $spacing-3;
+  margin-top: variables.$spacing-3;
 }
 .mt-4 {
-  margin-top: $spacing-4;
+  margin-top: variables.$spacing-4;
 }
 .mt-5 {
-  margin-top: $spacing-5;
+  margin-top: variables.$spacing-5;
 }
 .mt-6 {
-  margin-top: $spacing-6;
+  margin-top: variables.$spacing-6;
 }
 .mt-8 {
-  margin-top: $spacing-8;
+  margin-top: variables.$spacing-8;
 }
 .mt-10 {
-  margin-top: $spacing-10;
+  margin-top: variables.$spacing-10;
 }
 .mt-11 {
-  margin-top: $spacing-11;
+  margin-top: variables.$spacing-11;
 }
 .mt-12 {
-  margin-top: $spacing-12;
+  margin-top: variables.$spacing-12;
 }
 .mt-13 {
-  margin-top: $spacing-13;
+  margin-top: variables.$spacing-13;
 }
 .mt-14 {
-  margin-top: $spacing-14;
+  margin-top: variables.$spacing-14;
 }
 .mt-15 {
-  margin-top: $spacing-15;
+  margin-top: variables.$spacing-15;
 }
 
 .mb-0 {
-  margin-bottom: $spacing-0;
+  margin-bottom: variables.$spacing-0;
 }
 .mb-1 {
-  margin-bottom: $spacing-1;
+  margin-bottom: variables.$spacing-1;
 }
 .mb-2 {
-  margin-bottom: $spacing-2;
+  margin-bottom: variables.$spacing-2;
 }
 .mb-3 {
-  margin-bottom: $spacing-3;
+  margin-bottom: variables.$spacing-3;
 }
 .mb-4 {
-  margin-bottom: $spacing-4;
+  margin-bottom: variables.$spacing-4;
 }
 .mb-5 {
-  margin-bottom: $spacing-5;
+  margin-bottom: variables.$spacing-5;
 }
 .mb-6 {
-  margin-bottom: $spacing-6;
+  margin-bottom: variables.$spacing-6;
 }
 .mb-8 {
-  margin-bottom: $spacing-8;
+  margin-bottom: variables.$spacing-8;
 }
 .mb-10 {
-  margin-bottom: $spacing-10;
+  margin-bottom: variables.$spacing-10;
 }
 .mb-11 {
-  margin-bottom: $spacing-11;
+  margin-bottom: variables.$spacing-11;
 }
 .mb-12 {
-  margin-bottom: $spacing-12;
+  margin-bottom: variables.$spacing-12;
 }
 .mb-13 {
-  margin-bottom: $spacing-13;
+  margin-bottom: variables.$spacing-13;
 }
 .mb-14 {
-  margin-bottom: $spacing-14;
+  margin-bottom: variables.$spacing-14;
 }
 .mb-15 {
-  margin-bottom: $spacing-15;
+  margin-bottom: variables.$spacing-15;
 }
 
 .ml-auto {
@@ -212,124 +212,124 @@
 // ==========================================
 
 .p-0 {
-  padding: $spacing-0;
+  padding: variables.$spacing-0;
 }
 .p-1 {
-  padding: $spacing-1;
+  padding: variables.$spacing-1;
 }
 .p-2 {
-  padding: $spacing-2;
+  padding: variables.$spacing-2;
 }
 .p-3 {
-  padding: $spacing-3;
+  padding: variables.$spacing-3;
 }
 .p-4 {
-  padding: $spacing-4;
+  padding: variables.$spacing-4;
 }
 .p-5 {
-  padding: $spacing-5;
+  padding: variables.$spacing-5;
 }
 .p-6 {
-  padding: $spacing-6;
+  padding: variables.$spacing-6;
 }
 .p-8 {
-  padding: $spacing-8;
+  padding: variables.$spacing-8;
 }
 .p-10 {
-  padding: $spacing-10;
+  padding: variables.$spacing-10;
 }
 .p-11 {
-  padding: $spacing-11;
+  padding: variables.$spacing-11;
 }
 .p-12 {
-  padding: $spacing-12;
+  padding: variables.$spacing-12;
 }
 .p-13 {
-  padding: $spacing-13;
+  padding: variables.$spacing-13;
 }
 
 .pt-0 {
-  padding-top: $spacing-0;
+  padding-top: variables.$spacing-0;
 }
 .pt-4 {
-  padding-top: $spacing-4;
+  padding-top: variables.$spacing-4;
 }
 .pt-6 {
-  padding-top: $spacing-6;
+  padding-top: variables.$spacing-6;
 }
 .pt-8 {
-  padding-top: $spacing-8;
+  padding-top: variables.$spacing-8;
 }
 .pt-10 {
-  padding-top: $spacing-10;
+  padding-top: variables.$spacing-10;
 }
 .pt-11 {
-  padding-top: $spacing-11;
+  padding-top: variables.$spacing-11;
 }
 .pt-12 {
-  padding-top: $spacing-12;
+  padding-top: variables.$spacing-12;
 }
 .pt-13 {
-  padding-top: $spacing-13;
+  padding-top: variables.$spacing-13;
 }
 
 .pb-0 {
-  padding-bottom: $spacing-0;
+  padding-bottom: variables.$spacing-0;
 }
 .pb-4 {
-  padding-bottom: $spacing-4;
+  padding-bottom: variables.$spacing-4;
 }
 .pb-6 {
-  padding-bottom: $spacing-6;
+  padding-bottom: variables.$spacing-6;
 }
 .pb-8 {
-  padding-bottom: $spacing-8;
+  padding-bottom: variables.$spacing-8;
 }
 .pb-10 {
-  padding-bottom: $spacing-10;
+  padding-bottom: variables.$spacing-10;
 }
 .pb-11 {
-  padding-bottom: $spacing-11;
+  padding-bottom: variables.$spacing-11;
 }
 .pb-12 {
-  padding-bottom: $spacing-12;
+  padding-bottom: variables.$spacing-12;
 }
 .pb-13 {
-  padding-bottom: $spacing-13;
+  padding-bottom: variables.$spacing-13;
 }
 
 .px-4 {
-  padding-left: $spacing-4;
-  padding-right: $spacing-4;
+  padding-left: variables.$spacing-4;
+  padding-right: variables.$spacing-4;
 }
 .px-6 {
-  padding-left: $spacing-6;
-  padding-right: $spacing-6;
+  padding-left: variables.$spacing-6;
+  padding-right: variables.$spacing-6;
 }
 .px-8 {
-  padding-left: $spacing-8;
-  padding-right: $spacing-8;
+  padding-left: variables.$spacing-8;
+  padding-right: variables.$spacing-8;
 }
 .px-10 {
-  padding-left: $spacing-10;
-  padding-right: $spacing-10;
+  padding-left: variables.$spacing-10;
+  padding-right: variables.$spacing-10;
 }
 
 .py-2 {
-  padding-top: $spacing-2;
-  padding-bottom: $spacing-2;
+  padding-top: variables.$spacing-2;
+  padding-bottom: variables.$spacing-2;
 }
 .py-3 {
-  padding-top: $spacing-3;
-  padding-bottom: $spacing-3;
+  padding-top: variables.$spacing-3;
+  padding-bottom: variables.$spacing-3;
 }
 .py-4 {
-  padding-top: $spacing-4;
-  padding-bottom: $spacing-4;
+  padding-top: variables.$spacing-4;
+  padding-bottom: variables.$spacing-4;
 }
 .py-6 {
-  padding-top: $spacing-6;
-  padding-bottom: $spacing-6;
+  padding-top: variables.$spacing-6;
+  padding-bottom: variables.$spacing-6;
 }
 
 // ==========================================
@@ -337,34 +337,34 @@
 // ==========================================
 
 .gap-1 {
-  gap: $spacing-1;
+  gap: variables.$spacing-1;
 }
 .gap-2 {
-  gap: $spacing-2;
+  gap: variables.$spacing-2;
 }
 .gap-3 {
-  gap: $spacing-3;
+  gap: variables.$spacing-3;
 }
 .gap-4 {
-  gap: $spacing-4;
+  gap: variables.$spacing-4;
 }
 .gap-5 {
-  gap: $spacing-5;
+  gap: variables.$spacing-5;
 }
 .gap-6 {
-  gap: $spacing-6;
+  gap: variables.$spacing-6;
 }
 .gap-8 {
-  gap: $spacing-8;
+  gap: variables.$spacing-8;
 }
 .gap-10 {
-  gap: $spacing-10;
+  gap: variables.$spacing-10;
 }
 .gap-11 {
-  gap: $spacing-11;
+  gap: variables.$spacing-11;
 }
 .gap-12 {
-  gap: $spacing-12;
+  gap: variables.$spacing-12;
 }
 
 // ==========================================
@@ -372,11 +372,11 @@
 // ==========================================
 
 .text-ellipsis {
-  @include text-ellipsis;
+  @include mixins.text-ellipsis;
 }
 
 .text-clamp-2 {
-  @include text-clamp(2);
+  @include mixins.text-clamp(2);
 }
 
 .text-left {
@@ -390,7 +390,7 @@
 }
 
 .font-mono {
-  @include font-family-mono;
+  @include mixins.font-family-mono;
 }
 
 .font-medium {
@@ -404,59 +404,59 @@
 }
 
 .text-xs {
-  font-size: $font-size-xs;
+  font-size: variables.$font-size-xs;
 }
 .text-sm {
-  font-size: $font-size-sm;
+  font-size: variables.$font-size-sm;
 }
 .text-md {
-  font-size: $font-size-md;
+  font-size: variables.$font-size-md;
 }
 .text-base {
-  font-size: $font-size-base;
+  font-size: variables.$font-size-base;
 }
 .text-lg {
-  font-size: $font-size-lg;
+  font-size: variables.$font-size-lg;
 }
 .text-xl {
-  font-size: $font-size-xl;
+  font-size: variables.$font-size-xl;
 }
 .text-2xl {
-  font-size: $font-size-2xl;
+  font-size: variables.$font-size-2xl;
 }
 .text-3xl {
-  font-size: $font-size-3xl;
+  font-size: variables.$font-size-3xl;
 }
 .text-4xl {
-  font-size: $font-size-4xl;
+  font-size: variables.$font-size-4xl;
 }
 .text-5xl {
-  font-size: $font-size-5xl;
+  font-size: variables.$font-size-5xl;
 }
 
 .text-primary {
-  color: $color-primary;
+  color: variables.$color-primary;
 }
 .text-base-color {
-  color: $color-text-base;
+  color: variables.$color-text-base;
 }
 .text-secondary {
-  color: $color-text-secondary;
+  color: variables.$color-text-secondary;
 }
 .text-tertiary {
-  color: $color-text-tertiary;
+  color: variables.$color-text-tertiary;
 }
 .text-white {
-  color: $color-text-white;
+  color: variables.$color-text-white;
 }
 .text-success {
-  color: $color-success;
+  color: variables.$color-success;
 }
 .text-danger {
-  color: $color-danger;
+  color: variables.$color-danger;
 }
 .text-warning {
-  color: $color-warning-text;
+  color: variables.$color-warning-text;
 }
 
 // ==========================================
@@ -464,21 +464,21 @@
 // ==========================================
 
 .card {
-  @include card-base;
-  padding: $spacing-11;
+  @include mixins.card-base;
+  padding: variables.$spacing-11;
 }
 
 .card-bordered {
-  @include card-bordered;
-  padding: $spacing-11;
+  @include mixins.card-bordered;
+  padding: variables.$spacing-11;
 }
 
 .card-hover {
-  @include card-hover;
+  @include mixins.card-hover;
 }
 
 .card-float-hover {
-  @include card-float-hover;
+  @include mixins.card-float-hover;
 }
 
 // ==========================================
@@ -486,37 +486,37 @@
 // ==========================================
 
 .btn {
-  @include btn-base;
+  @include mixins.btn-base;
 }
 
 .btn-pill {
-  @include btn-pill;
+  @include mixins.btn-pill;
 }
 
 .btn-primary {
-  @include btn-primary;
+  @include mixins.btn-primary;
 }
 
 .btn-secondary {
-  @include btn-secondary;
+  @include mixins.btn-secondary;
 }
 
 .btn-outline {
-  @include btn-outline;
+  @include mixins.btn-outline;
 }
 
 .btn-danger {
-  @include btn-danger;
+  @include mixins.btn-danger;
 }
 
 .btn-sm {
-  padding: $spacing-5 $spacing-7;
-  font-size: $font-size-sm;
+  padding: variables.$spacing-5 variables.$spacing-7;
+  font-size: variables.$font-size-sm;
 }
 
 .btn-lg {
-  padding: $spacing-7 $spacing-9;
-  font-size: $font-size-2xl;
+  padding: variables.$spacing-7 variables.$spacing-9;
+  font-size: variables.$font-size-2xl;
 }
 
 // ==========================================
@@ -524,37 +524,37 @@
 // ==========================================
 
 .badge {
-  @include status-badge;
+  @include mixins.status-badge;
 }
 
 .badge-online {
-  @include status-badge;
-  @include status-online;
+  @include mixins.status-badge;
+  @include mixins.status-online;
 }
 
 .badge-offline {
-  @include status-badge;
-  @include status-offline;
+  @include mixins.status-badge;
+  @include mixins.status-offline;
 }
 
 .badge-success {
-  @include status-badge;
-  background: $color-success-bg;
-  color: $color-success-text;
-  border: 1px solid $color-success-border;
+  @include mixins.status-badge;
+  background: variables.$color-success-bg;
+  color: variables.$color-success-text;
+  border: 1px solid variables.$color-success-border;
 }
 
 .badge-danger {
-  @include status-badge;
-  background: $color-danger-bg;
-  color: $color-danger-text;
-  border: 1px solid $color-danger-border;
+  @include mixins.status-badge;
+  background: variables.$color-danger-bg;
+  color: variables.$color-danger-text;
+  border: 1px solid variables.$color-danger-border;
 }
 
 .badge-warning {
-  @include status-badge;
-  background: $color-warning-bg;
-  color: $color-warning-text;
+  @include mixins.status-badge;
+  background: variables.$color-warning-bg;
+  color: variables.$color-warning-text;
 }
 
 // ==========================================
@@ -599,39 +599,39 @@
 // ==========================================
 
 .bg-white {
-  background: $color-bg-white;
+  background: variables.$color-bg-white;
 }
 .bg-page {
-  background: $color-bg-page;
+  background: variables.$color-bg-page;
 }
 .bg-card {
-  background: $color-bg-card;
+  background: variables.$color-bg-card;
 }
 .bg-hover {
-  background: $color-bg-hover;
+  background: variables.$color-bg-hover;
 }
 
 .border {
-  border: 1px solid $color-border;
+  border: 1px solid variables.$color-border;
 }
 .border-light {
-  border: 1px solid $color-border-light;
+  border: 1px solid variables.$color-border-light;
 }
 .border-b {
-  border-bottom: 1px solid $color-border;
+  border-bottom: 1px solid variables.$color-border;
 }
 .border-t {
-  border-top: 1px solid $color-border;
+  border-top: 1px solid variables.$color-border;
 }
 
 .rounded-sm {
-  border-radius: $radius-sm;
+  border-radius: variables.$radius-sm;
 }
 .rounded-md {
-  border-radius: $radius-md;
+  border-radius: variables.$radius-md;
 }
 .rounded-lg {
-  border-radius: $radius-lg;
+  border-radius: variables.$radius-lg;
 }
 
 // ==========================================
@@ -639,7 +639,7 @@
 // ==========================================
 
 .scrollbar-thin {
-  @include custom-scrollbar(5px);
+  @include mixins.custom-scrollbar(5px);
 }
 
 // ==========================================
@@ -664,6 +664,6 @@
   animation: fadeIn 0.3s ease;
 }
 
-@include keyframes-spin;
-@include keyframes-fade-in;
-@include keyframes-slide-up;
+@include mixins.keyframes-spin;
+@include mixins.keyframes-fade-in;
+@include mixins.keyframes-slide-up;

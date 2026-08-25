@@ -3,13 +3,13 @@
 // ==========================================
 
 // 1. 变量（最底层，无依赖）
-@import './variables.scss';
+@use 'variables.scss';
 
 // 2. Mixins（依赖变量）
-@import './mixins.scss';
+@use 'mixins.scss';
 
 // 3. 重置样式（基础标签样式）
-@import './reset.scss';
+@use 'reset.scss';
 
 // 4. 通用工具类（依赖变量和 mixins）
-@import './common.scss';
+@use 'common.scss';

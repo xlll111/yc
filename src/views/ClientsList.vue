@@ -198,229 +198,177 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .client-list-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px;
-  width: 100%;
-  box-sizing: border-box;
+  @include container;
 }
 
 .page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
+  @include flex-between;
+  margin-bottom: $spacing-11;
 }
 
 .page-title {
-  font-size: 1.875rem;
+  font-size: $font-size-9xl;
   font-weight: 500;
-  color: #374151;
+  color: $color-text-base;
   margin: 0;
   letter-spacing: -0.01em;
 }
 
 .refresh-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 9999px;
-  color: #374151;
-  font-size: 0.875rem;
+  @include flex-center;
+  gap: $spacing-4;
+  padding: $spacing-5 $spacing-8;
+  background: $color-bg-white;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  color: $color-text-base;
+  font-size: $font-size-base;
   font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
+  transition: all $transition-base;
+  box-shadow: $shadow-card;
 
-.refresh-btn:hover:not(:disabled) {
-  background-color: #f9fafb;
-  border-color: #d1d5db;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.refresh-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.refresh-btn svg.spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
+  &:hover:not(:disabled) {
+    background: $color-bg-card;
+    border-color: $color-border-dark;
+    box-shadow: $shadow-btn-hover;
   }
-  to {
-    transform: rotate(360deg);
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  svg.spin {
+    animation: spin 1s linear infinite;
   }
 }
 
-/* 状态卡片 */
 .loading-state,
 .error-state,
 .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-  color: #6b7280;
-  background-color: #f9fafb;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  @include empty-state-base;
 }
 
 .error-state svg,
 .empty-state svg {
-  color: #9ca3af;
-  margin-bottom: 16px;
+  color: $color-text-tertiary;
+  margin-bottom: $spacing-8;
 }
 
 .error-state p,
 .empty-state p {
-  margin: 8px 0 16px;
-  font-size: 1rem;
+  margin: $spacing-4 0 $spacing-8;
+  font-size: $font-size-2xl;
 }
 
 .retry-btn {
-  padding: 8px 20px;
-  background-color: #1e40af;
-  color: white;
-  border: none;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  @include btn-primary;
+  padding: $spacing-5 $spacing-10;
+  box-shadow: $shadow-card;
+
+  &:hover {
+    background: $color-primary-dark;
+    box-shadow: $shadow-btn-hover;
+  }
 }
 
-.retry-btn:hover {
-  background-color: #1e3a8a;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-/* 卡片网格 */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
-  margin: 6px;
+  gap: $spacing-10;
+  margin: $spacing-3;
 }
 
 .client-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.2s ease;
-  display: flex;
-  flex-direction: column;
-}
+  @include card-bordered;
+  padding: $spacing-10;
+  @include flex-column;
+  transition: all $transition-base;
 
-.client-card:hover {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-  border-color: #d1d5db;
+  &:hover {
+    box-shadow: $shadow-card-float;
+    transform: translateY(-2px);
+    border-color: $color-border-dark;
+  }
 }
 
 .card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e5e7eb;
+  @include flex-between;
+  margin-bottom: $spacing-8;
+  padding-bottom: $spacing-6;
+  border-bottom: 1px solid $color-border;
 }
 
 .uuid {
-  font-family:
-    'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 'Droid Sans Mono', 'Courier New', monospace;
-  font-size: 0.875rem;
-  color: #6b7280;
-  background-color: #f3f4f6;
-  padding: 4px 8px;
-  border-radius: 6px;
+  @include font-family-mono;
+  font-size: $font-size-base;
+  color: $color-text-secondary;
+  background: $color-bg-hover;
+  padding: $spacing-2 $spacing-4;
+  border-radius: $radius-sm;
   cursor: default;
-  transition: all 0.2s ease;
-}
+  transition: all $transition-base;
 
-.uuid:hover {
-  background-color: #e5e7eb;
+  &:hover {
+    background: $color-border;
+  }
 }
 
 .status-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  @include status-badge;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  background-color: #f3f4f6;
+  background: $color-bg-hover;
   color: #4b5563;
-  transition: all 0.2s ease;
-}
+  transition: all $transition-base;
 
-.status-badge.online {
-  background-color: #dcfce7;
-  color: #166534;
-}
+  &.online {
+    background: $color-success-bg;
+    color: $color-success-text;
 
-.status-badge.offline {
-  background-color: #fee2e2;
-  color: #991b1b;
+    .status-dot {
+      background: #22c55e;
+      box-shadow: 0 0 6px #22c55e;
+    }
+  }
+
+  &.offline {
+    background: $color-danger-bg;
+    color: $color-danger-text;
+
+    .status-dot {
+      background: #ef4444;
+    }
+  }
 }
 
 .status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: currentColor;
-  opacity: 0.8;
-}
-
-.status-badge.online .status-dot {
-  background-color: #22c55e;
-  box-shadow: 0 0 6px #22c55e;
-}
-
-.status-badge.offline .status-dot {
-  background-color: #ef4444;
+  @include status-dot;
 }
 
 .card-body {
   flex: 1;
-  margin-bottom: 20px;
+  margin-bottom: $spacing-10;
 }
 
 .info-row {
   display: flex;
-  margin-bottom: 10px;
-  font-size: 0.875rem;
+  margin-bottom: $spacing-5;
+  font-size: $font-size-base;
   line-height: 1.5;
 }
 
 .info-label {
   width: 80px;
   flex-shrink: 0;
-  color: #6b7280;
+  color: $color-text-secondary;
   font-weight: 400;
 }
 
 .info-value {
-  color: #374151;
+  color: $color-text-base;
   font-weight: 500;
   word-break: break-word;
   flex: 1;
@@ -429,63 +377,59 @@ onMounted(async () => {
 .card-footer {
   display: flex;
   justify-content: flex-end;
-  margin-top: 4px;
+  margin-top: $spacing-3;
 }
 
 .detail-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 18px;
-  background-color: #1e40af;
-  color: white;
+  @include flex-center;
+  gap: $spacing-4;
+  padding: $spacing-5 $spacing-9;
+  background: $color-primary;
+  color: $color-text-white;
   border: none;
-  border-radius: 9999px;
-  font-size: 0.875rem;
+  border-radius: $radius-lg;
+  font-size: $font-size-base;
   font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all $transition-base;
+  box-shadow: $shadow-card;
+
+  &:hover {
+    background: $color-primary-dark;
+    box-shadow: $shadow-btn-hover;
+    transform: scale(1.02);
+  }
+
+  svg {
+    transition: transform $transition-base;
+  }
+
+  &:hover svg {
+    transform: translateX(3px);
+  }
 }
 
-.detail-btn:hover {
-  background-color: #1e3a8a;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-  transform: scale(1.02);
-}
-
-.detail-btn svg {
-  transition: transform 0.2s ease;
-}
-
-.detail-btn:hover svg {
-  transform: translateX(3px);
-}
-
-/* 响应式 */
-@media (max-width: 768px) {
+@include mobile {
   .client-list-container {
-    padding: 16px;
+    padding: $spacing-8;
   }
 
   .page-header {
-    /* flex-direction: column; */
     align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: $spacing-6;
+    margin-bottom: $spacing-10;
   }
 
   .page-title {
-    font-size: 1.5rem;
+    font-size: $font-size-8xl;
   }
 
   .cards-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: $spacing-8;
   }
 
   .client-card {
-    padding: 16px;
+    padding: $spacing-8;
   }
 
   .info-label {

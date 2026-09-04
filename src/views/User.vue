@@ -326,7 +326,7 @@
           </div>
           <div v-else-if="modalType === 'shxzhy'">
             <p class="modal-hint">
-              由于特殊原因，行之慧云暂时无法被访问，恢复时间未知（2026年8月21日）
+              由于特殊原因，行之慧云暂时无法被访问，恢复时间未知（2026年8月22日）
             </p>
             <p class="modal-hint">我们将调用行知·慧云的登录接口验证您的身份</p>
             <p class="modal-hint">您的数据只将用于验证身份，您无法使用行知·慧云账号登录YCService</p>

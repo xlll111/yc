@@ -494,7 +494,6 @@ const sendCaptcha = (phone) => {
 }
 
 const fetchBindCommand = async () => {
-  isHandlingConfirm.value = true
   if (!userInfo.value.emailVerified) {
     ElMessage.error('请先验证邮箱')
     return
@@ -502,6 +501,7 @@ const fetchBindCommand = async () => {
     ElMessage.error('权限等级不足，无法绑定钉钉')
     return
   }
+  isHandlingConfirm.value = true
   try {
     const dingtalkToken = await userStore.fetchDingtalkVerificationToken()
     const payload = {

@@ -428,7 +428,7 @@ if (!userStore.isLoggedIn) {
 const userInfo = computed(() => userStore.userInfo)
 const userInfoLoaded = computed(() => userInfo.value !== null)
 const userRole = computed(() => userInfo.value?.role || 0)
-console.log('User info:', userInfo.value)
+// console.log('User info:', userInfo.value)
 
 const modalVisible = ref(false)
 const modalTitle = ref('')
@@ -495,6 +495,13 @@ const sendCaptcha = (phone) => {
 
 const fetchBindCommand = async () => {
   isHandlingConfirm.value = true
+  if (!userInfo.value.emailVerified) {
+    ElMessage.error('请先验证邮箱')
+    return
+  } else if (userRole < 1) {
+    ElMessage.error('权限等级不足，无法绑定钉钉')
+    return
+  }
   try {
     const dingtalkToken = await userStore.fetchDingtalkVerificationToken()
     const payload = {
@@ -641,7 +648,10 @@ const handleModalFormatCheck = async () => {
         break
       }
       case 'shxzhy': {
-        if (!tempShxzhyUsername.value.trim()) {
+        if (!userInfo.value.emailVerified) {
+          ElMessage.error('请先验证邮箱')
+          return
+        } else if (!tempShxzhyUsername.value.trim()) {
           ElMessage.error('账号不能为空')
           return
         } else if (!tempShxzhyPassword.value.trim()) {

@@ -176,7 +176,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 
 const router = useRouter()
 const download = () => {
-  window.open('https://class.xlll.dpdns.org/api/files/installer/download/latest', '_blank')
+  window.open('https://fgarbogqref4qxbc.public.blob.vercel-storage.com/ycmain_setup.exe', '_blank')
 }
 // 轮播图数据
 const carouselImages = ref([

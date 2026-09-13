@@ -8,9 +8,7 @@ defineProps<{
   version: string
   lastSeen: string
   note: string
-  week: string
   weekLabel: string
-  weekOptions: Array<{ value: string; label: string }>
 }>()
 
 const emit = defineEmits<{
@@ -43,12 +41,12 @@ function onWeekChange(e: Event) {
 
       <!-- 操作栏：打印时整体隐藏（.no-print） -->
       <div class="header-actions no-print">
-        <label class="week-select">
+        <!-- <label class="week-select">
           <span class="sr-only">统计周期</span>
           <select :value="week" @change="onWeekChange">
             <option v-for="o in weekOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
           </select>
-        </label>
+        </label> -->
         <button class="btn-primary" @click="emit('export')">
           <svg
             viewBox="0 0 24 24"

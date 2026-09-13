@@ -19,16 +19,18 @@ import { useWeeklyReport } from './composables/useWeeklyReport'
 
 const props = defineProps({
   uuid: { type: [String], default: '' },
+  week: { type: [String], default: '2026-1-1' },
   token: { type: [String], default: '' },
 })
 const route = useRoute()
 
 // 统一取一个值：优先 props，其次 query
 const finalUUID = computed(() => props.uuid || String(route.query.uuid ?? ''))
+const finalWeek = computed(() => props.week || String(route.query.week ?? '2026-1-1'))
 const finalToken = computed(() => props.token || String(route.query.token ?? ''))
 
 const { week, weekOptions, weekRangeLabel, loading, error, aggregate, setWeek, retry } =
-  useWeeklyReport(finalUUID.value, finalToken.value)
+  useWeeklyReport(finalUUID.value, finalWeek.value, finalToken.value)
 
 /** DNS 风险占比（比例条填充宽度，0 ~ 100） */
 const dnsRiskPct = computed(() =>
@@ -185,7 +187,9 @@ function handlePrint() {
 body {
   background: var(--wr-bg);
 }
-
+#top-bar {
+  display: none;
+}
 /* 通用卡片 */
 .wr-card {
   background: var(--wr-card);

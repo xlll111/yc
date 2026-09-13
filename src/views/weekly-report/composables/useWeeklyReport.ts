@@ -91,15 +91,13 @@ function toOption(w: Dayjs, current: string) {
  *  组合函数
  * ================================================================ */
 
-export function useWeeklyReport(uuid: string, token: string) {
+export function useWeeklyReport(uuid: string, week0: string, token: string) {
   /** 周次选项：Mock 模式锚定需求示例周 2026-09-01；真实模式取最近 4 个自然周 */
   const anchor = startOfWeek(dayjs())
-  const currentWeek = startOfWeek(dayjs()).format('YYYY-MM-DD')
-  const weekOptions = [0, 1, 2, 3].map((o) =>
-    toOption(startOfWeek(dayjs()).subtract(o, 'week'), currentWeek),
-  )
+  const currentWeek = week0
+  const weekOptions = toOption(startOfWeek(dayjs(currentWeek)).subtract(0, 'week'), currentWeek)
 
-  const DEFAULT_WEEK = weekOptions[0]?.value || '1'
+  const DEFAULT_WEEK = weekOptions?.value || '1'
 
   /** 当前选中的周（周一日期，本地时区口径） */
   const week = ref<string>(DEFAULT_WEEK)

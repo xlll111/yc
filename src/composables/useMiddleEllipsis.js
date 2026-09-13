@@ -9,7 +9,7 @@ const truncateMiddle = (str, maxLength = 20, headLen = 8, tailLen = 8) => {
 }
 
 export function useMiddleEllipsis(uuid, options = {}) {
-  const { charWidth = 9, widthRatio = 0.6 } = options
+  const { charWidth = 9, widthRatio = 0.5 } = options
 
   // 确保 uuid 是 ref
   const uuidRef = typeof uuid === 'string' ? ref(uuid) : uuid
@@ -24,7 +24,8 @@ export function useMiddleEllipsis(uuid, options = {}) {
     const containerWidth =
       widthRatio * el.parentElement?.parentElement?.clientWidth || el.clientWidth
 
-    const maxChars = Math.floor(containerWidth / charWidth)
+    let maxChars = Math.floor(containerWidth / charWidth)
+    if (maxChars <= 0) maxChars = 1
 
     // 关键：如果可用字符数 >= UUID 长度，直接显示完整
     if (maxChars >= uuidRef.value.length) {

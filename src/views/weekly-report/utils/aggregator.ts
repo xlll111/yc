@@ -231,7 +231,7 @@ export function aggregateHeartbeats(
 
   // 2) 热力图统计：每条心跳计入 [星期][小时] 一格，反映“活跃密度”
   for (const t of beats) {
-    hourlyHeatmap[toMondayIndex(t)][t.hour()] += 1
+    hourlyHeatmap[toMondayIndex(t)]![t.hour()]! += 1
   }
 
   // 3) 会话切分：用索引标记每段 [首心跳, 末心跳]。
@@ -251,13 +251,14 @@ export function aggregateHeartbeats(
   const onlineSessions: OnlineSession[] = []
   let totalOnlineSeconds = 0
   for (const [s, e] of segments) {
-    const start = beats[s]
-    const end = beats[e]
+    const start = beats[s] ?? dayjs()
+    const end = beats[e] ?? dayjs()
     // 会话时长 = 末心跳 - 首心跳；单条心跳的孤立会话保守计 0 秒（避免高估在线率），
     // 其存在感已由热力图心跳密度体现。
     const seconds = end.diff(start, 'second')
     totalOnlineSeconds += seconds
     for (const { dayIndex, seconds: daySec } of splitSecondsByDay(start, end)) {
+      if (!dailyOnlineSeconds[dayIndex]) continue
       dailyOnlineSeconds[dayIndex] += daySec
     }
     onlineSessions.push({ start: start.toISOString(), end: end.toISOString(), seconds })
@@ -296,7 +297,7 @@ export function aggregateUsbSessions(
     let sessionCount = 0
     let sessionStart = times[0]
     let prev = times[0]
-
+    if (!sessionStart || !prev) continue
     const flush = (start: number, end: number) => {
       sessionCount += 1
       totalSeconds += Math.max(0, Math.round((end - start) / 1000))
@@ -306,6 +307,7 @@ export function aggregateUsbSessions(
       const cur = times[i]
       const gapSec = cur !== undefined ? (cur - prev) / 1000 : Number.POSITIVE_INFINITY
       if (gapSec > USB_SESSION_GAP_SECONDS) {
+        if (!sessionStart) continue
         flush(sessionStart, prev)
         sessionStart = cur // undefined 时循环已结束，赋值无副作用
       }
@@ -370,8 +372,8 @@ const SECOND_LEVEL_SUFFIXES = new Set([
 export function extractRegistrableDomain(url: string): string {
   let host = (url || '').trim().toLowerCase()
   host = host.replace(/^[a-z][a-z0-9+.-]*:\/\//, '') // scheme
-  host = host.split(/[/?#]/)[0] // path / query / hash
-  host = host.split(':')[0] // port（同时兜底 IPv6 冒号）
+  host = host.split(/[/?#]/)[0] ?? '' // path / query / hash
+  host = host.split(':')[0] ?? '' // port
   host = host.replace(/^\.+|\.+$/g, '') // 首尾点
   if (!host) return '(unknown)'
 

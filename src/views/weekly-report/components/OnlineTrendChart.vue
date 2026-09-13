@@ -46,7 +46,7 @@ function buildOption(): EChartsCoreOption {
       textStyle: { color: '#fff', fontSize: 12 },
       formatter: (params: any) => {
         const p = params[0]
-        return `<b>${p.name}</b><br/>在线时长：${formatDuration(props.daily[p.dataIndex])}`
+        return `<b>${p.name}</b><br/>在线时长：${formatDuration(props.daily[p.dataIndex] ?? 0)}`
       },
     },
     xAxis: {

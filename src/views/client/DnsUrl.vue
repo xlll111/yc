@@ -509,62 +509,78 @@ onUnmounted(() => {
 })
 </script>
 
-<style lang="scss" scoped>
-/* 提取的日历网格 Mixin (建议放入 scss) */
-@mixin calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: $spacing-1;
-}
-
+<style scoped>
 /* 容器与卡片 */
 .container {
-  @include container; // 直接复用 container mixin
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px;
+  box-sizing: border-box;
 }
-
 .content {
-  @include container;
-  border: 1px solid $color-danger; // 原 #ef4444 映射为 danger
-  border-radius: $radius-md;
-  background: $color-danger-hover-bg; // 原 #ffe5e5 映射为 danger hover bg
-  box-shadow: $shadow-card;
-  padding: $spacing-6 $spacing-8; // 12px 16px
-  margin-bottom: $spacing-3; // 6px
-  transition: all $transition-base;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px;
+  box-sizing: border-box;
+  border: #ef4444 1px solid;
+  border-radius: 8px;
+  background: #ffe5e5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  transition: all 0.2s ease;
+}
+.card {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transition: box-shadow 0.2s ease;
+  max-height: calc(100vh - 140px);
+  margin-bottom: 30px;
 }
 
-.card {
-  @include card-base;
-  padding: $spacing-11; // 24px
-  @include flex-column;
-  gap: $spacing-10; // 20px
-  max-height: calc(100vh - 140px);
-  margin-bottom: 30px; // 无精确匹配变量，若需严格统一可改为 $spacing-12 (28px)
-
-  &:hover {
-    @include card-hover; // 复用 hover 阴影
-  }
+.card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 /* 头部导航 */
 .header {
-  @include flex-between;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   flex-wrap: nowrap;
-  gap: $spacing-8; // 16px
-  margin-bottom: $spacing-12; // 28px
+  gap: 16px;
+  margin-bottom: 28px;
 }
 
 .back-button {
-  @include btn-text;
+  display: inline-flex;
   min-width: max-content;
-  color: $color-text-base;
-  font-size: $font-size-xl; // 0.95rem
-  padding: $spacing-4 $spacing-8; // 8px 16px
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: #374151;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
 
-  &:hover {
-    background-color: $color-bg-hover;
-    color: $color-primary;
-  }
+.back-button:hover {
+  background-color: #f3f4f6;
+  color: #1e40af;
 }
 
 .back-icon {
@@ -573,81 +589,84 @@ onUnmounted(() => {
 }
 
 .client-info {
-  background: $color-bg-white;
+  background: #fff;
   max-width: 60vw;
   min-width: 30%;
-  padding: $spacing-3 $spacing-8; // 6px 16px
-  border-radius: $radius-lg;
-  border: 1px solid $color-border;
-  box-shadow: $shadow-light;
-  @include flex-center;
-  gap: $spacing-4;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .client-label {
   min-width: max-content;
-  font-size: $font-size-md; // 0.85rem
+  font-size: 0.85rem;
   font-weight: 500;
-  color: $color-text-secondary;
+  color: #6b7280;
 }
 
 .client-uuid {
-  @include font-family-mono;
-  font-size: $font-size-md;
+  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+  font-size: 0.85rem;
   font-weight: 500;
-  color: $color-primary;
-  background: $color-primary-light;
-  padding: $spacing-2 $spacing-4; // 4px 8px
-  border-radius: $radius-lg;
+  color: #1e40af;
+  background: #eff6ff;
+  padding: 4px 8px;
+  border-radius: 9999px;
 }
 
 /* 卡片头部 */
 .card-header {
-  margin-bottom: $spacing-4; // 8px
+  margin-bottom: 8px;
 }
 
 .title-section {
-  @include flex-center;
-  justify-content: normal;
-  gap: $spacing-6; // 12px
+  display: flex;
+  align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: $spacing-4;
+  margin-bottom: 8px;
+}
 
-  h2 {
-    font-size: $font-size-7xl; // 1.6rem
-    font-weight: 600;
-    color: $color-text-base;
-    margin: 0;
-    letter-spacing: -0.01em;
-  }
+.title-section h2 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .subtitle {
-  color: $color-text-secondary;
-  font-size: $font-size-md;
+  color: #6b7280;
+  font-size: 0.85rem;
   margin: 0;
 }
 
 /* 工具栏 */
 .toolbar {
-  @include flex-between;
+  display: flex;
+  justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
-  gap: $spacing-8;
-  padding-bottom: $spacing-8;
-  border-bottom: 1px solid $color-border;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .filter-group {
-  @include flex-column;
-  gap: $spacing-4;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   flex: 1;
 }
 
 .filter-label {
-  font-size: $font-size-sm; // 0.8rem
+  font-size: 0.8rem;
   font-weight: 500;
-  color: $color-text-secondary;
+  color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -664,105 +683,113 @@ onUnmounted(() => {
 }
 
 .picker-header {
-  @include flex-between;
-  margin-bottom: $spacing-8;
-  padding: 0 $spacing-2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 0 4px;
 }
 
 .month-nav-btn {
-  @include flex-center;
-  width: $spacing-13; // 32px
-  height: $spacing-13;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   border: none;
-  border-radius: $radius-md;
+  border-radius: 8px;
   background: transparent;
-  color: $color-text-base;
-  transition: all $transition-base;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 
-  &:hover {
-    background: $color-bg-hover;
-  }
+.month-nav-btn:hover {
+  background: #f3f4f6;
+}
 
-  svg {
-    width: 18px;
-    height: 18px;
-  }
+.month-nav-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .month-year {
-  font-size: $font-size-xl;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: $color-text-base;
+  color: #374151;
   user-select: none;
 }
 
 .weekday-header {
-  @include calendar-grid;
-  margin-bottom: $spacing-4;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 8px;
 }
 
 .weekday {
   text-align: center;
-  font-size: $font-size-xs; // 0.75rem
+  font-size: 0.75rem;
   font-weight: 500;
-  color: $color-text-tertiary;
-  padding: $spacing-3 0;
+  color: #9ca3af;
+  padding: 6px 0;
   user-select: none;
 }
 
 .calendar-grid {
-  @include calendar-grid;
-  margin-bottom: $spacing-8;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 16px;
 }
 
 .calendar-day {
   position: relative;
-  @include flex-column-center; // 复用 flex-column-center
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   aspect-ratio: 1;
   border: none;
-  border-radius: $radius-md;
+  border-radius: 8px;
   background: transparent;
-  color: $color-text-base;
-  font-size: $font-size-md;
+  color: #374151;
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all $transition-fast; // 0.15s
+  transition: all 0.15s ease;
+}
 
-  &:hover:not(.disabled):not(.selected) {
-    background: $color-bg-hover;
-  }
+.calendar-day:hover:not(.disabled):not(.selected) {
+  background: #f3f4f6;
+}
 
-  &.other-month {
-    color: $color-border-dark;
-  }
+.calendar-day.other-month {
+  color: #d1d5db;
+}
 
-  &.today .day-number {
-    color: $color-primary;
-    font-weight: 700;
-  }
+.calendar-day.today .day-number {
+  color: #1e40af;
+  font-weight: 700;
+}
 
-  &.selected {
-    background: $color-primary;
-    color: $color-text-white;
+.calendar-day.selected {
+  background: #1e40af;
+  color: white;
+}
 
-    .day-number {
-      color: $color-text-white;
-    }
+.calendar-day.selected .day-number {
+  color: white;
+}
 
-    &.today .day-number {
-      color: $color-text-white;
-    }
+.calendar-day.selected.today .day-number {
+  color: white;
+}
 
-    .day-dot {
-      background: $color-text-white;
-    }
-  }
-
-  &.disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
+.calendar-day.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .day-number {
@@ -773,185 +800,229 @@ onUnmounted(() => {
 
 .day-dot {
   position: absolute;
-  bottom: $spacing-2;
+  bottom: 4px;
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: $color-primary;
+  background: #1e40af;
+}
+
+.calendar-day.selected .day-dot {
+  background: white;
 }
 
 .picker-footer {
   display: flex;
-  gap: $spacing-4;
+  gap: 8px;
   justify-content: flex-end;
-  padding-top: $spacing-6;
-  border-top: 1px solid $color-border-light;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
 }
 
 .footer-btn {
-  @include btn-secondary; // 替代原有的基础按钮样式
-  padding: $spacing-3 $spacing-7; // 6px 14px
-  font-size: $font-size-sm;
+  padding: 6px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
+  background: white;
+  color: #374151;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 
-  &.primary {
-    @include btn-primary;
-  }
+.footer-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.footer-btn.primary {
+  background: #1e40af;
+  color: white;
+  border-color: #1e40af;
+}
+
+.footer-btn.primary:hover {
+  background: #1e3a8a;
 }
 
 .actions-group {
-  @include flex-center;
-  gap: $spacing-6;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .toggle-switch {
-  @include flex-center;
-  gap: $spacing-4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   cursor: pointer;
   user-select: none;
+}
 
-  input {
-    display: none;
-  }
+.toggle-switch input {
+  display: none;
+}
 
-  .toggle-slider {
-    width: 36px;
-    height: 20px;
-    background: $color-border;
-    border-radius: $radius-lg;
-    position: relative;
-    transition: background $transition-base;
+.toggle-slider {
+  width: 36px;
+  height: 20px;
+  background: #e5e7eb;
+  border-radius: 9999px;
+  position: relative;
+  transition: background 0.2s ease;
+}
 
-    &::after {
-      content: '';
-      position: absolute;
-      width: 16px;
-      height: 16px;
-      background: $color-text-white;
-      border-radius: 50%;
-      top: $spacing-1;
-      left: $spacing-1;
-      transition: transform $transition-base;
-      box-shadow: $shadow-inset;
-    }
-  }
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
 
-  input:checked + .toggle-slider {
-    background: $color-primary;
+input:checked + .toggle-slider {
+  background: #1e40af;
+}
 
-    &::after {
-      transform: translateX(16px);
-    }
-  }
+input:checked + .toggle-slider::after {
+  transform: translateX(16px);
 }
 
 .toggle-label {
-  font-size: $font-size-md;
+  font-size: 0.85rem;
   font-weight: 500;
-  color: $color-text-base;
+  color: #374151;
 }
 
 /* 列表滚动区域 */
 .list-scroll-area {
   flex: 1;
-  @include custom-scrollbar(5px);
   overflow-y: auto;
-  padding-right: $spacing-2;
+  padding-right: 4px;
   max-height: calc(100vh - 380px);
   min-height: 300px;
 }
 
+.list-scroll-area::-webkit-scrollbar {
+  width: 5px;
+}
+
+.list-scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.list-scroll-area::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 9999px;
+}
+
 .empty-state {
-  @include flex-column-center;
-  gap: $spacing-8;
-  padding: $spacing-15 $spacing-10; // 48px 20px
-  color: $color-text-tertiary;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  color: #9ca3af;
 }
 
 .empty-icon {
   width: 48px;
   height: 48px;
+  margin-bottom: 16px;
 }
 
 /* 小时分组 */
 .hour-group {
-  margin-bottom: $spacing-10;
+  margin-bottom: 20px;
 }
 
 .hour-header {
-  @include flex-center;
-  gap: $spacing-5; // 10px
-  padding: $spacing-4 0;
-  margin-bottom: $spacing-4;
-  border-bottom: 1px dashed $color-border;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed #e5e7eb;
   position: sticky;
   top: 0;
-  background: $color-bg-white;
-  z-index: $z-sticky;
+  background: white;
+  z-index: 2;
 }
 
 .hour-dot {
-  width: $spacing-4;
-  height: $spacing-4;
-  background: $color-primary;
+  width: 8px;
+  height: 8px;
+  background: #1e40af;
   border-radius: 50%;
   display: inline-block;
 }
 
 .hour-text {
   font-weight: 600;
-  color: $color-text-base;
-  font-size: $font-size-lg;
+  color: #374151;
+  font-size: 0.9rem;
 }
 
 .hour-count {
-  font-size: $font-size-xs;
-  color: $color-text-tertiary;
+  font-size: 0.75rem;
+  color: #9ca3af;
   margin-left: auto;
 }
 
 /* 记录项 */
 .record-item {
-  padding: $spacing-6 $spacing-8;
-  border-radius: $radius-md;
-  margin-bottom: $spacing-3;
-  background: $color-bg-card;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: #f9fafb;
   border-left: 3px solid transparent;
-  transition: all $transition-base;
+  transition: all 0.2s ease;
+}
 
-  &:hover {
-    background: $color-bg-hover;
-  }
+.record-item:hover {
+  background: #f3f4f6;
+}
 
-  &.alert-item {
-    background: $color-danger-hover-bg;
-    border-left-color: $color-danger;
-  }
+.record-item.alert-item {
+  background: #ffe5e5;
+  border-left-color: #ef4444;
 }
 
 .record-main {
-  @include flex-between;
-  gap: $spacing-8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
 .record-details {
-  @include flex-column;
-  gap: $spacing-2;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   flex: 1;
   min-width: 0;
 }
 
 .record-url {
   font-weight: 500;
-  color: $color-text-base;
-  font-size: $font-size-lg;
+  color: #374151;
+  font-size: 0.9rem;
   word-break: break-all;
-  @include text-ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .record-time {
-  font-size: $font-size-xs;
-  color: $color-text-secondary;
+  font-size: 0.75rem;
+  color: #6b7280;
 }
 
 .record-actions {
@@ -959,74 +1030,99 @@ onUnmounted(() => {
 }
 
 .screenshot-btn {
-  @include btn-primary;
-  padding: $spacing-3 $spacing-7; // 6px 14px
-  font-size: $font-size-sm;
+  background: #1e40af;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
 
-  &:hover {
-    background: $color-primary-dark;
-    box-shadow: 0 2px 6px $color-primary-alpha-25;
-  }
+.screenshot-btn:hover {
+  background: #1e3a8a;
+  box-shadow: 0 2px 6px rgba(30, 64, 175, 0.3);
 }
 
 .loading-indicator {
   text-align: center;
-  padding: $spacing-8;
-  color: $color-text-secondary;
-  font-size: $font-size-md;
+  padding: 16px;
+  color: #6b7280;
+  font-size: 0.85rem;
 }
 
 /* 模态框 */
 .modal-overlay {
-  @include modal-overlay;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .modal-content {
-  @include modal-card;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 900px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .modal-header {
-  @include flex-between;
+  display: flex;
+  justify-content: space-between;
   align-items: flex-start;
-  padding: $spacing-10 $spacing-11;
-  border-bottom: 1px solid $color-border;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.modal-title-group {
-  h3 {
-    margin: 0 0 $spacing-2 0;
-    font-size: $font-size-5xl; // 1.3rem
-    color: $color-text-base;
-    font-weight: 600;
-  }
+.modal-title-group h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.3rem;
+  color: #374151;
+  font-weight: 600;
 }
 
 .modal-warning-info {
   margin: 0;
-  font-size: $font-size-md;
-  color: $color-danger;
+  font-size: 0.85rem;
+  color: #ef4444;
   word-break: break-all;
 }
 
 .modal-time-diff {
-  margin: $spacing-2 0 0 0;
-  font-size: $font-size-sm;
-  color: $color-text-secondary;
+  margin: 4px 0 0 0;
+  font-size: 0.8rem;
+  color: #6b7280;
 }
 
 .modal-close-btn {
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: $spacing-2;
-  border-radius: $radius-lg;
-  color: $color-text-secondary;
-  transition: all $transition-base;
+  padding: 4px;
+  border-radius: 9999px;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
 
-  &:hover {
-    background: $color-bg-hover;
-    color: $color-text-base;
-  }
+.modal-close-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
 }
 
 .close-icon {
@@ -1035,79 +1131,82 @@ onUnmounted(() => {
 }
 
 .modal-body {
-  padding: $spacing-10 $spacing-11;
+  padding: 20px 24px;
   overflow-y: auto;
   max-height: 70vh;
 }
 
 .screenshot-card {
-  border: 1px solid $color-border;
-  margin-bottom: $spacing-10;
-  border-radius: $radius-md;
-  overflow: hidden;
-  transition: all $transition-base;
-  background: $color-bg-white;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 20px;
 
-  &.best-match {
-    border-color: $color-primary;
-    box-shadow: 0 0 0 2px $color-primary-alpha-20;
-    background: $color-bg-light;
-  }
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.screenshot-card.best-match {
+  border-color: #1e40af;
+  box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.2);
+  background: #f8fafc;
 }
 
 .screenshot-img {
   width: 100%;
   height: auto;
   display: block;
-  border-bottom: 1px solid $color-border;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .screenshot-info {
-  @include flex-between;
-  padding: $spacing-5 $spacing-7;
-  gap: $spacing-6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  gap: 12px;
   flex-wrap: wrap;
-  font-size: $font-size-sm;
+  font-size: 0.8rem;
 }
 
 .shot-filename {
   font-weight: 500;
-  color: $color-text-base;
+  color: #374151;
   word-break: break-all;
   flex: 1;
 }
 
 .shot-time {
-  color: $color-text-secondary;
+  color: #6b7280;
   white-space: nowrap;
 }
 
 .shot-diff {
   font-weight: 600;
-  color: $color-primary;
+  color: #1e40af;
   white-space: nowrap;
+}
 
-  &.urgent {
-    color: $color-danger;
-  }
+.shot-diff.urgent {
+  color: #ef4444;
 }
 
 .no-screenshots,
 .loading-screenshots {
   text-align: center;
-  padding: $spacing-14; // 40px
-  color: $color-text-secondary;
+  padding: 40px;
+  color: #6b7280;
 }
 
 /* 响应式 */
-@include mobile {
+@media (max-width: 768px) {
   .container {
-    padding: $container-padding-mobile;
+    padding: 16px;
   }
 
   .card {
-    padding: $spacing-8;
-    gap: $spacing-8;
+    padding: 16px;
+    gap: 16px;
     max-height: calc(100vh - 120px);
   }
 
@@ -1120,7 +1219,7 @@ onUnmounted(() => {
   }
 
   .title-section h2 {
-    font-size: $font-size-5xl;
+    font-size: 1.3rem;
   }
 
   .toolbar {
@@ -1145,13 +1244,13 @@ onUnmounted(() => {
 
   .modal-content {
     max-height: 95vh;
-    margin: $spacing-5;
+    margin: 10px;
   }
 
   .screenshot-info {
     flex-direction: column-reverse;
-    gap: 3px; // 奇数像素无法精确映射变量，保留或统一定义 $spacing-half
-    padding: $spacing-3 $spacing-5;
+    gap: 3px;
+    padding: 5px 10px;
   }
 
   .list-scroll-area {

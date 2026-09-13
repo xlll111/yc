@@ -36,7 +36,9 @@
 .flex-between {
   @include mixins.flex-between;
 }
-
+.flex-col {
+  @include mixins.flex-column;
+}
 .flex-column {
   @include mixins.flex-column;
 }

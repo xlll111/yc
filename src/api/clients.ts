@@ -70,4 +70,16 @@ export const clientApi = {
       params: { uuid, startTime, endTime, page, pageSize },
     })
   },
+  getWeeklyClientReport(
+    uuid: string,
+    weekNum: number,
+    token: string,
+    signal?: AbortSignal,
+  ): Promise<any> {
+    return request.get('/clients/get_weekly_client_report', null, {
+      params: { uuid, weekNum },
+      headers: { Authorization: `Bearer ${token}` },
+      signal,
+    })
+  },
 }

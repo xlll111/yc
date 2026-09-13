@@ -21,6 +21,8 @@ const WhiteList = () => import('@/views/client/WhiteList.vue')
 const UDiskAllow = () => import('@/views/client/UDiskAllow.vue')
 const DnsUrl = () => import('@/views/client/DnsUrl.vue')
 
+const WeeklyClientReport = () => import('@/views/weekly-report/index.vue')
+
 const Blank = () => import('@/components/blank.vue')
 const E404 = () => import('@/views/E404.vue')
 
@@ -146,6 +148,11 @@ const router = createRouter({
         window.location.replace('/docs')
       },
       component: Home,
+    },
+    {
+      path: '/weekly_report',
+      name: 'WeeklyClientReport',
+      component: WeeklyClientReport,
     },
     {
       path: '/email_verify',

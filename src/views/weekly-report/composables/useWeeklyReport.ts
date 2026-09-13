@@ -202,6 +202,16 @@ export function useWeeklyReport(uuid: string, week0: string, token: string) {
       const raw = await fetchWeeklyReport(uuid, token, targetWeek, controller.signal)
       // 双保险：即使中断未被 fetch 捕获，过期结果也不落地
       if (controller !== activeController) return
+      // console.log('raw keys:', Object.keys(raw))
+      // console.log('client_record:', raw.client_record?.length, raw.client_record?.[0])
+      // console.log('targetWeek:', targetWeek, 'week.value:', week.value)
+      // const hb = aggregateHeartbeats(raw.client_record ?? [], targetWeek)
+      // console.log(
+      //   'dailyOnlineSeconds:',
+      //   hb.dailyOnlineSeconds,
+      //   'len:',
+      //   hb.dailyOnlineSeconds.length,
+      // )
       aggregate.value = await buildAggregateSafely(raw, targetWeek)
     } catch (e) {
       const err = e as Error

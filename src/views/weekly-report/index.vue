@@ -28,7 +28,6 @@ const route = useRoute()
 const finalUUID = computed(() => props.uuid || String(route.query.uuid ?? ''))
 const finalWeek = computed(() => props.week || String(route.query.week ?? '2026-1-1'))
 const finalToken = computed(() => props.token || String(route.query.token ?? ''))
-console.log(finalWeek.value)
 
 const { week, weekOptions, weekRangeLabel, loading, error, aggregate, setWeek, retry } =
   useWeeklyReport(finalUUID.value, finalWeek.value, finalToken.value)

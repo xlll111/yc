@@ -225,9 +225,12 @@ export function aggregateHeartbeats(
     .map((r) => toLocal(r.time))
     .filter((t) => isWithinWeek(t, weekStart))
     .sort((a, b) => a.valueOf() - b.valueOf())
+  // console.log(`beats${beats}`)
 
   const dailyOnlineSeconds: number[] = Array.from({ length: 7 }, () => 0)
   const hourlyHeatmap: number[][] = emptyHeatmap()
+  // console.log(`dailyOnlineSeconds${dailyOnlineSeconds}`)
+  // console.log(`hourlyHeatmap${hourlyHeatmap}`)
 
   // 2) 热力图统计：每条心跳计入 [星期][小时] 一格，反映“活跃密度”
   for (const t of beats) {
@@ -258,8 +261,7 @@ export function aggregateHeartbeats(
     const seconds = end.diff(start, 'second')
     totalOnlineSeconds += seconds
     for (const { dayIndex, seconds: daySec } of splitSecondsByDay(start, end)) {
-      if (!dailyOnlineSeconds[dayIndex]) continue
-      dailyOnlineSeconds[dayIndex] += daySec
+      dailyOnlineSeconds[dayIndex] = (dailyOnlineSeconds[dayIndex] ?? 0) + daySec
     }
     onlineSessions.push({ start: start.toISOString(), end: end.toISOString(), seconds })
   }

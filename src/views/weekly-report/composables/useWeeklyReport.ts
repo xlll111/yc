@@ -68,6 +68,7 @@ async function fetchWeeklyReport(
   const yearWeek = toYearWeek(week)
   // ---- 真实接口 ----
   const res = await clientApi.getWeeklyClientReport(uuid, yearWeek, token, signal)
+  // console.log('[weekly-report] 请求成功：', res) // Mock 模式下直接返回 Mock 数据
   return res
 }
 

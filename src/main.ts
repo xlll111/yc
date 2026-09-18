@@ -1,6 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-
+import './styles/tailwind.css' // Tailwind 的样式
 import App from './App.vue'
 import router from './router'
 import dayjs from 'dayjs'

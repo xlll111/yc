@@ -139,6 +139,9 @@ function handlePrint() {
             <p v-else class="attr-foot">禁止设备本周无接入记录</p>
           </section>
 
+          <!-- USB 设备会话 Top5 横向条形图 -->
+          <UsbTopChart :items="aggregate.usbTopSessions" />
+
           <!-- DNS 风险比例卡 -->
           <section class="wr-card attr-card">
             <header class="attr-head">
@@ -153,9 +156,6 @@ function handlePrint() {
             </div>
             <div class="ratio-track"><i :style="{ width: `${dnsRiskPct}%` }" /></div>
           </section>
-
-          <!-- USB 设备会话 Top5 横向条形图 -->
-          <UsbTopChart :items="aggregate.usbTopSessions" />
         </div>
       </div>
 

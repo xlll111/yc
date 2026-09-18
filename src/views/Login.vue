@@ -212,7 +212,11 @@ const handleLogin = async () => {
 const loginSuccess = () => {
   // 判断是否有上一页（Vue Router 注入的 back）
   if (window.history.state && window.history.state.back) {
-    router.back() // 返回上一页
+    if (window.history.state.back === '/') {
+      router.replace('/dash')
+    } else {
+      router.back() // 返回上一页
+    }
   } else {
     router.replace('/dash') // 没有上一页，跳转到控制台
   }

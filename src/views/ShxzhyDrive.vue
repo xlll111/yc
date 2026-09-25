@@ -317,19 +317,23 @@
           <p class="state-title">暂无目录数据</p>
         </div>
 
-        <div v-else class="tree-view">
+        <TransitionGroup v-else name="tree" tag="div" class="tree-view">
           <div
             v-for="node in flatTree"
             :key="`${node.type}-${node.path}-${node.file_id ?? 'd'}`"
             class="tree-node"
-            :class="{ 'is-file': !node.isDir }"
-            :style="{ paddingLeft: `${16 + node.depth * 22}px` }"
+            :class="{ 'is-file': !node.isDir, 'is-dir': node.isDir }"
+            :style="{ paddingLeft: `${12 + node.depth * 22}px` }"
+            @click="
+              node.isDir
+                ? toggleDir(node.path)
+                : handleDownload({ id: node.file_id, filename: node.name })
+            "
           >
             <template v-if="node.isDir">
-              <button class="tree-toggle" type="button" @click="toggleDir(node.path)">
+              <span class="tree-toggle" :class="{ open: node.expanded }">
                 <svg
                   class="chevron"
-                  :class="{ open: node.expanded }"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -339,7 +343,7 @@
                 >
                   <path d="m9 6 6 6-6 6" />
                 </svg>
-              </button>
+              </span>
               <span class="tree-icon dir-icon">
                 <svg
                   viewBox="0 0 24 24"
@@ -354,8 +358,9 @@
                   />
                 </svg>
               </span>
-              <span class="tree-name tree-name-clickable" @click="toggleDir(node.path)">
-                {{ node.name }}
+              <span class="tree-name">{{ node.name }}</span>
+              <span v-if="node.children?.length" class="tree-count">
+                {{ node.children.length }}
               </span>
             </template>
 
@@ -374,14 +379,7 @@
                 </svg>
               </span>
               <Spinner v-if="downloadingId === node.file_id" inline size="tiny" />
-              <span
-                class="tree-name is-deleted-target"
-                :class="{
-                  'is-deleted': node.is_deleted,
-                  'is-downloading': downloadingId === node.file_id,
-                }"
-                @click="handleDownload({ id: node.file_id, filename: node.name })"
-              >
+              <span class="tree-name" :class="{ 'is-deleted': node.is_deleted }">
                 {{ node.name }}
               </span>
               <span v-if="node.is_deleted" class="status-pill is-danger tree-flag">
@@ -390,7 +388,7 @@
               <span class="tree-size">{{ formatSize(node.size) }}</span>
             </template>
           </div>
-        </div>
+        </TransitionGroup>
       </div>
     </div>
 
@@ -1536,7 +1534,7 @@ onMounted(() => {
 
 /* ===== 目录树 ===== */
 .tree-view {
-  padding: 8px 0;
+  padding: 6px 8px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
@@ -1548,17 +1546,32 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 20px;
+  padding: 8px 12px;
+  margin: 1px 0;
+  border-radius: 6px;
   font-size: 14px;
-  transition: var(--transition);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
+  will-change: background-color;
 }
 
 .tree-node:hover {
-  background: #fafbfc;
+  background: #f3f6fb;
+}
+
+.tree-node:active {
+  background: #e8eef8;
+  transform: scale(0.998);
 }
 
 .tree-node.is-file:hover {
   background: var(--primary-soft);
+}
+
+.tree-node.is-file:active {
+  background: rgba(30, 64, 175, 0.14);
 }
 
 .tree-toggle {
@@ -1566,20 +1579,14 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
+  width: 18px;
+  height: 18px;
   color: var(--text-muted);
-  cursor: pointer;
-  transition: var(--transition);
+  transition: color 0.15s ease;
 }
 
-.tree-toggle:hover {
-  background: var(--border-light);
-  color: var(--text);
+.tree-node:hover .tree-toggle {
+  color: var(--primary);
 }
 
 .tree-toggle.placeholder {
@@ -1590,9 +1597,10 @@ onMounted(() => {
 .chevron {
   width: 14px;
   height: 14px;
-  transition: transform 0.2s ease;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.tree-toggle.open .chevron,
 .chevron.open {
   transform: rotate(90deg);
 }
@@ -1630,13 +1638,28 @@ onMounted(() => {
   color: var(--text-muted);
   text-decoration: line-through;
 }
-.tree-name-clickable {
-  cursor: pointer;
+
+.tree-count {
+  flex: none;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--border-light);
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
-.tree-node.is-file .tree-name {
-  cursor: pointer;
+.tree-node.is-dir:hover .tree-count {
+  background: #fff;
+  color: var(--primary);
 }
+
 .tree-flag {
   flex: none;
 }
@@ -1646,6 +1669,35 @@ onMounted(() => {
   margin-right: 8px;
   font-size: 12px;
   color: var(--text-muted);
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.tree-node.is-file:hover .tree-size {
+  opacity: 1;
+}
+
+/* ===== 目录树过渡动画 ===== */
+.tree-enter-active,
+.tree-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.tree-enter-from,
+.tree-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.tree-leave-active {
+  position: absolute;
+  width: 100%;
+}
+
+.tree-move {
+  transition: transform 0.25s ease;
 }
 
 /* ===== 弹窗 ===== */
@@ -1941,6 +1993,34 @@ onMounted(() => {
 
   .info-label {
     width: 64px;
+  }
+}
+
+/* 触屏设备：用 :active 替代 hover 效果 */
+@media (hover: none) {
+  .tree-node:hover {
+    background: transparent;
+  }
+
+  .tree-node.is-file:hover {
+    background: transparent;
+  }
+
+  .tree-node.is-dir:hover .tree-count {
+    background: var(--border-light);
+    color: var(--text-muted);
+  }
+
+  .tree-node.is-file:hover .tree-size {
+    opacity: 0.7;
+  }
+
+  .tree-node:active {
+    background: #e8eef8;
+  }
+
+  .tree-node.is-file:active {
+    background: rgba(30, 64, 175, 0.14);
   }
 }
 </style>

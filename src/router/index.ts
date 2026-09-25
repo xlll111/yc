@@ -176,6 +176,9 @@ const router = createRouter({
       path: '/shxzhy_drive',
       name: 'ShxzhyDrive',
       component: ShxzhyDrive,
+      meta: {
+        title: '慧云云盘镜像',
+      },
     },
     {
       path: '/:pathMatch(.*)*',

@@ -224,7 +224,7 @@ router.beforeEach(async (to, from) => {
   }
   const checkUserRole = async () => {
     try {
-      if (!(await userStore.checkUserRole(1))) {
+      if (!(await userStore.checkUserRole(2))) {
         ElMessage.warning('您没有权限查看控制台')
         ElMessage.warning('请完成用户验证')
         router.push('/user')

@@ -214,21 +214,27 @@ router.beforeEach((to, from) => {
 
 router.beforeEach(async (to, from) => {
   const userStore = useUserStore()
+  const newPath = to.path
+  const oldPath = from.path
+  if (newPath === oldPath) return
+
   const checkLogin = async () => {
     if (!userStore.getIsLoggedIn) {
       ElMessage.error('请先登录')
-      router.push('/login')
-      return false
+      return '/login' // 返回目标路由，交给 beforeEach 处理
     }
     return true
   }
+
   const checkUserRole = async () => {
     try {
       if (!(await userStore.checkUserRole(2))) {
         ElMessage.warning('您没有权限查看控制台')
-        ElMessage.warning('请完成用户验证')
-        router.push('/user')
-        return false
+        if (!(await userStore.checkUserRole(1))) {
+          ElMessage.warning('请完成用户验证')
+          return '/user'
+        }
+        return false // 表示中断导航
       }
       return true
     } catch (error) {
@@ -236,14 +242,19 @@ router.beforeEach(async (to, from) => {
       return false
     }
   }
-  const newPath = to.path
-  const oldPath = from.path
-  if (newPath === oldPath) return
+
   if (newPath === '/dash') {
-    if ((await checkLogin()) && (await checkUserRole())) router.push('/dash/clients')
+    const login = await checkLogin()
+    if (login !== true) return login // 未登录 → 跳 /login
+    const role = await checkUserRole()
+    if (role !== true) return role // 没权限 → 跳 /user 或中断
+    return '/dash/clients'
   } else if (newPath.startsWith('/dash')) {
-    await checkLogin()
-    await checkUserRole()
+    const login = await checkLogin()
+    if (login !== true) return login // ← 关键：检查返回值
+    const role = await checkUserRole()
+    if (role !== true) return role // ← 关键：检查返回值
+    return true
   }
 })
 

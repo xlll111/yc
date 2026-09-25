@@ -373,6 +373,7 @@
                   <path v-for="(d, i) in getFileIcon(node.name).paths" :key="i" :d="d" />
                 </svg>
               </span>
+              <Spinner v-if="downloadingId === node.file_id" inline size="tiny" />
               <span
                 class="tree-name is-deleted-target"
                 :class="{
@@ -474,6 +475,7 @@ import { useRouter } from 'vue-router'
 import { request } from '@/utils/request'
 import ToggleSwitch from '@/components/ToggleSwitch.vue'
 import { useUserStore } from '@/stores/userStore'
+import Spinner from '@/components/Spinner.vue'
 const router = useRouter()
 const userStore = useUserStore()
 if (!userStore.isLoggedIn) {

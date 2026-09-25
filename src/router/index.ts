@@ -23,6 +23,8 @@ const DnsUrl = () => import('@/views/client/DnsUrl.vue')
 
 const WeeklyClientReport = () => import('@/views/weekly-report/index.vue')
 
+const ShxzhyDrive = () => import('@/views/ShxzhyDrive.vue')
+
 const Blank = () => import('@/components/blank.vue')
 const E404 = () => import('@/views/E404.vue')
 
@@ -169,6 +171,11 @@ const router = createRouter({
         window.location.replace('https://xlll111.lanzouq.com/b00efkxesb')
       },
       component: Home,
+    },
+    {
+      path: '/shxzhy_drive',
+      name: 'ShxzhyDrive',
+      component: ShxzhyDrive,
     },
     {
       path: '/:pathMatch(.*)*',

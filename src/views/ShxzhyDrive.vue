@@ -355,7 +355,9 @@
                   />
                 </svg>
               </span>
-              <span class="tree-name">{{ node.name }}</span>
+              <span class="tree-name tree-name-clickable" @click="toggleDir(node.path)">
+                {{ node.name }}
+              </span>
             </template>
 
             <template v-else>
@@ -373,20 +375,20 @@
                   <path d="M14 3v5h5" />
                 </svg>
               </span>
-              <span class="tree-name" :class="{ 'is-deleted': node.is_deleted }">
+              <span
+                class="tree-name is-deleted-target"
+                :class="{
+                  'is-deleted': node.is_deleted,
+                  'is-downloading': downloadingId === node.file_id,
+                }"
+                @click="handleDownload({ id: node.file_id, filename: node.name })"
+              >
                 {{ node.name }}
               </span>
               <span v-if="node.is_deleted" class="status-pill is-danger tree-flag">
                 <i class="pill-dot" />已删除
               </span>
               <span class="tree-size">{{ formatSize(node.size) }}</span>
-              <button
-                class="btn btn-primary btn-xs"
-                :disabled="downloadingId === node.file_id"
-                @click="handleDownload({ id: node.file_id, filename: node.name })"
-              >
-                {{ downloadingId === node.file_id ? '获取中' : '下载' }}
-              </button>
             </template>
           </div>
         </div>
@@ -483,7 +485,7 @@ if (!userStore.isLoggedIn) {
 const { proxy } = getCurrentInstance()
 
 /* ---------------- 基础状态 ---------------- */
-const viewMode = ref('list') // list | tree
+const viewMode = ref('tree') // list | tree
 const includeDeleted = ref(true)
 const keyword = ref('')
 
@@ -645,6 +647,7 @@ const switchView = (mode) => {
   if (viewMode.value === mode) return
   viewMode.value = mode
   if (mode === 'tree' && !treeData.value && !treeLoading.value) loadTree()
+  if (mode === 'list' && !listLoading.value && !files.value.length) fetchFiles()
 }
 
 const toggleDir = (path) => {
@@ -656,6 +659,7 @@ const toggleDir = (path) => {
 
 const handleSearch = () => {
   page.value = 1
+  switchView('list')
   fetchFiles()
 }
 
@@ -735,7 +739,8 @@ watch(includeDeleted, () => {
 })
 
 onMounted(() => {
-  fetchFiles()
+  if (viewMode.value === 'tree') loadTree()
+  else fetchFiles()
   loadScanStatus()
 })
 </script>
@@ -1227,7 +1232,10 @@ onMounted(() => {
   color: var(--text-muted);
   text-decoration: line-through;
 }
-
+.tree-name.is-downloading {
+  color: var(--text-muted);
+  cursor: wait;
+}
 .dir-text {
   display: block;
   overflow: hidden;
@@ -1383,7 +1391,13 @@ onMounted(() => {
   color: var(--text-muted);
   text-decoration: line-through;
 }
+.tree-name-clickable {
+  cursor: pointer;
+}
 
+.tree-node.is-file .tree-name {
+  cursor: pointer;
+}
 .tree-flag {
   flex: none;
 }

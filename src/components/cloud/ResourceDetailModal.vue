@@ -52,7 +52,7 @@ watch(
     if (props.resourceType === 'file' && props.resource?.id) {
       try {
         const { request } = await import('@/utils/request') // TODO: 路径按项目调整
-        metaInfo.value = await request.get(`/api/cloud/download/${props.resource.id}/meta`)
+        metaInfo.value = await request.authget(`/api/cloud/download/${props.resource.id}/meta`)
       } catch {
         /* meta 仅为补充信息 */
       }

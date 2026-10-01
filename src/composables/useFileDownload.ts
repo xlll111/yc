@@ -18,9 +18,9 @@ export function useFileDownload() {
 
     try {
       // 1. 下载元信息（TODO: meta 字段待确认，最小假设 file_name）
-      const meta: any = await request.get(`${API_BASE}/download/${file.id}/meta`)
+      const meta: any = await request.authget(`${API_BASE}/download/${file.id}/meta`)
       // 2. 临时 url + 必需 headers
-      const info: any = await request.get(`${API_BASE}/download/${file.id}/url`)
+      const info: any = await request.authget(`${API_BASE}/download/${file.id}/url`)
       // 3. 带 headers 拉取 blob
       const res = await fetch(info.url, { headers: info.headers || {}, method: 'GET' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)

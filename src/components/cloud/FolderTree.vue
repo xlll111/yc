@@ -9,6 +9,7 @@ import type { FileItem, FolderItem } from '@/stores/cloudStore'
 import Spinner from '@/components/Spinner.vue'
 
 const props = defineProps<{ downloadingIds: Ref<Set<number>> }>()
+
 defineEmits<{
   (e: 'enter-folder', folder: FolderItem | null): void
   (e: 'open-folder-detail', folder: FolderItem): void
@@ -105,13 +106,13 @@ function onName(row: TreeRow) {
         :is-folder="row.kind !== 'file'"
         :box="28"
       />
-      <span
-        class="tree-name"
-        :class="{ link: row.kind !== 'file' }"
-        :title="row.kind === 'root' ? '我的云盘' : row.item.name"
-        @click="onName(row)"
-        >{{ row.kind === 'root' ? '我的云盘' : row.item.name }}</span
-      >
+
+      <!-- 文件名/文件夹名包裹层，负责 tooltip 定位 -->
+      <span class="name-wrap" :data-fullname="row.kind === 'root' ? '我的云盘' : row.item.name">
+        <span class="tree-name" :class="{ link: row.kind !== 'file' }" @click="onName(row)">{{
+          row.kind === 'root' ? '我的云盘' : row.item.name
+        }}</span>
+      </span>
 
       <span class="tree-meta">{{ row.kind === 'file' ? formatFileSize(row.item.size) : '' }}</span>
       <span class="tree-acts">
@@ -175,6 +176,8 @@ function onName(row: TreeRow) {
   max-width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
+  /* 注意：overflow-x: hidden 会裁掉垂直方向吗？不会，只裁 x。
+     但为保险，tooltip 放下面，且 .tree-row 不设 overflow。 */
 }
 .tree-row {
   display: flex;
@@ -184,7 +187,6 @@ function onName(row: TreeRow) {
   border-radius: var(--r-card, 8px);
   transition: background 0.2s ease;
 
-  /* 新增 */
   width: 100%;
   max-width: 100%;
   box-sizing: border-box; /* 让内联 paddingLeft 算进宽度 */
@@ -224,8 +226,19 @@ function onName(row: TreeRow) {
   transform: rotate(90deg);
 }
 
-.tree-name {
+/* ===== 名称包裹层 + tooltip ===== */
+
+/* 包裹层：定位参考，不裁剪 */
+.name-wrap {
+  position: relative;
   flex: 1 1 0;
+  min-width: 0;
+  display: block; /* 让它占满剩余空间，内部 .tree-name 才能正确截断 */
+}
+
+/* 名称本身：只负责截断 */
+.tree-name {
+  display: block;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -239,6 +252,56 @@ function onName(row: TreeRow) {
 .tree-name.link:hover {
   color: var(--c-primary, #1e40af);
 }
+
+/* 气泡本体 */
+.name-wrap[data-fullname]::after {
+  content: attr(data-fullname);
+  position: absolute;
+  left: 0;
+  top: calc(100% + 10px);
+  z-index: 100;
+  max-width: min(360px, 80vw);
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(17, 24, 39, 0.96);
+  color: #f9fafb;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: normal;
+  word-break: break-all;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+/* 小三角 */
+.name-wrap[data-fullname]::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: calc(100% + 4px);
+  z-index: 101;
+  border: 6px solid transparent;
+  border-bottom-color: rgba(17, 24, 39, 0.96);
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+/* 悬停显示 */
+.name-wrap[data-fullname]:hover::after,
+.name-wrap[data-fullname]:hover::before {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .tree-meta {
   flex: 0 1 auto;
   min-width: 0;
@@ -296,6 +359,11 @@ function onName(row: TreeRow) {
   }
   .tree-row {
     padding-right: 8px;
+  }
+  /* 移动端隐藏 tooltip */
+  .name-wrap[data-fullname]::after,
+  .name-wrap[data-fullname]::before {
+    display: none;
   }
 }
 </style>

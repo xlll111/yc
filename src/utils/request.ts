@@ -213,6 +213,10 @@ class Request {
     return this.instance.put(url, data, config)
   }
 
+  patch<T = any>(url: string, data?: any, config?: RequestConfig): Promise<T> {
+    return this.instance.patch(url, data, config)
+  }
+
   delete<T = any>(url: string, params?: any, config?: RequestConfig): Promise<T> {
     return this.instance.delete(url, { params, ...config })
   }
@@ -245,6 +249,16 @@ class Request {
     const token = userStore.getToken
     if (token) {
       return this.post(url, data, { headers: { Authorization: `Bearer ${token}` }, ...config })
+    } else {
+      return Promise.reject(new Error('未登录'))
+    }
+  }
+
+  authpatch<T = any>(url: string, data?: any, config?: RequestConfig): Promise<T> {
+    const userStore = useUserStore()
+    const token = userStore.getToken
+    if (token) {
+      return this.patch(url, data, { headers: { Authorization: `Bearer ${token}` }, ...config })
     } else {
       return Promise.reject(new Error('未登录'))
     }

@@ -144,6 +144,17 @@ const router = createRouter({
       },
     },
     {
+      path: '/dash',
+      children: [
+        {
+          path: 'cloud',
+          name: 'Cloud',
+          component: () => import('@/pages/cloud/CloudPage.vue'),
+          meta: { requiresAuth: true },
+        },
+      ],
+    },
+    {
       path: '/docs',
       name: 'Docs',
       beforeEnter() {

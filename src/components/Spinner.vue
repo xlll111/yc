@@ -1,3 +1,52 @@
+<!--
+============================================================
+组件名称: Spinner
+组件类型: UI / 加载状态 / Loading
+适用场景:
+  - 页面级加载
+  - 局部区域加载
+  - 按钮提交等待
+  - 表格/卡片数据加载
+不适用场景:
+  - 骨架屏（请使用 Skeleton 组件）
+  - 进度百分比展示（请使用 Progress 组件）
+
+AI 快速调用:
+  <Spinner />
+  <Spinner size="small" text="加载中..." />
+  <Spinner inline text="提交中" />
+  <Spinner overlay text="请稍候" />
+
+Props:
+  size: 'tiny' | 'small' | 'medium' | 'large'  默认 'medium'
+  color: string                                 默认 '#1e40af'
+  text: string                                  默认 ''
+  textColor: string                             默认 '#374151'
+  overlay: boolean                              默认 false
+  inline: boolean                               默认 false
+  customStyle: object                           默认 {}
+
+Slots:
+  无
+
+Events:
+  无
+
+关键行为:
+  - 默认非 inline 时为全屏 fixed 加载层
+  - inline 时为局部加载，宽度由内容决定
+  - overlay 为 true 时显示背景遮罩
+  - 支持暗色模式 prefers-color-scheme
+
+选择建议:
+  - 页面级等待：<Spinner text="加载中..." />
+  - 局部等待：<Spinner inline size="small" text="加载中..." />
+  - 弹窗/卡片内等待：<Spinner inline overlay text="请稍候" />
+
+依赖:
+  Vue 3 <script setup>
+============================================================
+-->
 <template>
   <div
     class="spinner-container"

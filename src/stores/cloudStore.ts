@@ -312,7 +312,13 @@ export const useCloudStore = defineStore('cloud', () => {
     const key = parentId == null ? 'root' : String(parentId)
     const existed = treeCache.get(key)
     if (existed && (existed.loaded || existed.loading)) return existed
-    const node: TreeNode = { loading: true, loaded: false, error: '', folders: [], files: [] }
+    const node = reactive<TreeNode>({
+      loading: true,
+      loaded: false,
+      error: '',
+      folders: [],
+      files: [],
+    })
     treeCache.set(key, node)
     try {
       const params = parentId != null ? { parent_id: parentId } : {}
@@ -718,7 +724,10 @@ export const useCloudStore = defineStore('cloud', () => {
 
   function ensurePermEntry(key: string): PermEntry {
     if (!permissionCache.has(key))
-      permissionCache.set(key, { loading: false, loaded: false, error: '', items: [] })
+      permissionCache.set(
+        key,
+        reactive<PermEntry>({ loading: false, loaded: false, error: '', items: [] }),
+      )
     return permissionCache.get(key) as PermEntry
   }
 

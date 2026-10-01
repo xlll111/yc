@@ -73,8 +73,12 @@ function onChanged() {
 const wrapper = computed(() => {
   if (store.viewMode === 'tree') {
     const root = store.treeCache.get('root')
-    // 树自身的加载/错误由树内 spinner 呈现，这里只兜底空态
-    return { loading: false, error: '', empty: !!root && root.loaded && root.folders.length === 0 }
+    return {
+      loading: false,
+      error: false, // ← 改成 boolean
+      errorText: '', // ← 补上
+      empty: !!root && root.loaded && root.folders.length === 0,
+    }
   }
   return {
     loading: store.listLoading,
@@ -337,9 +341,12 @@ onUnmounted(() => {
 
 /* 容器 */
 .page-container {
+  width: min(1200px, 100vw - 48px); /* ← 关键 */
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 /* 页头 */

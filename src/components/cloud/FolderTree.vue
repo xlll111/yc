@@ -75,7 +75,7 @@ function onName(row: TreeRow) {
       v-for="row in rows"
       :key="row.key"
       class="tree-row"
-      :style="{ paddingLeft: 12 + row.depth * 22 + 'px' }"
+      :style="{ paddingLeft: Math.min(12 + row.depth * 22, 120) + 'px' }"
     >
       <!-- 文件无展开箭头 -->
       <span v-if="row.kind === 'file'" class="chevron-spacer" />
@@ -86,7 +86,7 @@ function onName(row: TreeRow) {
         :aria-label="row.expanded ? '收起' : '展开'"
         @click.stop="onToggle(row.key, row.kind === 'root' ? null : row.item.id)"
       >
-        <Spinner v-if="row.loading" size="tiny" />
+        <Spinner v-if="row.loading" inline size="tiny" />
         <svg
           v-else
           viewBox="0 0 24 24"
@@ -171,6 +171,10 @@ function onName(row: TreeRow) {
   border-radius: var(--r-card, 8px);
   box-shadow: var(--sh-card, 0 2px 8px rgba(0, 0, 0, 0.08));
   padding: 8px 12px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 .tree-row {
   display: flex;
@@ -179,6 +183,12 @@ function onName(row: TreeRow) {
   padding: 8px 12px 8px 0;
   border-radius: var(--r-card, 8px);
   transition: background 0.2s ease;
+
+  /* 新增 */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box; /* 让内联 paddingLeft 算进宽度 */
+  min-width: 0; /* 让 .tree-name 能真正收缩 */
 }
 .tree-row:hover {
   background: var(--c-hover, #fafbfc);
@@ -215,7 +225,7 @@ function onName(row: TreeRow) {
 }
 
 .tree-name {
-  flex: 1;
+  flex: 1 1 0;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -230,10 +240,14 @@ function onName(row: TreeRow) {
   color: var(--c-primary, #1e40af);
 }
 .tree-meta {
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 12px;
   color: var(--c-text-weak, #9ca3af);
-  min-width: 64px;
   text-align: right;
 }
 .tree-acts {

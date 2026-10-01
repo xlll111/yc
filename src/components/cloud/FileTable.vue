@@ -5,11 +5,13 @@ import FileIcon from '@/components/cloud/FileIcon.vue'
 import { formatFileSize, resolveMtime } from '@/composables/cloudHelpers'
 import type { FileItem, FolderItem } from '@/stores/cloudStore'
 import Spinner from '@/components/Spinner.vue'
+
 const props = defineProps<{
   folders: FolderItem[]
   files: FileItem[]
   downloadingIds: Ref<Set<number>>
 }>()
+
 defineEmits<{
   (e: 'open-folder', folder: FolderItem): void
   (e: 'open-folder-detail', folder: FolderItem): void
@@ -39,14 +41,11 @@ const emptyRow = computed(() => props.folders.length === 0 && props.files.length
         <tr v-for="f in folders" :key="`fo-${f.id}`" class="row">
           <td data-label="名称" class="cell-name">
             <FileIcon :name="f.name" is-folder />
-            <button
-              type="button"
-              class="name link"
-              :data-fullname="f.name"
-              @click="$emit('open-folder', f)"
-            >
-              {{ f.name }}
-            </button>
+            <span class="name-wrap" :data-fullname="f.name">
+              <button type="button" class="name link" @click="$emit('open-folder', f)">
+                {{ f.name }}
+              </button>
+            </span>
           </td>
           <td data-label="大小" class="cell-plain">—</td>
           <td data-label="修改时间" class="cell-plain">{{ fmt(f) }}</td>
@@ -70,7 +69,9 @@ const emptyRow = computed(() => props.folders.length === 0 && props.files.length
         <tr v-for="f in files" :key="`fi-${f.id}`" class="row">
           <td data-label="名称" class="cell-name">
             <FileIcon :name="f.name" />
-            <span class="name" :data-fullname="f.name">{{ f.name }}</span>
+            <span class="name-wrap" :data-fullname="f.name">
+              <span class="name">{{ f.name }}</span>
+            </span>
           </td>
           <td data-label="大小" class="cell-plain">{{ formatFileSize(f.size) }}</td>
           <td data-label="修改时间" class="cell-plain">{{ fmt(f) }}</td>
@@ -81,7 +82,7 @@ const emptyRow = computed(() => props.folders.length === 0 && props.files.length
               :title="isDownloading(f.id) ? '下载中' : '下载'"
               @click="$emit('download', f)"
             >
-              <Spinner v-if="isDownloading(f.id)" size="tiny" />
+              <Spinner v-if="isDownloading(f.id)" inline size="tiny" />
               <svg
                 v-else
                 viewBox="0 0 24 24"
@@ -123,7 +124,9 @@ const emptyRow = computed(() => props.folders.length === 0 && props.files.length
   border: 1px solid var(--c-border, #e5e7eb);
   border-radius: var(--r-card, 8px);
   box-shadow: var(--sh-card, 0 2px 8px rgba(0, 0, 0, 0.08));
+  /* 注意：这里不再用 overflow: hidden，否则 tooltip 会被裁掉 */
 }
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -140,6 +143,21 @@ thead th {
   border-bottom: 1px solid var(--c-border-soft, #f3f4f6);
   white-space: nowrap;
 }
+
+/* 用子元素裁圆角，替代 .file-table 的 overflow: hidden */
+thead th:first-child {
+  border-top-left-radius: var(--r-card, 8px);
+}
+thead th:last-child {
+  border-top-right-radius: var(--r-card, 8px);
+}
+tbody tr:last-child td:first-child {
+  border-bottom-left-radius: var(--r-card, 8px);
+}
+tbody tr:last-child td:last-child {
+  border-bottom-right-radius: var(--r-card, 8px);
+}
+
 tbody td {
   padding: 12px 16px;
   font-size: 14px;
@@ -159,16 +177,26 @@ tbody tr.row:hover {
 .w-name {
   width: 46%;
 }
+
 .cell-name {
   display: flex;
   align-items: center;
   gap: 12px;
 }
+
 /* ===== 自定义 tooltip ===== */
 
+/* 包裹层：负责定位，不裁剪 */
+.name-wrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* 文件名：只负责截断 */
 .name {
-  position: relative; /* 加这一行 */
-  display: inline-block; /* 让 relative 生效更稳定 */
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -177,11 +205,11 @@ tbody tr.row:hover {
 }
 
 /* 气泡本体 */
-.name[data-fullname]::after {
+.name-wrap[data-fullname]::after {
   content: attr(data-fullname);
   position: absolute;
   left: 0;
-  top: calc(100% + 10px); /* 放下面，避免被 .file-table 的 overflow: hidden 裁掉 */
+  top: calc(100% + 10px);
   z-index: 100;
   max-width: min(360px, 80vw);
   padding: 8px 10px;
@@ -201,7 +229,8 @@ tbody tr.row:hover {
     transform 0.18s ease;
 }
 
-.name[data-fullname]::before {
+/* 小三角 */
+.name-wrap[data-fullname]::before {
   content: '';
   position: absolute;
   left: 14px;
@@ -217,17 +246,13 @@ tbody tr.row:hover {
     transform 0.18s ease;
 }
 
-.name[data-fullname]:hover::after,
-.name[data-fullname]:hover::before {
+/* 悬停显示 */
+.name-wrap[data-fullname]:hover::after,
+.name-wrap[data-fullname]:hover::before {
   opacity: 1;
   transform: translateY(0);
 }
-/* .name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-} */
+
 button.name {
   border: none;
   background: transparent;
@@ -325,6 +350,12 @@ button.name:hover {
   }
   .cell-acts::before {
     top: 10px;
+  }
+
+  /* 移动端卡片模式：隐藏 tooltip */
+  .name-wrap[data-fullname]::after,
+  .name-wrap[data-fullname]::before {
+    display: none;
   }
 }
 </style>

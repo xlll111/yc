@@ -25,7 +25,7 @@ export function useFileActions() {
   function createFolder(name: string) {
     return run(async () => {
       // TODO: FolderCreate 字段待后端确认，最小假设 { name, parent_id }
-      await store.createFolder({ name, parent_id: store.currentFolderId })
+      await store.createFolder({ parent_id: store.currentFolderId })
       await store.refreshCurrentFolder(true)
     }, '创建成功')
   }

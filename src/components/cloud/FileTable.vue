@@ -1,14 +1,14 @@
 <!-- 列表视图：名称 / 大小 / 修改时间 / 操作；移动端表格转卡片（data-label） -->
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { computed, inject, type Ref } from 'vue'
 import FileIcon from '@/components/cloud/FileIcon.vue'
 import { formatFileSize, resolveMtime } from '@/composables/cloudHelpers'
 import type { FileItem, FolderItem } from '@/stores/cloudStore'
-
+import Spinner from '@/components/Spinner.vue'
 const props = defineProps<{
   folders: FolderItem[]
   files: FileItem[]
-  downloadingIds: Set<number>
+  downloadingIds: Ref<Set<number>>
 }>()
 defineEmits<{
   (e: 'open-folder', folder: FolderItem): void
@@ -20,7 +20,7 @@ defineEmits<{
 // TODO: inject key 按项目实际确认
 const $filters = inject<any>('$filters', { formatDateTime: (v: string) => v || '—' })
 const fmt = (item: any) => $filters.formatDateTime(resolveMtime(item))
-const isDownloading = (id: number) => props.downloadingIds.has(id)
+const isDownloading = (id: number) => props.downloadingIds.value.has(id)
 const emptyRow = computed(() => props.folders.length === 0 && props.files.length === 0)
 </script>
 
@@ -42,7 +42,7 @@ const emptyRow = computed(() => props.folders.length === 0 && props.files.length
             <button
               type="button"
               class="name link"
-              :title="f.name"
+              :data-fullname="f.name"
               @click="$emit('open-folder', f)"
             >
               {{ f.name }}
@@ -70,7 +70,7 @@ const emptyRow = computed(() => props.folders.length === 0 && props.files.length
         <tr v-for="f in files" :key="`fi-${f.id}`" class="row">
           <td data-label="名称" class="cell-name">
             <FileIcon :name="f.name" />
-            <span class="name" :title="f.name">{{ f.name }}</span>
+            <span class="name" :data-fullname="f.name">{{ f.name }}</span>
           </td>
           <td data-label="大小" class="cell-plain">{{ formatFileSize(f.size) }}</td>
           <td data-label="修改时间" class="cell-plain">{{ fmt(f) }}</td>
@@ -123,12 +123,13 @@ const emptyRow = computed(() => props.folders.length === 0 && props.files.length
   border: 1px solid var(--c-border, #e5e7eb);
   border-radius: var(--r-card, 8px);
   box-shadow: var(--sh-card, 0 2px 8px rgba(0, 0, 0, 0.08));
-  overflow: hidden;
 }
 table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
+
 thead th {
   padding: 12px 16px;
   text-align: left;
@@ -163,12 +164,70 @@ tbody tr.row:hover {
   align-items: center;
   gap: 12px;
 }
+/* ===== 自定义 tooltip ===== */
+
 .name {
+  position: relative; /* 加这一行 */
+  display: inline-block; /* 让 relative 生效更稳定 */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
+  vertical-align: middle;
 }
+
+/* 气泡本体 */
+.name[data-fullname]::after {
+  content: attr(data-fullname);
+  position: absolute;
+  left: 0;
+  top: calc(100% + 10px); /* 放下面，避免被 .file-table 的 overflow: hidden 裁掉 */
+  z-index: 100;
+  max-width: min(360px, 80vw);
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(17, 24, 39, 0.96);
+  color: #f9fafb;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: normal;
+  word-break: break-all;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.name[data-fullname]::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: calc(100% + 4px);
+  z-index: 101;
+  border: 6px solid transparent;
+  border-bottom-color: rgba(17, 24, 39, 0.96);
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.name[data-fullname]:hover::after,
+.name[data-fullname]:hover::before {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+} */
 button.name {
   border: none;
   background: transparent;

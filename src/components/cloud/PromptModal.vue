@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import BaseModal from '@/components/cloud/BaseModal.vue'
-
+import Spinner from '@/components/Spinner.vue'
 const props = withDefaults(
   defineProps<{
     visible: boolean
@@ -67,7 +67,7 @@ function onConfirm() {
     <template #footer>
       <button class="ghost-btn" :disabled="submitting" @click="emit('close')">取消</button>
       <button class="primary-btn" :disabled="submitting" @click="onConfirm">
-        <Spinner v-if="submitting" size="inline" />
+        <Spinner v-if="submitting" inline size="tiny" />
         <span>{{ confirmText }}</span>
       </button>
     </template>

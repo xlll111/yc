@@ -32,7 +32,7 @@ export const PERM_BIT_META = [
 
 export function parsePermissionBits(bitmask: unknown) {
   const n = Number(bitmask) || 0
-  return PERM_BIT_META.filter((b) => b.value !== 0 && (n & b.value) === b.value)
+  return PERM_BIT_META.filter((b) => (n & b.value) === b.value)
 }
 
 export type ResourceType = 'folder' | 'file'
@@ -234,7 +234,7 @@ export const useCloudStore = defineStore('cloud', () => {
     return (async () => {
       try {
         const params = parentId != null ? { parent_id: parentId } : {}
-        const data: any = await request.get(`${API_BASE}/folders`, { params })
+        const data: any = await request.authget(`${API_BASE}/folders`, params)
         if (seq !== fetchSeq) return false // 旧响应丢弃，避免快速切目录时覆盖
         const r = data || {}
         folders.value = r.folders || []
@@ -316,7 +316,7 @@ export const useCloudStore = defineStore('cloud', () => {
     treeCache.set(key, node)
     try {
       const params = parentId != null ? { parent_id: parentId } : {}
-      const data: any = await request.get(`${API_BASE}/folders`, { params })
+      const data: any = await request.authget(`${API_BASE}/folders`, params)
       node.folders = data?.folders || []
       node.files = parentId == null ? [] : data?.files || []
       node.loaded = true
@@ -346,22 +346,22 @@ export const useCloudStore = defineStore('cloud', () => {
   // ============================== 增删改（纯请求，消息与刷新在 useFileActions） ==============================
 
   function createFolder(payload: any) {
-    return request.post(`${API_BASE}/folders`, payload)
+    return request.authpost(`${API_BASE}/folders`, payload)
   }
   function renameFolder(id: number, payload: any) {
-    return request.patch(`${API_BASE}/folders/${id}`, payload)
+    return request.authpatch(`${API_BASE}/folders/${id}`, payload)
   }
   function deleteFolder(id: number) {
-    return request.delete(`${API_BASE}/folders/${id}`)
+    return request.authdelete(`${API_BASE}/folders/${id}`)
   }
   function renameFile(id: number, payload: any) {
-    return request.patch(`${API_BASE}/files/${id}`, payload)
+    return request.authpatch(`${API_BASE}/files/${id}`, payload)
   }
   function deleteFile(id: number) {
-    return request.delete(`${API_BASE}/files/${id}`)
+    return request.authdelete(`${API_BASE}/files/${id}`)
   }
   function fetchFileDetail(id: number) {
-    return request.get(`${API_BASE}/files/${id}`)
+    return request.authget(`${API_BASE}/files/${id}`)
   }
 
   // ============================== 上传引擎 ==============================
@@ -384,7 +384,7 @@ export const useCloudStore = defineStore('cloud', () => {
         const start = index * task.chunkSize
         const blob = (task.file as File).slice(start, Math.min(start + task.chunkSize, task.size))
         // TODO: direct 模式约定 total_chunks=1，走同一 chunk 通道
-        await request.post(`${API_BASE}/upload/${task.sessionId}/chunk`, blob, {
+        await request.authpost(`${API_BASE}/upload/${task.sessionId}/chunk`, blob, {
           params: { index },
           headers: { 'Content-Type': 'application/octet-stream' },
         })
@@ -410,6 +410,7 @@ export const useCloudStore = defineStore('cloud', () => {
         while (cursor < indexes.length) {
           if (task.cancelRequested) throw new UploadCanceledError()
           const index = indexes[cursor++]
+          if (index === undefined) break
           await uploadOneChunk(task, index)
         }
       })(),
@@ -442,7 +443,7 @@ export const useCloudStore = defineStore('cloud', () => {
           return
         }
         try {
-          const s: any = await request.get(`${API_BASE}/upload/${task.sessionId}/status`)
+          const s: any = await request.authget(`${API_BASE}/upload/${task.sessionId}/status`)
           if (s?.status === 'completed') {
             cleanup()
             resolve()
@@ -513,7 +514,7 @@ export const useCloudStore = defineStore('cloud', () => {
     task.cancelRequested = false
     try {
       if (!task.sessionId) {
-        const data: any = await request.post(`${API_BASE}/upload/init`, {
+        const data: any = await request.authpost(`${API_BASE}/upload/init`, {
           file_name: task.fileName, // 1~255
           target_folder_id: task.targetFolderId,
           total_size: task.size, // >0，enqueue 已校验
@@ -532,7 +533,7 @@ export const useCloudStore = defineStore('cloud', () => {
       ensureSessionAlive(task)
       await runChunkQueue(task)
       if (task.cancelRequested) throw new UploadCanceledError()
-      await request.post(`${API_BASE}/upload/${task.sessionId}/complete`)
+      await request.authpost(`${API_BASE}/upload/${task.sessionId}/complete`)
       await confirmCompleteByPolling(task)
       task.status = 'success'
       task.progress = 100
@@ -617,7 +618,7 @@ export const useCloudStore = defineStore('cloud', () => {
     task.cancelRequested = true
     stopStatusPolling(localId)
     try {
-      if (task.sessionId) await request.delete(`${API_BASE}/upload/${task.sessionId}`)
+      if (task.sessionId) await request.authdelete(`${API_BASE}/upload/${task.sessionId}`)
     } catch {
       /* 服务端会话可能已结束 */
     }
@@ -676,7 +677,7 @@ export const useCloudStore = defineStore('cloud', () => {
     for (const rec of list) {
       if (!rec.sessionId) continue
       try {
-        const s: any = await request.get(`${API_BASE}/upload/${rec.sessionId}/status`)
+        const s: any = await request.authget(`${API_BASE}/upload/${rec.sessionId}/status`)
         if (s?.status === 'completed' || s?.status === 'canceled') {
           removePersistedSession(rec.localId)
           continue
@@ -732,7 +733,9 @@ export const useCloudStore = defineStore('cloud', () => {
     entry.loading = true
     entry.error = ''
     try {
-      const data: any = await request.get(`${API_BASE}/permissions/${resourceType}/${resourceId}`)
+      const data: any = await request.authget(
+        `${API_BASE}/permissions/${resourceType}/${resourceId}`,
+      )
       // TODO: 响应结构待确认，最小假设为数组或 { items: [] }
       entry.items = Array.isArray(data) ? data : data?.items || []
       entry.loaded = true
@@ -745,13 +748,13 @@ export const useCloudStore = defineStore('cloud', () => {
   }
 
   function grantPermission(resourceType: ResourceType, resourceId: number, payload: any) {
-    return request.post(`${API_BASE}/permissions/${resourceType}/${resourceId}`, payload)
+    return request.authpost(`${API_BASE}/permissions/${resourceType}/${resourceId}`, payload)
   }
   function revokePermission(resourceType: ResourceType, resourceId: number, permId: number) {
-    return request.delete(`${API_BASE}/permissions/${resourceType}/${resourceId}/${permId}`)
+    return request.authdelete(`${API_BASE}/permissions/${resourceType}/${resourceId}/${permId}`)
   }
   function transferOwnership(resourceType: ResourceType, resourceId: number, newOwnerId: number) {
-    return request.post(`${API_BASE}/permissions/${resourceType}/${resourceId}/transfer`, {
+    return request.authpost(`${API_BASE}/permissions/${resourceType}/${resourceId}/transfer`, {
       new_owner_id: newOwnerId,
     })
   }

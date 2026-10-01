@@ -264,6 +264,26 @@ class Request {
     }
   }
 
+  authput<T = any>(url: string, data?: any, config?: RequestConfig): Promise<T> {
+    const userStore = useUserStore()
+    const token = userStore.getToken
+    if (token) {
+      return this.put(url, data, { headers: { Authorization: `Bearer ${token}` }, ...config })
+    } else {
+      return Promise.reject(new Error('未登录'))
+    }
+  }
+
+  authdelete<T = any>(url: string, params?: any, config?: RequestConfig): Promise<T> {
+    const userStore = useUserStore()
+    const token = userStore.getToken
+    if (token) {
+      return this.delete(url, params, { headers: { Authorization: `Bearer ${token}` }, ...config })
+    } else {
+      return Promise.reject(new Error('未登录'))
+    }
+  }
+
   download(url: string, filename: string, params?: any) {
     return this.instance
       .get(url, {

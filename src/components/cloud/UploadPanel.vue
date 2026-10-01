@@ -5,7 +5,8 @@ import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 import { useCloudStore } from '@/stores/cloudStore'
 import { formatFileSize } from '@/composables/cloudHelpers'
-
+import Spinner from '@/components/Spinner.vue'
+import ToggleSwitch from '@/components/ToggleSwitch.vue'
 const store = useCloudStore()
 
 const STATUS_TEXT: Record<string, string> = {
@@ -106,7 +107,7 @@ const actionText = (s: string) =>
 <template>
   <div v-if="tasks.length" class="upload-panel" :class="{ collapsed }">
     <div class="panel-head" @click="collapsed = !collapsed">
-      <Spinner v-if="hasActive" size="tiny" />
+      <Spinner v-if="hasActive" inline size="tiny" />
       <span class="head-text">{{ headText }}</span>
       <span v-if="hasActive" class="head-pct">{{ overall }}%</span>
       <div class="head-progress"><i :style="{ width: overall + '%' }" /></div>

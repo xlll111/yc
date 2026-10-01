@@ -1,15 +1,15 @@
 <!--
 ============================================================
-@ai-component StateWrapper
+@ai-component LoadingState
 @ai-type ui/state
 @ai-tags state,loading,error,empty,状态,加载,错误,空状态,占位
 @ai-when 异步数据区域加载态|请求失败重试|列表空数据占位|卡片/表格/页面局部状态切换
 @ai-not 骨架屏|进度百分比|全局全屏加载（用 Spinner 全屏模式）|表单校验提示
 @ai-summary 统一处理「加载中 / 错误 / 空 / 正常内容」四种状态的容器组件，内部复用 Spinner 展示加载态，内置错误重试按钮和空状态占位。
-@ai-import import StateWrapper from '@/components/StateWrapper.vue'
-@ai-example <StateWrapper :loading="loading"><div>内容</div></StateWrapper>
-@ai-example <StateWrapper :loading="loading" :error="error" @retry="fetchData"><List /></StateWrapper>
-@ai-example <StateWrapper :loading="loading" :empty="!list.length" empty-title="暂无订单"><OrderList /></StateWrapper>
+@ai-import import LoadingState from '@/components/LoadingState.vue'
+@ai-example <LoadingState :loading="loading"><div>内容</div></LoadingState>
+@ai-example <LoadingState :loading="loading" :error="error" @retry="fetchData"><List /></LoadingState>
+@ai-example <LoadingState :loading="loading" :empty="!list.length" empty-title="暂无订单"><OrderList /></LoadingState>
 @ai-props loading:boolean, error:boolean, empty:boolean, loadingText:string, errorText:string, showRetry:boolean, retryText:string, emptyTitle:string, emptyHint:string
 @ai-events retry
 @ai-slots default（正常内容，AI 调用时必须传入）
@@ -66,6 +66,7 @@
     <p class="empty-text">{{ emptyTitle }}</p>
     <p v-if="emptyHint" class="empty-hint">{{ emptyHint }}</p>
   </div>
+  <slot v-else />
 </template>
 
 <script setup>

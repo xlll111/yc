@@ -9,6 +9,7 @@ const Register = () => import('@/views/Register.vue')
 const About = () => import('@/views/AboutView.vue')
 const Dash = () => import('@/views/Dash.vue')
 const User = () => import('@/views/User.vue')
+const Cloud = () => import('@/views/cloud/CloudPage.vue')
 const ClientsList = () => import('@/views/ClientsList.vue')
 const GlobalSetting = () => import('@/views/GlobalSetting.vue')
 const EmailVerify = () => import('@/views/EmailVerify.vue')
@@ -144,15 +145,10 @@ const router = createRouter({
       },
     },
     {
-      path: '/dash',
-      children: [
-        {
-          path: 'cloud',
-          name: 'Cloud',
-          component: () => import('@/pages/cloud/CloudPage.vue'),
-          meta: { requiresAuth: true },
-        },
-      ],
+      path: '/cloud',
+      name: 'Cloud',
+      component: Cloud,
+      meta: { requiresAuth: true },
     },
     {
       path: '/docs',
@@ -240,7 +236,7 @@ router.beforeEach(async (to, from) => {
   const checkUserRole = async () => {
     try {
       if (!(await userStore.checkUserRole(2))) {
-        ElMessage.warning('您没有权限查看控制台')
+        ElMessage.warning('您没有权限查看该页面')
         if (!(await userStore.checkUserRole(1))) {
           ElMessage.warning('请完成用户验证')
           return '/user'
@@ -252,6 +248,11 @@ router.beforeEach(async (to, from) => {
       ElMessage.error(`用户验证失败: ${error}`)
       return false
     }
+  }
+  const meta = to.meta
+  if (meta.requiresAuth) {
+    const login = await checkLogin()
+    if (login !== true) return login // 未登录 → 跳 /login
   }
 
   if (newPath === '/dash') {

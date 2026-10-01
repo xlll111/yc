@@ -1,7 +1,7 @@
 <!-- 通用二次确认弹窗 -->
 <script setup lang="ts">
 import BaseModal from '@/components/cloud/BaseModal.vue'
-
+import Spinner from '@/components/Spinner.vue'
 withDefaults(
   defineProps<{
     visible: boolean
@@ -27,7 +27,7 @@ const emit = defineEmits<{ (e: 'close'): void; (e: 'confirm'): void }>()
         :disabled="submitting"
         @click="emit('confirm')"
       >
-        <Spinner v-if="submitting" size="inline" />
+        <Spinner v-if="submitting" inline size="tiny" />
         <span>{{ confirmText }}</span>
       </button>
     </template>

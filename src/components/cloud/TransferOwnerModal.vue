@@ -52,7 +52,7 @@ function onConfirm() {
     <template #footer>
       <button class="ghost-btn" :disabled="submitting" @click="emit('close')">取消</button>
       <button class="primary-btn" :disabled="submitting" @click="onConfirm">
-        <Spinner v-if="submitting" size="inline" /><span>移交</span>
+        <Spinner v-if="submitting" inline size="tiny" /><span>移交</span>
       </button>
     </template>
   </BaseModal>

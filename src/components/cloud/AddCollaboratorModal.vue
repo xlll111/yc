@@ -3,7 +3,7 @@
 import { computed, ref, watch } from 'vue'
 import BaseModal from '@/components/cloud/BaseModal.vue'
 import { CLOUD_PERM, PERM_BIT_META } from '@/stores/cloudStore'
-
+import Spinner from '@/components/Spinner.vue'
 const props = withDefaults(defineProps<{ visible: boolean; submitting?: boolean }>(), {
   submitting: false,
 })
@@ -104,7 +104,7 @@ function onConfirm() {
     <template #footer>
       <button class="ghost-btn" :disabled="submitting" @click="emit('close')">取消</button>
       <button class="primary-btn" :disabled="submitting" @click="onConfirm">
-        <Spinner v-if="submitting" size="inline" /><span>添加</span>
+        <Spinner v-if="submitting" inline size="tiny" /><span>添加</span>
       </button>
     </template>
   </BaseModal>

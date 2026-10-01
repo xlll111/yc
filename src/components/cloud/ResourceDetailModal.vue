@@ -10,7 +10,7 @@ import BaseModal from '@/components/cloud/BaseModal.vue'
 import PromptModal from '@/components/cloud/PromptModal.vue'
 import ConfirmModal from '@/components/cloud/ConfirmModal.vue'
 import CollaboratorPanel from '@/components/cloud/CollaboratorPanel.vue'
-
+import Spinner from '@/components/Spinner.vue'
 const props = withDefaults(
   defineProps<{
     visible: boolean

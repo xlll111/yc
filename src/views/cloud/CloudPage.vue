@@ -1,9 +1,10 @@
-<!-- 全部文件页：页头 / 面包屑 / 工具栏 / 内容区（StateWrapper） / 上传浮层 / 详情弹窗 -->
+<!-- 全部文件页：页头 / 面包屑 / 工具栏 / LoadingState / 上传浮层 / 详情弹窗 -->
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
+import LoadingState from '@/components/LoadingState.vue'
 import { useCloudStore } from '@/stores/cloudStore'
 import { useFileActions } from '@/composables/useFileActions'
 import { useFileDownload } from '@/composables/useFileDownload'
@@ -68,7 +69,7 @@ function onChanged() {
   store.refreshCurrentFolder(true)
 }
 
-// ---------- StateWrapper 状态（TODO: props 按现有组件实现微调） ----------
+// ---------- LoadingState 状态（TODO: props 按现有组件实现微调） ----------
 const wrapper = computed(() => {
   if (store.viewMode === 'tree') {
     const root = store.treeCache.get('root')
@@ -77,7 +78,8 @@ const wrapper = computed(() => {
   }
   return {
     loading: store.listLoading,
-    error: store.listError,
+    error: !!store.listError,
+    errorText: store.listError || '',
     empty:
       !store.listLoading &&
       !store.listError &&
@@ -145,6 +147,14 @@ watch(
 onUnmounted(() => {
   store.stopAllPolling()
 })
+// watchEffect(() => {
+//   console.log(
+//     'listError =',
+//     JSON.stringify(store.listError),
+//     'wrapper.error =',
+//     wrapper.value.error,
+//   )
+// })
 </script>
 
 <template>
@@ -214,12 +224,13 @@ onUnmounted(() => {
         @refresh="onRefresh"
       />
 
-      <!-- 内容区：所有异步数据区域必须 StateWrapper 包裹 -->
-      <StateWrapper
+      <!-- 内容区：所有异步数据区域必须 LoadingState 包裹 -->
+      <LoadingState
         :loading="wrapper.loading"
         :error="wrapper.error"
+        :error-text="wrapper.errorText || undefined"
         :empty="wrapper.empty"
-        :empty-text="emptyText"
+        :empty-title="emptyText"
         @retry="onRetry"
       >
         <FileTable
@@ -240,7 +251,7 @@ onUnmounted(() => {
           @open-file-detail="openFileDetail"
           @download="dl.downloadFile"
         />
-      </StateWrapper>
+      </LoadingState>
     </div>
 
     <!-- 整页拖拽 dropzone -->

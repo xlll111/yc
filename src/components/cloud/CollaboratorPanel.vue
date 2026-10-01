@@ -10,7 +10,7 @@ import { truncateUuid } from '@/composables/cloudHelpers'
 import AddCollaboratorModal from '@/components/cloud/AddCollaboratorModal.vue'
 import TransferOwnerModal from '@/components/cloud/TransferOwnerModal.vue'
 import ConfirmModal from '@/components/cloud/ConfirmModal.vue'
-
+import Spinner from '@/components/Spinner.vue'
 const props = defineProps<{ resourceType: ResourceType; resourceId: number }>()
 const emit = defineEmits<{ (e: 'changed'): void }>()
 
@@ -131,7 +131,7 @@ function initials(name?: string) {
       </div>
     </div>
 
-    <div v-if="entry.loading" class="collab-state"><Spinner size="inline" /></div>
+    <div v-if="entry.loading" class="collab-state"><Spinner inline size="tiny" /></div>
     <div v-else-if="entry.error" class="collab-state error">
       <span>{{ entry.error }}</span>
       <button class="ghost-btn sm" @click="reload(true)">重试</button>

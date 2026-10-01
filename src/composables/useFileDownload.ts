@@ -1,8 +1,7 @@
-// 下载必须携带自定义 headers，因此统一走 fetch -> blob，禁止 a[href] / window.open / iframe
-import { ref } from 'vue'
+import { ref, triggerRef } from 'vue' // 新增 triggerRef
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
-import { request } from '@/utils/request' // TODO: 按项目实际路径调整
+import { request } from '@/utils/request'
 import { API_BASE } from '@/stores/cloudStore'
 
 export function useFileDownload() {
@@ -15,6 +14,8 @@ export function useFileDownload() {
   async function downloadFile(file: { id: number; name: string }) {
     if (isDownloading(file.id)) return
     downloadingIds.value.add(file.id)
+    triggerRef(downloadingIds) // 通知依赖更新
+
     try {
       // 1. 下载元信息（TODO: meta 字段待确认，最小假设 file_name）
       const meta: any = await request.get(`${API_BASE}/download/${file.id}/meta`)
@@ -37,6 +38,7 @@ export function useFileDownload() {
       ElMessage.error('下载失败，请稍后重试')
     } finally {
       downloadingIds.value.delete(file.id)
+      triggerRef(downloadingIds) // 通知依赖更新
     }
   }
 

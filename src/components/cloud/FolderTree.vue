@@ -1,13 +1,14 @@
 <!-- 目录树视图：懒加载子层，缩进 22px，chevron 旋转 90°；展开状态存 store -->
 <script setup lang="ts">
 // FolderTree.vue <script setup>（修正版）
-import { computed } from 'vue'
+import { computed, type Ref } from 'vue'
 import { useCloudStore } from '@/stores/cloudStore'
 import FileIcon from '@/components/cloud/FileIcon.vue'
 import { formatFileSize } from '@/composables/cloudHelpers'
 import type { FileItem, FolderItem } from '@/stores/cloudStore'
+import Spinner from '@/components/Spinner.vue'
 
-const props = defineProps<{ downloadingIds: Set<number> }>()
+const props = defineProps<{ downloadingIds: Ref<Set<number>> }>()
 defineEmits<{
   (e: 'enter-folder', folder: FolderItem | null): void
   (e: 'open-folder-detail', folder: FolderItem): void
@@ -117,11 +118,11 @@ function onName(row: TreeRow) {
         <template v-if="row.kind === 'file'">
           <button
             class="icon-btn"
-            :disabled="downloadingIds.has(row.item.id)"
-            :title="downloadingIds.has(row.item.id) ? '下载中' : '下载'"
+            :disabled="downloadingIds.value.has(row.item.id)"
+            :title="downloadingIds.value.has(row.item.id) ? '下载中' : '下载'"
             @click="$emit('download', row.item)"
           >
-            <Spinner v-if="downloadingIds.has(row.item.id)" size="tiny" />
+            <Spinner v-if="downloadingIds.value.has(row.item.id)" size="tiny" />
             <svg
               v-else
               viewBox="0 0 24 24"

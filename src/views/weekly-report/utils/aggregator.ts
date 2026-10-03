@@ -1,11 +1,12 @@
 /**
  * aggregator.ts —— 周报核心聚合算法（纯函数，无副作用，可独立单测）
  *
- * 三大算法：
+ * 四大算法：
  * 1. 心跳聚合   ：相邻心跳间隔 <= 90s 视为持续在线，否则切分会话；
  *                 输出 每日在线秒数[7] / 7x24 心跳密度热力图 / 会话区间列表。
  * 2. USB 会话切分：同设备相邻记录间隔 > 300s 视为新会话，汇总各设备会话总时长（Top5 排序依据）。
  * 3. DNS 归并   ：提取可注册主域名（含 com.cn 等二级后缀识别），统计 Top10 与风险命中数。
+ * 4. DNS 时间维度：按日 / 小时统计 DNS 请求总数与风险命中数（原 dnsTimeline.ts 并入）。
  *
  * 时间口径：所有输入为 UTC ISO，内部统一通过 toLocal() 转为本地时区后再做 星期/小时 归属；
  *           输出的会话区间统一存回 UTC ISO（存储口径），由展示层按本地时区格式化。
@@ -17,6 +18,7 @@ import { isSensitiveFilename, maskSensitiveFilename, shortUsbId, toLocal } from 
 
 dayjs.extend(isoWeek)
 dayjs.extend(weekOfYear)
+
 /* ============================ 业务常量 ============================ */
 
 /** 相邻心跳间隔阈值（秒）：<= 90s 视为持续在线 */
@@ -114,6 +116,17 @@ export interface DnsDomainStat {
   risks: number // 风险命中数（detection: true）
   lastTime: string
   lastRiskTime?: string
+}
+
+export interface DnsTimeline {
+  /** 每日 DNS 请求总数，下标 0 = 周一，长度 7 */
+  dnsDailyTotal: number[]
+  /** 每日风险命中数，下标 0 = 周一，长度 7 */
+  dnsDailyRisk: number[]
+  /** [weekday][hour] 请求密度矩阵，7 × 24 */
+  dnsHourlyTotal: number[][]
+  /** [weekday][hour] 风险命中密度矩阵，7 × 24 */
+  dnsHourlyRisk: number[][]
 }
 
 export interface SensitiveFileItem {
@@ -417,6 +430,87 @@ export function aggregateDns(records: DnsRecord[], week: string): DnsDomainStat[
 
   // 按总请求数降序 —— Top10 直接 slice
   return [...byDomain.values()].sort((a, b) => b.total - a.total)
+}
+
+/* ============================ 算法 4：DNS 时间维度聚合 ============================ */
+
+function zeroMatrix(): number[][] {
+  return Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => 0))
+}
+
+/** 7×24 全零兜底（聚合失败时使用） */
+export function emptyDnsTimeline(): DnsTimeline {
+  return {
+    dnsDailyTotal: Array.from({ length: 7 }, () => 0),
+    dnsDailyRisk: Array.from({ length: 7 }, () => 0),
+    dnsHourlyTotal: zeroMatrix(),
+    dnsHourlyRisk: zeroMatrix(),
+  }
+}
+
+/* ================================================================
+ *  ⚠️ 字段适配层：若后端 DNS 记录的时间 / 风险字段名不一致，
+ *     只改 pickTime / pickRisk 这两个函数即可，其余逻辑无需改动。
+ * ================================================================ */
+function pickTime(raw: Record<string, unknown>): unknown {
+  return (
+    raw.time ??
+    raw.recordTime ??
+    raw.record_time ??
+    raw.eventTime ??
+    raw.event_time ??
+    raw.createdAt ??
+    raw.createTime ??
+    raw.create_time ??
+    raw.timestamp ??
+    null
+  )
+}
+
+function pickRisk(raw: Record<string, unknown>): boolean {
+  return Boolean(raw.detection ?? raw.isRisk ?? raw.is_risk ?? raw.risk ?? false)
+}
+
+/** 宽松时间解析：兼容 10 位秒级 / 13 位毫秒级时间戳与各类字符串 */
+function parseTime(raw: unknown): dayjs.Dayjs | null {
+  if (raw == null || raw === '') return null
+  const d = typeof raw === 'number' ? dayjs(raw < 1e12 ? raw * 1000 : raw) : dayjs(String(raw))
+  return d.isValid() ? d : null
+}
+
+/**
+ * 把 DNS 原始记录摊平成时间维度统计。
+ * 落在 [weekStart, weekStart + 7d) 之外的记录会被丢弃（防止跨周脏数据）。
+ */
+export function aggregateDnsTimeline<T extends object>(
+  records: readonly T[],
+  weekStart: string,
+): DnsTimeline {
+  const out = emptyDnsTimeline()
+  const start = dayjs(weekStart).startOf('day')
+
+  for (const item of records) {
+    const raw = item as Record<string, unknown>
+    const t = parseTime(pickTime(raw))
+    if (!t) continue
+
+    const dayIdx = t.startOf('day').diff(start, 'day')
+    if (dayIdx < 0 || dayIdx > 6) continue
+
+    const hour = t.hour()
+    const totalRow = out.dnsHourlyTotal[dayIdx]!
+    const riskRow = out.dnsHourlyRisk[dayIdx]!
+
+    out.dnsDailyTotal[dayIdx]! += 1
+    totalRow[hour]! += 1
+
+    if (pickRisk(raw)) {
+      out.dnsDailyRisk[dayIdx]! += 1
+      riskRow[hour]! += 1
+    }
+  }
+
+  return out
 }
 
 /* ============================ 敏感 USB 设备识别 ============================ */

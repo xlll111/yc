@@ -21,6 +21,7 @@ export default defineConfig({
         @use "@/styles/common.scss" as *;
         @use "@/styles/reset.scss" as *;
       `,
+        api: 'modern-compiler',
       },
     },
   },

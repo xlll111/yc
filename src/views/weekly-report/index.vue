@@ -15,6 +15,9 @@ import OnlineTrendChart from './components/OnlineTrendChart.vue'
 import ActiveHeatmap from './components/ActiveHeatmap.vue'
 import UsbTopChart from './components/UsbTopChart.vue'
 import RiskListTable from './components/RiskListTable.vue'
+import DnsDailyChart from './components/DnsDailyChart.vue'
+import DnsHeatmap from './components/DnsHeatmap.vue'
+import DnsRiskHeatmap from './components/DnsRiskHeatmap.vue'
 import { useWeeklyReport } from './composables/useWeeklyReport'
 
 const props = defineProps({
@@ -69,6 +72,18 @@ function handlePrint() {
           <div class="wr-skeleton" style="height: 250px" />
         </div>
       </div>
+
+      <!-- DNS 时序区骨架 -->
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+        <div class="sm:col-span-12 min-[1200px]:col-span-6">
+          <div class="wr-skeleton" style="height: 300px" />
+        </div>
+        <div class="sm:col-span-12 min-[1200px]:col-span-6">
+          <div class="wr-skeleton" style="height: 330px" />
+          <div class="wr-skeleton" style="height: 330px" />
+        </div>
+      </div>
+      <!-- DNS 风险占比条形图骨架 -->
       <div class="wr-skeleton" style="height: 300px" />
     </div>
 
@@ -134,7 +149,7 @@ function handlePrint() {
             </div>
             <p v-if="aggregate.deniedUsbSessionCount > 0" class="attr-foot">
               禁止接入的设备本周仍产生
-              <b>{{ aggregate.deniedUsbSessionCount }}</b> 次接入会话，建议关注
+              <b>{{ aggregate.deniedUsbSessionCount }}</b> 次接入会话
             </p>
             <p v-else class="attr-foot">禁止设备本周无接入记录</p>
           </section>
@@ -158,7 +173,27 @@ function handlePrint() {
           </section>
         </div>
       </div>
+      <!-- 4. DNS 时序分析：每日请求柱状图 + 星期 × 小时请求热力图 -->
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 md:gap-5">
+        <div class="sm:col-span-12 min-[1200px]:col-span-6">
+          <DnsDailyChart
+            :daily-total="aggregate.dnsDailyTotal"
+            :daily-risk="aggregate.dnsDailyRisk"
+            :week-start="week"
+          />
+        </div>
+        <div class="sm:col-span-12 min-[1200px]:col-span-6">
+          <DnsHeatmap :heatmap="aggregate.dnsHourlyTotal" :risk-heatmap="aggregate.dnsHourlyRisk" />
+        </div>
+        <div class="sm:col-span-12 min-[1200px]:col-span-6">
+          <DnsRiskHeatmap
+            :risk-heatmap="aggregate.dnsHourlyRisk"
+            :total-heatmap="aggregate.dnsHourlyTotal"
+          />
+        </div>
+      </div>
 
+      <!-- 5. 明细区：Tabs 切换的风险 DNS / 敏感 USB 设备列表 -->
       <!-- 4. 明细区：Tabs 切换的风险 DNS / 敏感 USB 设备列表 -->
       <RiskListTable
         :risk-dns-list="aggregate.riskDnsList"

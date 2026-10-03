@@ -18,8 +18,10 @@ import { clientApi } from '@/api/clients'
 import {
   WEEK_SECONDS,
   aggregateDns,
+  aggregateDnsTimeline, // ← 新增
   aggregateHeartbeats,
   aggregateUsbSessions,
+  emptyDnsTimeline, // ← 新增
   emptyHeatmap,
   findSensitiveUsbDevices,
   toYearWeek,
@@ -37,7 +39,11 @@ import type {
   HeartbeatRecord,
   ClientInfo,
   DnsRecord,
+  DnsTimeline,
 } from '../utils/aggregator'
+
+/** 视图聚合结果 = 原有聚合 + DNS 时间维度 */
+export type WeeklyReportAggregateView = WeeklyReportAggregate & DnsTimeline
 
 /* ================================================================
  *  请求层： 真实接口统一签名，均支持 AbortSignal
@@ -104,7 +110,7 @@ export function useWeeklyReport(uuid: string, week0: string, token: string) {
   const week = ref<string>(DEFAULT_WEEK)
   const loading = ref(false)
   const error = ref<null | { message: string }>(null)
-  const aggregate = ref<WeeklyReportAggregate | null>(null)
+  const aggregate = ref<WeeklyReportAggregateView | null>(null)
 
   /** 当前活跃请求的控制器 —— 竞态控制核心 */
   let activeController: AbortController | null = null
@@ -117,8 +123,14 @@ export function useWeeklyReport(uuid: string, week0: string, token: string) {
   async function buildAggregateSafely(
     raw: WeeklyReportRawData,
     targetWeek: string,
-  ): Promise<WeeklyReportAggregate> {
-    const MODULE_NAMES = ['心跳聚合', 'USB 会话切分', 'DNS 主域名归并', '敏感 USB 设备识别']
+  ): Promise<WeeklyReportAggregateView> {
+    const MODULE_NAMES = [
+      '心跳聚合',
+      'USB 会话切分',
+      'DNS 主域名归并',
+      '敏感 USB 设备识别',
+      'DNS 时序聚合',
+    ]
 
     const tasks = (await Promise.allSettled([
       Promise.resolve().then(() => aggregateHeartbeats(raw.client_record ?? [], targetWeek)),
@@ -127,11 +139,13 @@ export function useWeeklyReport(uuid: string, week0: string, token: string) {
       ),
       Promise.resolve().then(() => aggregateDns(raw.dns_url_records ?? [], targetWeek)),
       Promise.resolve().then(() => findSensitiveUsbDevices(raw.usb_allowed ?? [])),
+      Promise.resolve().then(() => aggregateDnsTimeline(raw.dns_url_records ?? [], targetWeek)),
     ])) as [
       PromiseSettledResult<HeartbeatAggregate>,
       PromiseSettledResult<UsbDeviceStat[]>,
       PromiseSettledResult<DnsDomainStat[]>,
       PromiseSettledResult<SensitiveUsbDevice[]>,
+      PromiseSettledResult<DnsTimeline>,
     ]
 
     tasks.forEach((r, i) => {
@@ -144,6 +158,7 @@ export function useWeeklyReport(uuid: string, week0: string, token: string) {
     const usbStats = tasks[1].status === 'fulfilled' ? tasks[1].value : []
     const dnsStats = tasks[2].status === 'fulfilled' ? tasks[2].value : []
     const sensitive = tasks[3].status === 'fulfilled' ? tasks[3].value : []
+    const dnsTimeline = tasks[4].status === 'fulfilled' ? tasks[4].value : emptyDnsTimeline()
 
     const dnsRecords = raw.dns_url_records ?? []
     // 风险命中数直接从原始记录兜底统计：即使 DNS 归并失败，关键 KPI 也不丢失
@@ -180,6 +195,7 @@ export function useWeeklyReport(uuid: string, week0: string, token: string) {
       riskDnsList: dnsStats
         .filter((s) => s.risks > 0)
         .sort((a, b) => b.risks - a.risks || b.total - a.total),
+      ...dnsTimeline,
     }
   }
 
@@ -203,7 +219,7 @@ export function useWeeklyReport(uuid: string, week0: string, token: string) {
       const raw = await fetchWeeklyReport(uuid, token, targetWeek, controller.signal)
       // 双保险：即使中断未被 fetch 捕获，过期结果也不落地
       if (controller !== activeController) return
-      // console.log('raw keys:', Object.keys(raw))
+      console.log('raw data:', raw)
       // console.log('client_record:', raw.client_record?.length, raw.client_record?.[0])
       // console.log('targetWeek:', targetWeek, 'week.value:', week.value)
       // const hb = aggregateHeartbeats(raw.client_record ?? [], targetWeek)
@@ -214,6 +230,7 @@ export function useWeeklyReport(uuid: string, week0: string, token: string) {
       //   hb.dailyOnlineSeconds.length,
       // )
       aggregate.value = await buildAggregateSafely(raw, targetWeek)
+      console.log('aggregate:', aggregate.value)
     } catch (e) {
       const err = e as Error
       // 被新请求取代 → 静默退出，不进入错误态

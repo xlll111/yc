@@ -228,13 +228,15 @@ const currentTabLabel = computed(
         <tbody>
           <tr v-for="(row, i) in fileRows" :key="row.id">
             <td class="tabular col-idx">{{ rowIndex(i) }}</td>
-            <td class="file-name">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"
-                aria-hidden="true">
-                <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" />
-                <path d="M14 3v5h5" />
-              </svg>
-              <span>{{ row.fileName }}</span>
+            <td class="file-cell">
+              <div class="file-name">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"
+                  aria-hidden="true">
+                  <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" />
+                  <path d="M14 3v5h5" />
+                </svg>
+                <span>{{ row.fileName }}</span>
+              </div>
             </td>
             <td>
               <span class="pill" :class="statusTone(row.status)">{{
@@ -553,17 +555,32 @@ const currentTabLabel = computed(
 }
 
 /* ---- 文件传输 Tab ---- */
+/* td 只负责列宽与换行 */
+.file-cell {
+  min-width: 160px;
+  /* 防止移动端被挤成极窄一列 */
+  word-break: break-all;
+}
+
+/* flex 放在内层 div，不再破坏表格布局 */
 .file-name {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   font-weight: 500;
   color: var(--wr-text);
-  word-break: break-all;
 
   svg {
     flex-shrink: 0;
-    color: var(--wr-text-sub);
+    margin-top: 2px;
+    /* 与首行文字视觉对齐 */
+  }
+
+  span {
+    min-width: 0;
+    /* 允许收缩，但配合下面的换行规则 */
+    line-height: 1.45;
+    word-break: break-all;
   }
 }
 

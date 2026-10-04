@@ -5,8 +5,13 @@
  */
 export const IS_SCREENSHOT_MODE =
     typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('screenshot') === '1';
-
+    (
+        new URLSearchParams(window.location.search).get('screenshot') === '1' ||
+        // Puppeteer / 无头浏览器一定为 true
+        (navigator as any).webdriver === true ||
+        // Worker 侧 emulateMediaFeatures 注入后会命中
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    );
 /**
  * 把 option 包装成"截图友好"的版本：
  * 关闭所有动画相关配置

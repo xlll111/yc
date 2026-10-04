@@ -94,10 +94,10 @@ export const FILE_TRANSFER_STATUS_LABEL: Record<number, string> = {
 
 export interface FileTransferRecord {
   id: number
-  created_at: string // ISO 8601 UTC
-  updated_at: string // ISO 8601 UTC
+  createdAt: string // ISO 8601 UTC
+  updatedAt: string // ISO 8601 UTC
   status: number
-  file_name: string | null
+  fileName: string | null
 }
 
 export interface WeeklyReportRawData {
@@ -290,7 +290,7 @@ export function toYearWeek(input: string | number | Date | dayjs.Dayjs, pad = tr
 
 export function aggregateHeartbeats(
   records: HeartbeatRecord[],
-  week: string, // 周一日期 YYYY-MM-DD
+  week: string // 周一日期 YYYY-MM-DD
 ): HeartbeatAggregate {
   const weekStart = dayjs(week).startOf('day')
 
@@ -348,7 +348,7 @@ export function aggregateHeartbeats(
 export function aggregateUsbSessions(
   records: UsbRecord[],
   allowedDevices: UsbAllowedDevice[],
-  week: string,
+  week: string
 ): UsbDeviceStat[] {
   const weekStart = dayjs(week).startOf('day')
   // 白名单元数据索引（usbId → 设备信息），用于补齐卷标 / 授权状态
@@ -545,7 +545,7 @@ function parseTime(raw: unknown): dayjs.Dayjs | null {
  */
 export function aggregateDnsTimeline<T extends object>(
   records: readonly T[],
-  weekStart: string,
+  weekStart: string
 ): DnsTimeline {
   const out = emptyDnsTimeline()
   const start = dayjs(weekStart).startOf('day')
@@ -611,11 +611,11 @@ export function aggregateFileTransfers(records: FileTransferRecord[]): FileTrans
 
   const list: FileTransferStat[] = records.map((r) => ({
     id: r.id,
-    fileName: r.file_name?.trim() || `文件 #${r.id}`,
+    fileName: r.fileName?.trim() || `文件 #${r.id}`,
     status: r.status,
     statusLabel: FILE_TRANSFER_STATUS_LABEL[r.status] ?? '未知',
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
+    createdAt: r.createdAt,
+    updatedAt: r.updatedAt,
   }))
 
   const countOf = (s: FileTransferStatus) => list.filter((r) => r.status === s).length
@@ -629,7 +629,7 @@ export function aggregateFileTransfers(records: FileTransferRecord[]): FileTrans
   list.sort(
     (a, b) =>
       (FILE_TRANSFER_SORT_WEIGHT[a.status] ?? 9) - (FILE_TRANSFER_SORT_WEIGHT[b.status] ?? 9) ||
-      +new Date(b.createdAt) - +new Date(a.createdAt),
+      +new Date(b.createdAt) - +new Date(a.createdAt)
   )
 
   return {
@@ -680,7 +680,7 @@ export function findSensitiveUsbDevices(devices: UsbAllowedDevice[]): SensitiveU
  */
 export function buildWeeklyAggregate(
   raw: WeeklyReportRawData,
-  week: string,
+  week: string
 ): WeeklyReportAggregate {
   const heart = aggregateHeartbeats(raw.client_record ?? [], week)
   const usbStats = aggregateUsbSessions(raw.usb_record ?? [], raw.usb_allowed ?? [], week)

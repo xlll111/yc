@@ -93,9 +93,8 @@ function startOfWeek(d: Dayjs): Dayjs {
 function toOption(w: Dayjs, current: string) {
   return {
     value: w.format('YYYY-MM-DD'),
-    label: `${w.format('YYYY-MM-DD')} ~ ${w.add(6, 'day').format('MM-DD')}${
-      w.format('YYYY-MM-DD') === current ? '（本周）' : ''
-    }`,
+    label: `${w.format('YYYY-MM-DD')} ~ ${w.add(6, 'day').format('MM-DD')}${w.format('YYYY-MM-DD') === current ? '（本周）' : ''
+      }`,
   }
 }
 
@@ -149,13 +148,13 @@ export function useWeeklyReport(uuid: string, week0: string, token: string) {
       // ← 新增
       Promise.resolve().then(() => aggregateFileTransfers(raw.file_transfer ?? [])),
     ])) as [
-      PromiseSettledResult<HeartbeatAggregate>,
-      PromiseSettledResult<UsbDeviceStat[]>,
-      PromiseSettledResult<DnsDomainStat[]>,
-      PromiseSettledResult<SensitiveUsbDevice[]>,
-      PromiseSettledResult<DnsTimeline>,
-      PromiseSettledResult<FileTransferAggregate> // ← 新增
-    ]
+        PromiseSettledResult<HeartbeatAggregate>,
+        PromiseSettledResult<UsbDeviceStat[]>,
+        PromiseSettledResult<DnsDomainStat[]>,
+        PromiseSettledResult<SensitiveUsbDevice[]>,
+        PromiseSettledResult<DnsTimeline>,
+        PromiseSettledResult<FileTransferAggregate> // ← 新增
+      ]
 
     tasks.forEach((r, i) => {
       if (r.status === 'rejected') {

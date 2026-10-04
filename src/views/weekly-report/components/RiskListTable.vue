@@ -115,11 +115,11 @@ onBeforeUnmount(() => {
 
 const currentTabLabel = computed(
   () =>
-    ({
-      dns: '风险 DNS 域名列表',
-      usb: '含敏感目录的 USB 设备列表',
-      file: '文件传输记录列表',
-    }[activeTab.value])
+  ({
+    dns: '风险 DNS 域名列表',
+    usb: '含敏感目录的 USB 设备列表',
+    file: '文件传输记录列表',
+  }[activeTab.value])
 )
 </script>
 
@@ -130,12 +130,7 @@ const currentTabLabel = computed(
 
       <!-- Tab 切换栏：打印时隐藏（纸质上无法交互） -->
       <nav class="tab-nav no-print">
-        <button
-          v-for="t in tabList"
-          :key="t.key"
-          :class="{ active: activeTab === t.key }"
-          @click="activeTab = t.key"
-        >
+        <button v-for="t in tabList" :key="t.key" :class="{ active: activeTab === t.key }" @click="activeTab = t.key">
           {{ t.label }}<span class="badge tabular">{{ t.count }}</span>
         </button>
       </nav>
@@ -167,9 +162,7 @@ const currentTabLabel = computed(
             <td>
               <div class="risk-rate">
                 <span class="tabular">{{ riskRate(row).toFixed(1) }}%</span>
-                <i class="track"
-                  ><i class="fill" :style="{ width: `${Math.max(4, riskRate(row))}%` }"
-                /></i>
+                <i class="track"><i class="fill" :style="{ width: `${Math.max(4, riskRate(row))}%` }" /></i>
               </div>
             </td>
             <td class="tabular">{{ row.total }}</td>
@@ -203,36 +196,18 @@ const currentTabLabel = computed(
             <td>
               <div class="files">
                 <span v-for="(f, j) in visibleFiles(dev)" :key="j" class="file-chip sensitive">
-                  <svg
-                    v-if="f.type === 'folder'"
-                    viewBox="0 0 24 24"
-                    width="11"
-                    height="11"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z"
-                    />
+                  <svg v-if="f.type === 'folder'" viewBox="0 0 24 24" width="11" height="11" fill="currentColor"
+                    aria-hidden="true">
+                    <path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z" />
                   </svg>
-                  <svg
-                    v-else
-                    viewBox="0 0 24 24"
-                    width="11"
-                    height="11"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    aria-hidden="true"
-                  >
+                  <svg v-else viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor"
+                    stroke-width="2" aria-hidden="true">
                     <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" />
                     <path d="M14 3v5h5" />
                   </svg>
                   {{ f.name }}
                 </span>
-                <span v-if="hiddenFileCount(dev) > 0" class="more"
-                  >+{{ hiddenFileCount(dev) }}</span
-                >
+                <span v-if="hiddenFileCount(dev) > 0" class="more">+{{ hiddenFileCount(dev) }}</span>
               </div>
             </td>
             <td class="time tabular">{{ formatShortTime(dev.lastTime) }}</td>
@@ -254,15 +229,8 @@ const currentTabLabel = computed(
           <tr v-for="(row, i) in fileRows" :key="row.id">
             <td class="tabular col-idx">{{ rowIndex(i) }}</td>
             <td class="file-name">
-              <svg
-                viewBox="0 0 24 24"
-                width="13"
-                height="13"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                aria-hidden="true"
-              >
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"
+                aria-hidden="true">
                 <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" />
                 <path d="M14 3v5h5" />
               </svg>
@@ -278,6 +246,7 @@ const currentTabLabel = computed(
           </tr>
         </tbody>
       </table>
+      <p v-if="activeTab === 'file'" class="table-note">注：图片类文件传输不携带文件名。</p>
 
       <!-- 空态 -->
       <div v-if="activeList.length === 0" class="table-empty">
@@ -285,8 +254,8 @@ const currentTabLabel = computed(
           activeTab === 'dns'
             ? '本周无风险 DNS 记录'
             : activeTab === 'usb'
-            ? '本周未发现含敏感目录的 USB 设备'
-            : '本周无文件传输记录'
+              ? '本周未发现含敏感目录的 USB 设备'
+              : '本周无文件传输记录'
         }}
       </div>
     </div>
@@ -296,16 +265,8 @@ const currentTabLabel = computed(
       <span>共 {{ activeList.length }} 条</span>
       <div class="pager">
         <button :disabled="page <= 1" @click="prevPage">
-          <svg
-            viewBox="0 0 24 24"
-            width="13"
-            height="13"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 6l-6 6 6 6" />
           </svg>
           上一页
@@ -313,16 +274,8 @@ const currentTabLabel = computed(
         <span class="tabular">{{ page }} / {{ totalPages }}</span>
         <button :disabled="page >= totalPages" @click="nextPage">
           下一页
-          <svg
-            viewBox="0 0 24 24"
-            width="13"
-            height="13"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <path d="M10 6l6 6-6 6" />
           </svg>
         </button>
@@ -404,7 +357,9 @@ const currentTabLabel = computed(
 /* ---- 表格 ---- */
 .table-scroll {
   overflow-x: auto;
-} /* 移动端横向滚动，打印时由全局规则接管 */
+}
+
+/* 移动端横向滚动，打印时由全局规则接管 */
 
 .wr-table {
   width: 100%;
@@ -432,6 +387,7 @@ const currentTabLabel = computed(
   tbody tr {
     transition: background 0.12s ease;
   }
+
   tbody tr:hover {
     background: #f6f9ff;
   }
@@ -441,6 +397,7 @@ const currentTabLabel = computed(
   width: 42px;
   color: var(--wr-text-sub);
 }
+
 .col-rate {
   min-width: 130px;
 }
@@ -448,9 +405,11 @@ const currentTabLabel = computed(
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
+
 .domain {
   font-weight: 500;
 }
+
 .time {
   color: var(--wr-text-sub);
   white-space: nowrap;
@@ -469,7 +428,7 @@ const currentTabLabel = computed(
   align-items: center;
   gap: 8px;
 
-  > span {
+  >span {
     font-size: 12px;
     color: var(--wr-text-sub);
     min-width: 44px;
@@ -505,6 +464,7 @@ const currentTabLabel = computed(
     background: #e8f6ef;
     color: var(--wr-ok);
   }
+
   &.danger {
     background: #fdeeee;
     color: var(--wr-risk);
@@ -583,6 +543,7 @@ const currentTabLabel = computed(
         opacity: 0.45;
         cursor: not-allowed;
       }
+
       &:hover:not(:disabled) {
         border-color: var(--wr-brand);
         color: var(--wr-brand);
@@ -606,16 +567,24 @@ const currentTabLabel = computed(
   }
 }
 
+.table-note {
+  margin: 10px 2px 0;
+  font-size: 12px;
+  color: var(--wr-text-sub);
+}
+
 /* 状态胶囊扩展：待传输 / 传输中 / 已接收 */
 .pill {
   &.pending {
     background: #f0f3f9;
     color: #55607a;
   }
+
   &.progress {
     background: var(--wr-brand-soft);
     color: var(--wr-brand);
   }
+
   &.received {
     background: #e7f4f8;
     color: #24808f;

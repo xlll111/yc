@@ -25,6 +25,8 @@ import {
   emptyHeatmap,
   findSensitiveUsbDevices,
   toYearWeek,
+  aggregateFileTransfers,
+  emptyFileTransferAggregate,
 } from '../utils/aggregator'
 import type {
   DnsDomainStat,
@@ -40,6 +42,7 @@ import type {
   ClientInfo,
   DnsRecord,
   DnsTimeline,
+  FileTransferAggregate,
 } from '../utils/aggregator'
 
 /** 视图聚合结果 = 原有聚合 + DNS 时间维度 */
@@ -69,7 +72,7 @@ async function fetchWeeklyReport(
   uuid: string,
   token: string,
   week: string,
-  signal: AbortSignal,
+  signal: AbortSignal
 ): Promise<WeeklyReportRawData> {
   const yearWeek = toYearWeek(week)
   // ---- 真实接口 ----
@@ -90,7 +93,9 @@ function startOfWeek(d: Dayjs): Dayjs {
 function toOption(w: Dayjs, current: string) {
   return {
     value: w.format('YYYY-MM-DD'),
-    label: `${w.format('YYYY-MM-DD')} ~ ${w.add(6, 'day').format('MM-DD')}${w.format('YYYY-MM-DD') === current ? '（本周）' : ''}`,
+    label: `${w.format('YYYY-MM-DD')} ~ ${w.add(6, 'day').format('MM-DD')}${
+      w.format('YYYY-MM-DD') === current ? '（本周）' : ''
+    }`,
   }
 }
 
@@ -122,7 +127,7 @@ export function useWeeklyReport(uuid: string, week0: string, token: string) {
    */
   async function buildAggregateSafely(
     raw: WeeklyReportRawData,
-    targetWeek: string,
+    targetWeek: string
   ): Promise<WeeklyReportAggregateView> {
     const MODULE_NAMES = [
       '心跳聚合',
@@ -130,22 +135,26 @@ export function useWeeklyReport(uuid: string, week0: string, token: string) {
       'DNS 主域名归并',
       '敏感 USB 设备识别',
       'DNS 时序聚合',
+      '文件传输聚合', // ← 新增
     ]
 
     const tasks = (await Promise.allSettled([
       Promise.resolve().then(() => aggregateHeartbeats(raw.client_record ?? [], targetWeek)),
       Promise.resolve().then(() =>
-        aggregateUsbSessions(raw.usb_record ?? [], raw.usb_allowed ?? [], targetWeek),
+        aggregateUsbSessions(raw.usb_record ?? [], raw.usb_allowed ?? [], targetWeek)
       ),
       Promise.resolve().then(() => aggregateDns(raw.dns_url_records ?? [], targetWeek)),
       Promise.resolve().then(() => findSensitiveUsbDevices(raw.usb_allowed ?? [])),
       Promise.resolve().then(() => aggregateDnsTimeline(raw.dns_url_records ?? [], targetWeek)),
+      // ← 新增
+      Promise.resolve().then(() => aggregateFileTransfers(raw.file_transfer ?? [])),
     ])) as [
       PromiseSettledResult<HeartbeatAggregate>,
       PromiseSettledResult<UsbDeviceStat[]>,
       PromiseSettledResult<DnsDomainStat[]>,
       PromiseSettledResult<SensitiveUsbDevice[]>,
       PromiseSettledResult<DnsTimeline>,
+      PromiseSettledResult<FileTransferAggregate> // ← 新增
     ]
 
     tasks.forEach((r, i) => {
@@ -159,7 +168,8 @@ export function useWeeklyReport(uuid: string, week0: string, token: string) {
     const dnsStats = tasks[2].status === 'fulfilled' ? tasks[2].value : []
     const sensitive = tasks[3].status === 'fulfilled' ? tasks[3].value : []
     const dnsTimeline = tasks[4].status === 'fulfilled' ? tasks[4].value : emptyDnsTimeline()
-
+    const fileTransfer =
+      tasks[5].status === 'fulfilled' ? tasks[5].value : emptyFileTransferAggregate()
     const dnsRecords = raw.dns_url_records ?? []
     // 风险命中数直接从原始记录兜底统计：即使 DNS 归并失败，关键 KPI 也不丢失
     const dnsRiskCount = dnsRecords.reduce((n, r) => n + (r.detection ? 1 : 0), 0)
@@ -196,6 +206,7 @@ export function useWeeklyReport(uuid: string, week0: string, token: string) {
         .filter((s) => s.risks > 0)
         .sort((a, b) => b.risks - a.risks || b.total - a.total),
       ...dnsTimeline,
+      ...fileTransfer, // ← 新增
     }
   }
 
@@ -219,7 +230,7 @@ export function useWeeklyReport(uuid: string, week0: string, token: string) {
       const raw = await fetchWeeklyReport(uuid, token, targetWeek, controller.signal)
       // 双保险：即使中断未被 fetch 捕获，过期结果也不落地
       if (controller !== activeController) return
-      console.log('raw data:', raw)
+      // console.log('raw data:', raw)
       // console.log('client_record:', raw.client_record?.length, raw.client_record?.[0])
       // console.log('targetWeek:', targetWeek, 'week.value:', week.value)
       // const hb = aggregateHeartbeats(raw.client_record ?? [], targetWeek)
@@ -230,7 +241,7 @@ export function useWeeklyReport(uuid: string, week0: string, token: string) {
       //   hb.dailyOnlineSeconds.length,
       // )
       aggregate.value = await buildAggregateSafely(raw, targetWeek)
-      console.log('aggregate:', aggregate.value)
+      // console.log('aggregate:', aggregate.value)
     } catch (e) {
       const err = e as Error
       // 被新请求取代 → 静默退出，不进入错误态

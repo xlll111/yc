@@ -1,12 +1,13 @@
 /**
  * aggregator.ts —— 周报核心聚合算法（纯函数，无副作用，可独立单测）
  *
- * 四大算法：
+ * 五大算法：
  * 1. 心跳聚合   ：相邻心跳间隔 <= 90s 视为持续在线，否则切分会话；
  *                 输出 每日在线秒数[7] / 7x24 心跳密度热力图 / 会话区间列表。
  * 2. USB 会话切分：同设备相邻记录间隔 > 300s 视为新会话，汇总各设备会话总时长（Top5 排序依据）。
  * 3. DNS 归并   ：提取可注册主域名（含 com.cn 等二级后缀识别），统计 Top10 与风险命中数。
  * 4. DNS 时间维度：按日 / 小时统计 DNS 请求总数与风险命中数（原 dnsTimeline.ts 并入）。
+ * 5. 文件传输聚合：按传输状态统计成功 / 失败 / 待传输 / 传输中 / 已接收数量与成功率。
  *
  * 时间口径：所有输入为 UTC ISO，内部统一通过 toLocal() 转为本地时区后再做 星期/小时 归属；
  *           输出的会话区间统一存回 UTC ISO（存储口径），由展示层按本地时区格式化。
@@ -72,12 +73,40 @@ export interface DnsRecord {
   detection: boolean // 是否命中风险
 }
 
+/* ---------- 文件传输（钉钉）原始类型 ---------- */ // ← 新增
+
+/** 与后端 DingtalkFileTransferStatus 对齐 */
+export enum FileTransferStatus {
+  PENDING = 0, // 待传输
+  SENT = 1, // 传输中
+  RECEIVED = 2, // 已接收
+  ACKED = 3, // 成功
+  FAILED = 4, // 失败
+}
+
+export const FILE_TRANSFER_STATUS_LABEL: Record<number, string> = {
+  [FileTransferStatus.PENDING]: '待传输',
+  [FileTransferStatus.SENT]: '传输中',
+  [FileTransferStatus.RECEIVED]: '已接收',
+  [FileTransferStatus.ACKED]: '成功',
+  [FileTransferStatus.FAILED]: '失败',
+}
+
+export interface FileTransferRecord {
+  id: number
+  created_at: string // ISO 8601 UTC
+  updated_at: string // ISO 8601 UTC
+  status: number
+  file_name: string | null
+}
+
 export interface WeeklyReportRawData {
   client: ClientInfo
   client_record: HeartbeatRecord[]
   usb_allowed: UsbAllowedDevice[]
   usb_record: UsbRecord[]
   dns_url_records: DnsRecord[]
+  file_transfer?: FileTransferRecord[] // ← 新增（向后兼容：旧接口不返回时为 undefined）
 }
 
 /* ============================ 聚合结果类型 ============================ */
@@ -145,8 +174,40 @@ export interface SensitiveUsbDevice {
   files: SensitiveFileItem[]
 }
 
+/* ---------- 文件传输聚合视图 ---------- */ // ← 新增
+
+/** 明细表行视图（已做展示加工） */
+export interface FileTransferStat {
+  id: number
+  fileName: string // 兜底：file_name 为空时显示 “文件 #id”
+  status: number
+  statusLabel: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FileTransferAggregate {
+  /** 文件推送总数 */
+  fileTransferTotal: number
+  /** 成功（ACKED）数量 */
+  fileTransferSuccessCount: number
+  /** 失败（FAILED）数量 */
+  fileTransferFailedCount: number
+  /** 待传输（PENDING）数量 */
+  fileTransferPendingCount: number
+  /** 传输中（SENT）数量 */
+  fileTransferInProgressCount: number
+  /** 已接收（RECEIVED）数量 */
+  fileTransferReceivedCount: number
+  /** 成功率 = 成功 / 总数，0 ~ 1 */
+  fileTransferSuccessRate: number
+  /** 明细列表（失败 / 传输中优先，组内按创建时间倒序） */
+  fileTransferList: FileTransferStat[]
+}
+
 /** 页面消费的最终聚合视图（各字段均有兜底默认值，容错降级由 composable 层保证） */
-export interface WeeklyReportAggregate {
+export interface WeeklyReportAggregate extends FileTransferAggregate {
+  // ← extends 追加
   weekStart: string
   // 客户端信息
   clientHostname: string
@@ -513,6 +574,76 @@ export function aggregateDnsTimeline<T extends object>(
   return out
 }
 
+/* ============================ 算法 5：文件传输聚合 ============================ */ // ← 新增
+
+/** 明细排序权重：失败 → 传输中 → 待传输 → 已接收 → 成功 */
+const FILE_TRANSFER_SORT_WEIGHT: Record<number, number> = {
+  [FileTransferStatus.FAILED]: 0,
+  [FileTransferStatus.SENT]: 1,
+  [FileTransferStatus.PENDING]: 2,
+  [FileTransferStatus.RECEIVED]: 3,
+  [FileTransferStatus.ACKED]: 4,
+}
+
+/** 全零兜底（聚合失败 / 无数据时使用） */
+export function emptyFileTransferAggregate(): FileTransferAggregate {
+  return {
+    fileTransferTotal: 0,
+    fileTransferSuccessCount: 0,
+    fileTransferFailedCount: 0,
+    fileTransferPendingCount: 0,
+    fileTransferInProgressCount: 0,
+    fileTransferReceivedCount: 0,
+    fileTransferSuccessRate: 0,
+    fileTransferList: [],
+  }
+}
+
+/**
+ * 文件传输（钉钉）聚合：统计各状态数量、成功率，并输出明细行视图。
+ * 说明：
+ * - 不做周次过滤，直接统计接口返回的全部记录（与后端查询口径保持一致）；
+ * - file_name 为空时兜底为 “文件 #id”，保证明细表可读；
+ * - 未知 status 归一为 label「未知」，排序权重置于最后，避免丢失数据。
+ */
+export function aggregateFileTransfers(records: FileTransferRecord[]): FileTransferAggregate {
+  if (!records.length) return emptyFileTransferAggregate()
+
+  const list: FileTransferStat[] = records.map((r) => ({
+    id: r.id,
+    fileName: r.file_name?.trim() || `文件 #${r.id}`,
+    status: r.status,
+    statusLabel: FILE_TRANSFER_STATUS_LABEL[r.status] ?? '未知',
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  }))
+
+  const countOf = (s: FileTransferStatus) => list.filter((r) => r.status === s).length
+  const success = countOf(FileTransferStatus.ACKED)
+  const failed = countOf(FileTransferStatus.FAILED)
+  const pending = countOf(FileTransferStatus.PENDING)
+  const inProgress = countOf(FileTransferStatus.SENT)
+  const received = countOf(FileTransferStatus.RECEIVED)
+
+  // 明细排序：状态优先级升序（失败/进行中最前），组内按创建时间倒序
+  list.sort(
+    (a, b) =>
+      (FILE_TRANSFER_SORT_WEIGHT[a.status] ?? 9) - (FILE_TRANSFER_SORT_WEIGHT[b.status] ?? 9) ||
+      +new Date(b.createdAt) - +new Date(a.createdAt),
+  )
+
+  return {
+    fileTransferTotal: list.length,
+    fileTransferSuccessCount: success,
+    fileTransferFailedCount: failed,
+    fileTransferPendingCount: pending,
+    fileTransferInProgressCount: inProgress,
+    fileTransferReceivedCount: received,
+    fileTransferSuccessRate: list.length > 0 ? success / list.length : 0,
+    fileTransferList: list,
+  }
+}
+
 /* ============================ 敏感 USB 设备识别 ============================ */
 
 /**
@@ -555,6 +686,7 @@ export function buildWeeklyAggregate(
   const usbStats = aggregateUsbSessions(raw.usb_record ?? [], raw.usb_allowed ?? [], week)
   const dnsStats = aggregateDns(raw.dns_url_records ?? [], week)
   const dnsRecords = raw.dns_url_records ?? []
+  const fileTransfer = aggregateFileTransfers(raw.file_transfer ?? []) // ← 新增
 
   const dnsRiskCount = dnsRecords.reduce((n, r) => n + (r.detection ? 1 : 0), 0)
 
@@ -588,5 +720,7 @@ export function buildWeeklyAggregate(
     riskDnsList: dnsStats
       .filter((s) => s.risks > 0)
       .sort((a, b) => b.risks - a.risks || b.total - a.total),
+
+    ...fileTransfer, // ← 新增
   }
 }

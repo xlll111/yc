@@ -2,22 +2,39 @@
      分页 + 打印联动：beforeprint 触发展开全量数据并隐藏分页，afterprint 恢复。 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import type { DnsDomainStat, SensitiveUsbDevice } from '../utils/aggregator'
+import type { DnsDomainStat, FileTransferStat, SensitiveUsbDevice } from '../utils/aggregator'
 import { formatShortTime } from '../utils/sanitizer'
 
 const props = defineProps<{
   riskDnsList: DnsDomainStat[]
   sensitiveDevices: SensitiveUsbDevice[]
+  fileTransfers: FileTransferStat[]
   dnsTotal: number
 }>()
 
-type TabKey = 'dns' | 'usb'
+type TabKey = 'dns' | 'usb' | 'file'
 const activeTab = ref<TabKey>('dns')
 
 const tabList = computed(() => [
   { key: 'dns' as const, label: '风险 DNS 域名', count: props.riskDnsList.length },
   { key: 'usb' as const, label: '敏感 USB 设备', count: props.sensitiveDevices.length },
+  { key: 'file' as const, label: '文件传输记录', count: props.fileTransfers.length },
 ])
+
+/* ---- 文件传输状态元数据 ---- */
+const FILE_STATUS_META: Record<number, { label: string; tone: string }> = {
+  0: { label: '待传输', tone: 'pending' },
+  1: { label: '传输中', tone: 'progress' },
+  2: { label: '已接收', tone: 'received' },
+  3: { label: '成功', tone: 'ok' },
+  4: { label: '失败', tone: 'danger' },
+}
+function statusLabel(s: number): string {
+  return FILE_STATUS_META[s]?.label ?? '未知'
+}
+function statusTone(s: number): string {
+  return FILE_STATUS_META[s]?.tone ?? 'pending'
+}
 
 /** 打印模式：由 beforeprint / afterprint 事件驱动 */
 const printMode = ref(false)
@@ -26,9 +43,11 @@ const printMode = ref(false)
 const PAGE_SIZE = 8
 const page = ref(1)
 
-const activeList = computed<unknown[]>(() =>
-  activeTab.value === 'dns' ? props.riskDnsList : props.sensitiveDevices,
-)
+const activeList = computed<unknown[]>(() => {
+  if (activeTab.value === 'dns') return props.riskDnsList
+  if (activeTab.value === 'usb') return props.sensitiveDevices
+  return props.fileTransfers
+})
 const totalPages = computed(() => Math.max(1, Math.ceil(activeList.value.length / PAGE_SIZE)))
 
 function paginate<T>(list: T[]): T[] {
@@ -40,11 +59,15 @@ function paginate<T>(list: T[]): T[] {
 
 const dnsRows = computed(() => paginate(props.riskDnsList))
 const usbRows = computed(() => paginate(props.sensitiveDevices))
+const fileRows = computed(() => paginate(props.fileTransfers))
 
 // 切换 Tab / 数据源更新时回到第一页
-watch([activeTab, () => props.riskDnsList, () => props.sensitiveDevices], () => {
-  page.value = 1
-})
+watch(
+  [activeTab, () => props.riskDnsList, () => props.sensitiveDevices, () => props.fileTransfers],
+  () => {
+    page.value = 1
+  }
+)
 
 function prevPage() {
   if (page.value > 1) page.value -= 1
@@ -90,8 +113,13 @@ onBeforeUnmount(() => {
   window.removeEventListener('afterprint', onAfterPrint)
 })
 
-const currentTabLabel = computed(() =>
-  activeTab.value === 'dns' ? '风险 DNS 域名列表' : '含敏感目录的 USB 设备列表',
+const currentTabLabel = computed(
+  () =>
+    ({
+      dns: '风险 DNS 域名列表',
+      usb: '含敏感目录的 USB 设备列表',
+      file: '文件传输记录列表',
+    }[activeTab.value])
 )
 </script>
 
@@ -151,7 +179,7 @@ const currentTabLabel = computed(() =>
       </table>
 
       <!-- ===== Tab 2：含敏感目录的 USB 设备列表 ===== -->
-      <table v-else class="wr-table">
+      <table v-else-if="activeTab === 'usb'" class="wr-table">
         <thead>
           <tr>
             <th class="col-idx">#</th>
@@ -211,10 +239,55 @@ const currentTabLabel = computed(() =>
           </tr>
         </tbody>
       </table>
+      <!-- ===== Tab 3：文件传输记录 ===== -->
+      <table v-else class="wr-table">
+        <thead>
+          <tr>
+            <th class="col-idx">#</th>
+            <th>文件名</th>
+            <th>传输状态</th>
+            <th>创建时间</th>
+            <th>更新时间</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(row, i) in fileRows" :key="row.id">
+            <td class="tabular col-idx">{{ rowIndex(i) }}</td>
+            <td class="file-name">
+              <svg
+                viewBox="0 0 24 24"
+                width="13"
+                height="13"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" />
+                <path d="M14 3v5h5" />
+              </svg>
+              <span>{{ row.fileName }}</span>
+            </td>
+            <td>
+              <span class="pill" :class="statusTone(row.status)">{{
+                statusLabel(row.status)
+              }}</span>
+            </td>
+            <td class="time tabular">{{ formatShortTime(row.createdAt) }}</td>
+            <td class="time tabular">{{ formatShortTime(row.updatedAt) }}</td>
+          </tr>
+        </tbody>
+      </table>
 
       <!-- 空态 -->
       <div v-if="activeList.length === 0" class="table-empty">
-        {{ activeTab === 'dns' ? '本周无风险 DNS 记录' : '本周未发现含敏感目录的 USB 设备' }}
+        {{
+          activeTab === 'dns'
+            ? '本周无风险 DNS 记录'
+            : activeTab === 'usb'
+            ? '本周未发现含敏感目录的 USB 设备'
+            : '本周无文件传输记录'
+        }}
       </div>
     </div>
 
@@ -304,9 +377,7 @@ const currentTabLabel = computed(() =>
     font-size: 13px;
     color: var(--wr-text-sub);
     cursor: pointer;
-    transition:
-      background 0.15s ease,
-      color 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease;
 
     &.active {
       background: #fff;
@@ -506,9 +577,7 @@ const currentTabLabel = computed(() =>
       font-size: 12px;
       color: var(--wr-text);
       cursor: pointer;
-      transition:
-        border-color 0.15s ease,
-        color 0.15s ease;
+      transition: border-color 0.15s ease, color 0.15s ease;
 
       &:disabled {
         opacity: 0.45;
@@ -519,6 +588,37 @@ const currentTabLabel = computed(() =>
         color: var(--wr-brand);
       }
     }
+  }
+}
+
+/* ---- 文件传输 Tab ---- */
+.file-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  color: var(--wr-text);
+  word-break: break-all;
+
+  svg {
+    flex-shrink: 0;
+    color: var(--wr-text-sub);
+  }
+}
+
+/* 状态胶囊扩展：待传输 / 传输中 / 已接收 */
+.pill {
+  &.pending {
+    background: #f0f3f9;
+    color: #55607a;
+  }
+  &.progress {
+    background: var(--wr-brand-soft);
+    color: var(--wr-brand);
+  }
+  &.received {
+    background: #e7f4f8;
+    color: #24808f;
   }
 }
 </style>

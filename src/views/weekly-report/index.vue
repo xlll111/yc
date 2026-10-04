@@ -37,8 +37,11 @@ const { week, weekOptions, weekRangeLabel, loading, error, aggregate, setWeek, r
 
 /** DNS 风险占比（比例条填充宽度，0 ~ 100） */
 const dnsRiskPct = computed(() =>
-  Math.min(100, (aggregate.value?.dnsRiskRate ?? 0) * 100).toFixed(1),
+  Math.min(100, (aggregate.value?.dnsRiskRate ?? 0) * 100).toFixed(1)
 )
+
+/** 文件传输成功率（进度条宽度） */
+const fileSuccessPct = computed(() => (aggregate.value?.fileTransferSuccessRate ?? 0) * 100)
 
 /** 导出 PDF：beforeprint 钩子会让表格展开全量数据，@media print 负责版式收敛 */
 function handlePrint() {
@@ -53,14 +56,8 @@ function handlePrint() {
     <!-- ==================== 加载中：骨架屏 ==================== -->
     <div v-if="loading" class="sk-wrap flex flex-col gap-4 md:gap-5" aria-busy="true">
       <div class="wr-skeleton" style="height: 96px" />
-      <div class="grid grid-cols-2 sm:grid-cols-3 min-[1200px]:grid-cols-5 gap-4">
-        <div
-          v-for="i in 5"
-          :key="i"
-          class="wr-skeleton"
-          :class="{ 'sk-wide': i === 5 }"
-          style="height: 110px"
-        />
+      <div class="grid grid-cols-2 sm:grid-cols-3 min-[1200px]:grid-cols-6 gap-4">
+        <div v-for="i in 6" :key="i" class="wr-skeleton" style="height: 110px" />
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
         <div class="sm:col-span-12 min-[1200px]:col-span-8 flex flex-col gap-4">
@@ -69,6 +66,7 @@ function handlePrint() {
         <div class="sm:col-span-12 min-[1200px]:col-span-4 flex flex-col gap-4">
           <div class="wr-skeleton" style="height: 170px" />
           <div class="wr-skeleton" style="height: 140px" />
+          <div class="wr-skeleton" style="height: 180px" />
           <div class="wr-skeleton" style="height: 250px" />
         </div>
       </div>
@@ -157,6 +155,52 @@ function handlePrint() {
           <!-- USB 设备会话 Top5 横向条形图 -->
           <UsbTopChart :items="aggregate.usbTopSessions" />
 
+          <!-- 文件传输概览 -->
+          <section class="wr-card attr-card">
+            <header class="attr-head">
+              <h3>文件传输概览</h3>
+              <span class="attr-tag">{{ aggregate.fileTransferTotal }} 个文件</span>
+            </header>
+
+            <div class="ft-metrics">
+              <div class="ft-item">
+                <strong class="tabular">{{ aggregate.fileTransferTotal }}</strong>
+                <span>总推送</span>
+              </div>
+              <div class="ft-item ok">
+                <strong class="tabular">{{ aggregate.fileTransferSuccessCount }}</strong>
+                <span>成功</span>
+              </div>
+              <div class="ft-item danger">
+                <strong class="tabular">{{ aggregate.fileTransferFailedCount }}</strong>
+                <span>失败</span>
+              </div>
+            </div>
+
+            <div class="ft-rate">
+              <div class="ft-rate-head">
+                <span>推送成功率</span>
+                <b class="tabular">{{ (aggregate.fileTransferSuccessRate * 100).toFixed(1) }}%</b>
+              </div>
+              <div class="ratio-track">
+                <i
+                  :class="aggregate.fileTransferFailedCount > 0 ? '' : 'is-ok'"
+                  :style="{ width: `${fileSuccessPct}%` }"
+                />
+              </div>
+            </div>
+
+            <p
+              v-if="aggregate.fileTransferPendingCount + aggregate.fileTransferInProgressCount > 0"
+              class="attr-foot"
+            >
+              其中
+              <b class="is-warn">{{ aggregate.fileTransferInProgressCount }}</b> 个传输中、
+              <b class="is-warn">{{ aggregate.fileTransferPendingCount }}</b> 个待传输
+            </p>
+            <p v-else class="attr-foot">全部文件已处理完毕</p>
+          </section>
+
           <!-- DNS 风险比例卡 -->
           <section class="wr-card attr-card">
             <header class="attr-head">
@@ -194,10 +238,10 @@ function handlePrint() {
       </div>
 
       <!-- 5. 明细区：Tabs 切换的风险 DNS / 敏感 USB 设备列表 -->
-      <!-- 4. 明细区：Tabs 切换的风险 DNS / 敏感 USB 设备列表 -->
       <RiskListTable
         :risk-dns-list="aggregate.riskDnsList"
         :sensitive-devices="aggregate.sensitiveUsbDevices"
+        :file-transfers="aggregate.fileTransferList"
         :dns-total="aggregate.dnsTotalCount"
       />
     </template>
@@ -230,9 +274,7 @@ body {
   background: var(--wr-card);
   border: 1px solid var(--wr-border);
   border-radius: var(--wr-radius);
-  box-shadow:
-    0 1px 2px rgba(23, 33, 61, 0.04),
-    0 4px 16px rgba(23, 33, 61, 0.04);
+  box-shadow: 0 1px 2px rgba(23, 33, 61, 0.04), 0 4px 16px rgba(23, 33, 61, 0.04);
 }
 
 /* 等宽数字（KPI / 表格数值对齐） */
@@ -277,9 +319,7 @@ body {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition:
-    background 0.15s ease,
-    transform 0.1s ease;
+  transition: background 0.15s ease, transform 0.1s ease;
 
   &:hover {
     background: #274dbe;
@@ -494,5 +534,68 @@ body {
     background: var(--wr-risk);
     transition: width 0.5s ease;
   }
+}
+
+/* ---- 文件传输概览 ---- */
+.ft-metrics {
+  display: flex;
+  gap: 8px;
+
+  .ft-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 4px;
+    border-radius: 8px;
+    background: #f7f9fd;
+
+    strong {
+      font-size: 20px;
+      font-weight: 650;
+      letter-spacing: -0.4px;
+      color: var(--wr-text);
+    }
+    span {
+      font-size: 11.5px;
+      color: var(--wr-text-sub);
+    }
+
+    &.ok strong {
+      color: var(--wr-ok);
+    }
+    &.danger strong {
+      color: var(--wr-risk);
+    }
+  }
+}
+
+.ft-rate {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .ft-rate-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 12px;
+    color: var(--wr-text-sub);
+
+    b {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--wr-text);
+    }
+  }
+}
+
+/* 进度条成功态 + 文案告警色 */
+.ratio-track i.is-ok {
+  background: var(--wr-ok);
+}
+.attr-foot b.is-warn {
+  color: var(--wr-warn);
 }
 </style>

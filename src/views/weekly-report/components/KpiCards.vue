@@ -36,6 +36,21 @@ const cards = computed(() => {
       accent: agg.usbDeniedCount > 0 ? 'is-warn' : '',
     },
     {
+      key: 'file',
+      label: '文件推送数',
+      value: agg.fileTransferTotal.toLocaleString('zh-CN'),
+      unit: '个',
+      hint:
+        agg.fileTransferTotal > 0
+          ? `成功 ${agg.fileTransferSuccessCount} · 失败 ${agg.fileTransferFailedCount} · 成功率 ${(
+              agg.fileTransferSuccessRate * 100
+            ).toFixed(1)}%`
+          : '本周无文件推送记录',
+      bar: agg.fileTransferSuccessRate,
+      barTone: agg.fileTransferFailedCount > 0 ? 'is-risk' : 'is-ok',
+      accent: agg.fileTransferFailedCount > 0 ? 'is-risk' : '',
+    },
+    {
       key: 'dns',
       label: 'DNS 请求量',
       value: agg.dnsTotalCount.toLocaleString('zh-CN'),
@@ -60,14 +75,9 @@ function pct(v: number): string {
 </script>
 
 <template>
-  <!-- 响应式：2 列 → 3 列(sm) → 5 列(>=1200px) -->
-  <div class="grid grid-cols-2 sm:grid-cols-3 min-[1200px]:grid-cols-5 gap-4">
-    <section
-      v-for="(c, i) in cards"
-      :key="c.key"
-      class="wr-card kpi-card"
-      :class="[c.accent, { 'kpi-wide': i === 4 }]"
-    >
+  <!-- 6 张卡：2 列 → 3 列(sm) → 6 列(>=1200px)，每档都刚好铺满 -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 min-[1200px]:grid-cols-6 gap-4">
+    <section v-for="c in cards" :key="c.key" class="wr-card kpi-card" :class="c.accent">
       <p class="kpi-label">{{ c.label }}</p>
       <p class="kpi-value tabular">
         <span class="num">{{ c.value }}</span>
@@ -75,7 +85,7 @@ function pct(v: number): string {
       </p>
       <p v-if="c.hint" class="kpi-hint">{{ c.hint }}</p>
       <div v-if="c.bar !== undefined" class="kpi-track">
-        <i class="kpi-fill" :style="{ width: pct(c.bar) }" />
+        <i class="kpi-fill" :class="c.barTone" :style="{ width: pct(c.bar) }" />
       </div>
     </section>
   </div>
@@ -90,9 +100,7 @@ function pct(v: number): string {
   transition: box-shadow 0.2s ease;
 
   &:hover {
-    box-shadow:
-      0 2px 4px rgba(23, 33, 61, 0.06),
-      0 8px 22px rgba(23, 33, 61, 0.08);
+    box-shadow: 0 2px 4px rgba(23, 33, 61, 0.06), 0 8px 22px rgba(23, 33, 61, 0.08);
   }
 }
 
@@ -165,6 +173,13 @@ function pct(v: number): string {
     border-radius: 999px;
     background: var(--wr-brand);
     transition: width 0.5s ease;
+
+    &.is-ok {
+      background: var(--wr-ok);
+    }
+    &.is-risk {
+      background: var(--wr-risk);
+    }
   }
 }
 </style>

@@ -159,6 +159,7 @@ watch(
     font-weight: 600;
     color: var(--wr-text);
   }
+
   .chart-sub {
     font-size: 11.5px;
     color: var(--wr-text-sub);
@@ -167,6 +168,7 @@ watch(
 
 .active-heatmap {
   height: 330px;
+
   @media (max-width: 639px) {
     height: 270px;
   }

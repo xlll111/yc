@@ -9,6 +9,7 @@ import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/compon
 import { CanvasRenderer } from 'echarts/renderers'
 import dayjs from 'dayjs'
 import { WEEKDAY_LABELS } from '../utils/aggregator'
+import { noAnim } from '../utils/screenshot'
 
 echarts.use([BarChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer])
 
@@ -110,7 +111,7 @@ function buildOption(): EChartsCoreOption {
 
 onMounted(() => {
   chart = init(el.value as HTMLDivElement)
-  chart.setOption(buildOption())
+  chart.setOption(noAnim(buildOption()))
 
   observer = new ResizeObserver(() => chart?.resize())
   observer.observe(el.value as HTMLDivElement)
@@ -157,6 +158,7 @@ watch([() => props.dailyTotal, () => props.dailyRisk, () => props.weekStart], ()
     font-weight: 600;
     color: var(--wr-text);
   }
+
   .chart-sub {
     font-size: 11.5px;
     color: var(--wr-text-sub);
@@ -165,6 +167,7 @@ watch([() => props.dailyTotal, () => props.dailyRisk, () => props.weekStart], ()
 
 .dns-trend {
   height: 300px;
+
   @media (max-width: 639px) {
     height: 240px;
   }

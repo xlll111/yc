@@ -10,6 +10,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 import dayjs from 'dayjs'
 import { WEEKDAY_LABELS } from '../utils/aggregator'
 import { formatDuration } from '../utils/sanitizer'
+import { noAnim } from '../utils/screenshot'
 
 // ECharts 按需注册（echarts.use 幂等，可安全重复调用）
 echarts.use([BarChart, GridComponent, TooltipComponent, MarkLineComponent, CanvasRenderer])
@@ -95,7 +96,7 @@ function buildOption(): EChartsCoreOption {
 
 onMounted(() => {
   chart = init(el.value as HTMLDivElement)
-  chart.setOption(buildOption())
+  chart.setOption(noAnim(buildOption()))
 
   // 容器尺寸自适应：ResizeObserver（而非 window.resize，兼容容器级布局变化）
   observer = new ResizeObserver(() => chart?.resize())
@@ -142,6 +143,7 @@ watch([() => props.daily, () => props.weekStart], () => chart?.setOption(buildOp
     font-weight: 600;
     color: var(--wr-text);
   }
+
   .chart-sub {
     font-size: 11.5px;
     color: var(--wr-text-sub);
@@ -150,8 +152,11 @@ watch([() => props.daily, () => props.weekStart], () => chart?.setOption(buildOp
 
 .online-trend {
   height: 300px;
+
   @media (max-width: 639px) {
     height: 240px;
-  } /* 移动端压缩高度 */
+  }
+
+  /* 移动端压缩高度 */
 }
 </style>

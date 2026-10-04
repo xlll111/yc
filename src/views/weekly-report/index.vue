@@ -50,9 +50,7 @@ function handlePrint() {
 </script>
 
 <template>
-  <div
-    class="weekly-report mx-auto w-full max-w-[1440px] px-4 py-5 md:px-6 md:py-6 flex flex-col gap-4 md:gap-5"
-  >
+  <div class="weekly-report mx-auto w-full max-w-[1440px] px-4 py-5 md:px-6 md:py-6 flex flex-col gap-4 md:gap-5">
     <!-- ==================== 加载中：骨架屏 ==================== -->
     <div v-if="loading" class="sk-wrap flex flex-col gap-4 md:gap-5" aria-busy="true">
       <div class="wr-skeleton" style="height: 96px" />
@@ -100,17 +98,9 @@ function handlePrint() {
     <!-- ==================== 正常内容 ==================== -->
     <template v-else-if="aggregate">
       <!-- 1. Header：周期切换 / 客户端信息 / 导出 -->
-      <ReportHeader
-        :hostname="aggregate.clientHostname"
-        :version="aggregate.clientVersion"
-        :last-seen="aggregate.lastSeen"
-        :note="aggregate.note"
-        :week="week"
-        :week-label="weekRangeLabel"
-        :week-options="weekOptions"
-        @change-week="setWeek"
-        @export="handlePrint"
-      />
+      <ReportHeader :hostname="aggregate.clientHostname" :version="aggregate.clientVersion"
+        :last-seen="aggregate.lastSeen" :note="aggregate.note" :week="week" :week-label="weekRangeLabel"
+        :week-options="weekOptions" @change-week="setWeek" @export="handlePrint" />
 
       <!-- 2. KPI 区：5 个核心指标卡 -->
       <KpiCards :aggregate="aggregate" />
@@ -119,10 +109,7 @@ function handlePrint() {
       <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 md:gap-5">
         <!-- 主图区 -->
         <div class="sm:col-span-12 min-[1200px]:col-span-8 flex flex-col gap-4 md:gap-5">
-          <OnlineTrendChart
-            :daily="aggregate.dailyOnlineSeconds"
-            :week-start="week"
-          ></OnlineTrendChart>
+          <OnlineTrendChart :daily="aggregate.dailyOnlineSeconds" :week-start="week"></OnlineTrendChart>
           <ActiveHeatmap :heatmap="aggregate.hourlyHeatmap" />
         </div>
 
@@ -183,17 +170,12 @@ function handlePrint() {
                 <b class="tabular">{{ (aggregate.fileTransferSuccessRate * 100).toFixed(1) }}%</b>
               </div>
               <div class="ratio-track">
-                <i
-                  :class="aggregate.fileTransferFailedCount > 0 ? '' : 'is-ok'"
-                  :style="{ width: `${fileSuccessPct}%` }"
-                />
+                <i :class="aggregate.fileTransferFailedCount > 0 ? '' : 'is-ok'"
+                  :style="{ width: `${fileSuccessPct}%` }" />
               </div>
             </div>
 
-            <p
-              v-if="aggregate.fileTransferPendingCount + aggregate.fileTransferInProgressCount > 0"
-              class="attr-foot"
-            >
+            <p v-if="aggregate.fileTransferPendingCount + aggregate.fileTransferInProgressCount > 0" class="attr-foot">
               其中
               <b class="is-warn">{{ aggregate.fileTransferInProgressCount }}</b> 个传输中、
               <b class="is-warn">{{ aggregate.fileTransferPendingCount }}</b> 个待传输
@@ -208,9 +190,7 @@ function handlePrint() {
               <span class="attr-tag">{{ aggregate.riskDnsList.length }} 个风险域名</span>
             </header>
             <div class="risk-ratio">
-              <strong class="tabular"
-                >{{ (aggregate.dnsRiskRate * 100).toFixed(1) }}<i>%</i></strong
-              >
+              <strong class="tabular">{{ (aggregate.dnsRiskRate * 100).toFixed(1) }}<i>%</i></strong>
               <span>{{ aggregate.dnsRiskCount }} / {{ aggregate.dnsTotalCount }} 次命中</span>
             </div>
             <div class="ratio-track"><i :style="{ width: `${dnsRiskPct}%` }" /></div>
@@ -220,30 +200,20 @@ function handlePrint() {
       <!-- 4. DNS 时序分析：每日请求柱状图 + 星期 × 小时请求热力图 -->
       <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 md:gap-5">
         <div class="sm:col-span-12 min-[1200px]:col-span-6">
-          <DnsDailyChart
-            :daily-total="aggregate.dnsDailyTotal"
-            :daily-risk="aggregate.dnsDailyRisk"
-            :week-start="week"
-          />
+          <DnsDailyChart :daily-total="aggregate.dnsDailyTotal" :daily-risk="aggregate.dnsDailyRisk"
+            :week-start="week" />
         </div>
         <div class="sm:col-span-12 min-[1200px]:col-span-6">
           <DnsHeatmap :heatmap="aggregate.dnsHourlyTotal" :risk-heatmap="aggregate.dnsHourlyRisk" />
         </div>
         <div class="sm:col-span-12 min-[1200px]:col-span-6">
-          <DnsRiskHeatmap
-            :risk-heatmap="aggregate.dnsHourlyRisk"
-            :total-heatmap="aggregate.dnsHourlyTotal"
-          />
+          <DnsRiskHeatmap :risk-heatmap="aggregate.dnsHourlyRisk" :total-heatmap="aggregate.dnsHourlyTotal" />
         </div>
       </div>
 
       <!-- 5. 明细区：Tabs 切换的风险 DNS / 敏感 USB 设备列表 -->
-      <RiskListTable
-        :risk-dns-list="aggregate.riskDnsList"
-        :sensitive-devices="aggregate.sensitiveUsbDevices"
-        :file-transfers="aggregate.fileTransferList"
-        :dns-total="aggregate.dnsTotalCount"
-      />
+      <RiskListTable :risk-dns-list="aggregate.riskDnsList" :sensitive-devices="aggregate.sensitiveUsbDevices"
+        :file-transfers="aggregate.fileTransferList" :dns-total="aggregate.dnsTotalCount" />
     </template>
   </div>
 </template>
@@ -266,9 +236,11 @@ function handlePrint() {
 body {
   background: var(--wr-bg);
 }
+
 #top-bar {
   display: none;
 }
+
 /* 通用卡片 */
 .wr-card {
   background: var(--wr-card);
@@ -324,6 +296,7 @@ body {
   &:hover {
     background: #274dbe;
   }
+
   &:active {
     transform: translateY(1px);
   }
@@ -348,7 +321,8 @@ body {
   .weekly-report {
     max-width: none !important;
     padding: 0 !important;
-    gap: 10px !important; /* 打印更紧凑 */
+    gap: 10px !important;
+    /* 打印更紧凑 */
   }
 
   /* 所有卡片 / 图表容器禁止跨页截断 */
@@ -387,12 +361,15 @@ body {
   max-width: 1200px;
   padding: 30px 15px 50px 15px;
 }
+
 .flex-direction {
   flex-direction: column;
 }
+
 /* ---- 骨架：小屏第 5 个 KPI 占满整行 ---- */
 .sk-wide {
   grid-column: span 2 / span 2;
+
   @media (min-width: 640px) {
     grid-column: auto;
   }
@@ -412,6 +389,7 @@ body {
     font-weight: 600;
     color: var(--wr-text);
   }
+
   .err-msg {
     margin: 0 0 8px;
     font-size: 13px;
@@ -465,6 +443,7 @@ body {
       font-weight: 650;
       letter-spacing: -0.5px;
     }
+
     span {
       font-size: 12px;
       color: var(--wr-text-sub);
@@ -473,6 +452,7 @@ body {
     &.ok strong {
       color: var(--wr-ok);
     }
+
     &.danger strong {
       color: var(--wr-risk);
     }
@@ -557,6 +537,7 @@ body {
       letter-spacing: -0.4px;
       color: var(--wr-text);
     }
+
     span {
       font-size: 11.5px;
       color: var(--wr-text-sub);
@@ -565,6 +546,7 @@ body {
     &.ok strong {
       color: var(--wr-ok);
     }
+
     &.danger strong {
       color: var(--wr-risk);
     }
@@ -595,6 +577,7 @@ body {
 .ratio-track i.is-ok {
   background: var(--wr-ok);
 }
+
 .attr-foot b.is-warn {
   color: var(--wr-warn);
 }

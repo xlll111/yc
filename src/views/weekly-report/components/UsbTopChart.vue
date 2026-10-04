@@ -10,6 +10,7 @@ import { GridComponent, TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import type { UsbDeviceStat } from '../utils/aggregator'
 import { formatDuration, formatShortTime } from '../utils/sanitizer'
+import { noAnim } from '../utils/screenshot'
 
 echarts.use([BarChart, GridComponent, TooltipComponent, CanvasRenderer])
 
@@ -87,7 +88,7 @@ function buildOption(): EChartsCoreOption {
 
 onMounted(() => {
   chart = init(el.value as HTMLDivElement)
-  chart.setOption(buildOption())
+  chart.setOption(noAnim(buildOption()))
   observer = new ResizeObserver(() => chart?.resize())
   observer.observe(el.value as HTMLDivElement)
 })
@@ -152,12 +153,15 @@ watch(
     height: 8px;
     border-radius: 3px;
     margin: 0 3px 0 8px;
+
     &:first-child {
       margin-left: 0;
     }
+
     &.ok {
       background: #4c7bff;
     }
+
     &.danger {
       background: #d64545;
     }
@@ -170,6 +174,7 @@ watch(
 
 .usb-top {
   height: 250px;
+
   @media (max-width: 639px) {
     height: 220px;
   }

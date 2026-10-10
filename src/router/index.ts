@@ -201,6 +201,31 @@ const router = createRouter({
   },
 })
 
+router.beforeEach((to, from) => {
+  // 只处理站内导航
+  // 如果 from 是初始进入（from.name 为 undefined），不处理
+  if (!from.name) return true
+
+  // 如果目标路由已经显式带了 query，就不覆盖
+  // 这里判断 to.query 是否为空对象
+  const toHasQuery = Object.keys(to.query).length > 0
+  if (toHasQuery) return true
+
+  // 把来源路由的 query 继承过去
+  const fromQuery = from.query
+  console.log('fromQuery:', fromQuery) // 用于调试
+  if (Object.keys(fromQuery).length === 0) return true
+
+  // 返回一个新的 location，让 router 重新解析
+  return {
+    path: to.path,
+    query: { ...fromQuery, ...to.query },
+    hash: to.hash,
+    replace: true, // 用 replace 避免历史记录里多一条
+  }
+})
+
+
 let loadingTimeout: number | null = null
 
 router.beforeEach((to, from) => {

@@ -202,29 +202,52 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from) => {
-  // 只处理站内导航
-  // 如果 from 是初始进入（from.name 为 undefined），不处理
-  if (!from.name) return true
+  const SPECIAL_KEY_PATTERN = /\.shxzhy\.cn\/.*$/
 
-  // 如果目标路由已经显式带了 query，就不覆盖
-  // 这里判断 to.query 是否为空对象
-  const toHasQuery = Object.keys(to.query).length > 0
-  if (toHasQuery) return true
+  // 收集所有需要转换的 key（to 优先，from 补充）
+  const allKeys = new Set<string>([
+    ...Object.keys(to.query),
+    ...Object.keys(from.query),
+  ])
 
-  // 把来源路由的 query 继承过去
-  const fromQuery = from.query
-  console.log('fromQuery:', fromQuery) // 用于调试
-  if (Object.keys(fromQuery).length === 0) return true
+  const specialKeys = [...allKeys].filter((key) =>
+    SPECIAL_KEY_PATTERN.test(key)
+  )
 
-  // 返回一个新的 location，让 router 重新解析
+  if (specialKeys.length === 0) return true
+
+  const newQuery: Record<string, any> = { ...to.query }
+
+  specialKeys.forEach((key) => {
+    const value = to.query[key] ?? from.query[key]
+    delete newQuery[key]
+    newQuery[fullEncode('xzhyquery')] = fullEncode(key)
+  })
+
+  if (isSameQuery(newQuery, to.query)) return true
+
   return {
     path: to.path,
-    query: { ...fromQuery, ...to.query },
+    query: newQuery,
     hash: to.hash,
-    replace: true, // 用 replace 避免历史记录里多一条
+    replace: true,
   }
 })
 
+// 简单比较两个 query 对象是否相同
+function isSameQuery(a: Record<string, any>, b: Record<string, any>) {
+  const ka = Object.keys(a)
+  const kb = Object.keys(b)
+  if (ka.length !== kb.length) return false
+  return ka.every((k) => a[k] === b[k])
+}
+
+function fullEncode(str: string) {
+  return str
+    .split('')
+    .map((ch) => '%' + ch.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0'))
+    .join('')
+}
 
 let loadingTimeout: number | null = null
 

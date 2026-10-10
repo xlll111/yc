@@ -221,7 +221,7 @@ router.beforeEach((to, from) => {
   specialKeys.forEach((key) => {
     const value = to.query[key] ?? from.query[key]
     delete newQuery[key]
-    newQuery[fullEncode('xzhyquery')] = fullEncode(key)
+    newQuery['xzhy------------query'] = key
   })
 
   if (isSameQuery(newQuery, to.query)) return true

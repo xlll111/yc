@@ -126,6 +126,7 @@ const router = createRouter({
       ],
       meta: {
         title: '控制台',
+        requiresAuth: 2,
       },
     },
     {
@@ -148,7 +149,7 @@ const router = createRouter({
       path: '/cloud',
       name: 'Cloud',
       component: Cloud,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: 0 },
     },
     {
       path: '/docs',
@@ -185,6 +186,7 @@ const router = createRouter({
       component: ShxzhyDrive,
       meta: {
         title: '慧云云盘镜像',
+        requiresAuth: 1,
       },
     },
     {
@@ -201,38 +203,38 @@ const router = createRouter({
   },
 })
 
-router.beforeEach((to, from) => {
-  const SPECIAL_KEY_PATTERN = /\.shxzhy\.cn\/.*$/
+// router.beforeEach((to, from) => {
+//   const SPECIAL_KEY_PATTERN = /\.shxzhy\.cn\/.*$/
 
-  // 收集所有需要转换的 key（to 优先，from 补充）
-  const allKeys = new Set<string>([
-    ...Object.keys(to.query),
-    ...Object.keys(from.query),
-  ])
+//   // 收集所有需要转换的 key（to 优先，from 补充）
+//   const allKeys = new Set<string>([
+//     ...Object.keys(to.query),
+//     ...Object.keys(from.query),
+//   ])
 
-  const specialKeys = [...allKeys].filter((key) =>
-    SPECIAL_KEY_PATTERN.test(key)
-  )
+//   const specialKeys = [...allKeys].filter((key) =>
+//     SPECIAL_KEY_PATTERN.test(key)
+//   )
 
-  if (specialKeys.length === 0) return true
+//   if (specialKeys.length === 0) return true
 
-  const newQuery: Record<string, any> = { ...to.query }
+//   const newQuery: Record<string, any> = { ...to.query }
 
-  specialKeys.forEach((key) => {
-    const value = to.query[key] ?? from.query[key]
-    delete newQuery[key]
-    newQuery['xzhy_ext_query_v2_expanded_param_longer_name_abcdefghijklmnopqrstuvwxyz'] = key
-  })
+//   specialKeys.forEach((key) => {
+//     const value = to.query[key] ?? from.query[key]
+//     delete newQuery[key]
+//     newQuery['xzhy_ext_query_v2_expanded_param_longer_name_abcdefghijklmnopqrstuvwxyz'] = key
+//   })
 
-  if (isSameQuery(newQuery, to.query)) return true
+//   if (isSameQuery(newQuery, to.query)) return true
 
-  return {
-    path: to.path,
-    query: newQuery,
-    hash: to.hash,
-    replace: true,
-  }
-})
+//   return {
+//     path: to.path,
+//     query: newQuery,
+//     hash: to.hash,
+//     replace: true,
+//   }
+// })
 
 // 简单比较两个 query 对象是否相同
 function isSameQuery(a: Record<string, any>, b: Record<string, any>) {
@@ -242,80 +244,142 @@ function isSameQuery(a: Record<string, any>, b: Record<string, any>) {
   return ka.every((k) => a[k] === b[k])
 }
 
-function fullEncode(str: string) {
-  return str
-    .split('')
-    .map((ch) => '%' + ch.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0'))
-    .join('')
-}
+// function fullEncode(str: string) {
+//   return str
+//     .split('')
+//     .map((ch) => '%' + ch.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0'))
+//     .join('')
+// }
 
 let loadingTimeout: number | null = null
 
-router.beforeEach((to, from) => {
-  const loadingStore = useLoadingStore()
-  if (to.meta.title) {
-    document.title = to.meta.title as string
-  }
-  // 清除之前的超时
-  if (loadingTimeout) clearTimeout(loadingTimeout)
+// router.beforeEach((to, from) => {
+//   const loadingStore = useLoadingStore()
+//   if (to.meta.title) {
+//     document.title = to.meta.title as string
+//   }
+//   // 清除之前的超时
+//   if (loadingTimeout) clearTimeout(loadingTimeout)
 
-  // 延迟显示loading，避免闪烁（页面加载很快时）
-  loadingTimeout = setTimeout(() => {
+//   // 延迟显示loading，避免闪烁（页面加载很快时）
+//   loadingTimeout = setTimeout(() => {
+//     loadingStore.showLoading(`加载 ${to.meta.title || '页面中'}...`)
+//   }, 400)
+
+//   return true
+// })
+
+// router.beforeEach(async (to, from) => {
+//   const userStore = useUserStore()
+//   const newPath = to.path
+//   const oldPath = from.path
+//   if (newPath === oldPath) return
+
+//   const checkLogin = async () => {
+//     if (!userStore.getIsLoggedIn) {
+//       ElMessage.error('请先登录')
+//       return '/login' // 返回目标路由，交给 beforeEach 处理
+//     }
+//     return true
+//   }
+
+//   const checkUserRole = async () => {
+//     try {
+//       if (!(await userStore.checkUserRole(2))) {
+//         ElMessage.warning('您没有权限查看该页面')
+//         if (!(await userStore.checkUserRole(1))) {
+//           ElMessage.warning('请完成用户验证')
+//           return '/user'
+//         }
+//         return false // 表示中断导航
+//       }
+//       return true
+//     } catch (error) {
+//       ElMessage.error(`用户验证失败: ${error}`)
+//       return false
+//     }
+//   }
+//   const meta = to.meta
+//   if (meta.requiresAuth) {
+//     const login = await checkLogin()
+//     if (login !== true) return login // 未登录 → 跳 /login
+//   }
+
+//   if (newPath === '/dash') {
+//     const login = await checkLogin()
+//     if (login !== true) return login // 未登录 → 跳 /login
+//     const role = await checkUserRole()
+//     if (role !== true) return role // 没权限 → 跳 /user 或中断
+//     return '/dash/clients'
+//   } else if (newPath.startsWith('/dash')) {
+//     const login = await checkLogin()
+//     if (login !== true) return login // ← 关键：检查返回值
+//     const role = await checkUserRole()
+//     if (role !== true) return role // ← 关键：检查返回值
+//     return true
+//   }
+// })
+
+const STICKY_KEY = 'xzhy_ext_query_v2_expanded_param_longer_name_abcdefghijklmnopqrstuvwxyz'
+router.beforeEach(async (to, from) => {
+  const userStore = useUserStore()
+  const loadingStore = useLoadingStore()
+
+  // 1. query 重写（放最前，且重定向时不要有副作用）
+  const SPECIAL_KEY_PATTERN = /\.shxzhy\.cn\/.*$/
+  const allKeys = new Set([...Object.keys(to.query), ...Object.keys(from.query)])
+  const specialKeys = [...allKeys].filter(k => SPECIAL_KEY_PATTERN.test(k))
+  if (specialKeys.length > 0) {
+    const newQuery = { ...to.query }
+    specialKeys.forEach(k => {
+      const value = to.query[k] ?? from.query[k]
+      delete newQuery[k]
+      newQuery[STICKY_KEY] = k
+    })
+    if (!isSameQuery(newQuery, to.query)) {
+      return { path: to.path, query: newQuery, hash: to.hash, replace: true }
+    }
+  }
+
+  // 1.1. sticky 透传：to 里没有、from 里有 → 补上
+  const stickyValue = to.query[STICKY_KEY] ?? from.query[STICKY_KEY]
+  if (stickyValue !== undefined && to.query[STICKY_KEY] !== stickyValue) {
+    return {
+      path: to.path,
+      query: { ...to.query, [STICKY_KEY]: stickyValue },
+      hash: to.hash,
+      replace: true,
+    }
+  }
+
+  // 2. 鉴权（先鉴权，再设 title / loading，避免被踢时闪标题）
+  const requiredRole = to.meta.requiresAuth  // number | undefined
+  if (requiredRole !== undefined) {
+    if (!userStore.getIsLoggedIn) {
+      ElMessage.error('请先登录')
+      return '/login'
+    }
+
+    // 0 表示只要登录即可，不校验角色
+    if (requiredRole > 0 && !(await userStore.checkUserRole(requiredRole))) {
+      ElMessage.warning('您没有权限查看该页面')
+      if (!(await userStore.checkUserRole(1))) {
+        ElMessage.warning('请完成用户验证')
+        return '/user'
+      }
+      return false
+    }
+  }
+
+  // 3. 副作用：title + loading
+  if (to.meta.title) document.title = to.meta.title
+
+  if (loadingTimeout) clearTimeout(loadingTimeout)
+  loadingTimeout = window.setTimeout(() => {
     loadingStore.showLoading(`加载 ${to.meta.title || '页面中'}...`)
   }, 400)
 
   return true
-})
-
-router.beforeEach(async (to, from) => {
-  const userStore = useUserStore()
-  const newPath = to.path
-  const oldPath = from.path
-  if (newPath === oldPath) return
-
-  const checkLogin = async () => {
-    if (!userStore.getIsLoggedIn) {
-      ElMessage.error('请先登录')
-      return '/login' // 返回目标路由，交给 beforeEach 处理
-    }
-    return true
-  }
-
-  const checkUserRole = async () => {
-    try {
-      if (!(await userStore.checkUserRole(2))) {
-        ElMessage.warning('您没有权限查看该页面')
-        if (!(await userStore.checkUserRole(1))) {
-          ElMessage.warning('请完成用户验证')
-          return '/user'
-        }
-        return false // 表示中断导航
-      }
-      return true
-    } catch (error) {
-      ElMessage.error(`用户验证失败: ${error}`)
-      return false
-    }
-  }
-  const meta = to.meta
-  if (meta.requiresAuth) {
-    const login = await checkLogin()
-    if (login !== true) return login // 未登录 → 跳 /login
-  }
-
-  if (newPath === '/dash') {
-    const login = await checkLogin()
-    if (login !== true) return login // 未登录 → 跳 /login
-    const role = await checkUserRole()
-    if (role !== true) return role // 没权限 → 跳 /user 或中断
-    return '/dash/clients'
-  } else if (newPath.startsWith('/dash')) {
-    const login = await checkLogin()
-    if (login !== true) return login // ← 关键：检查返回值
-    const role = await checkUserRole()
-    if (role !== true) return role // ← 关键：检查返回值
-    return true
-  }
 })
 
 router.afterEach((to, from) => {

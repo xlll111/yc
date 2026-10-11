@@ -21,6 +21,7 @@ const Netauth = () => import('@/views/client/NetAuth.vue')
 const WhiteList = () => import('@/views/client/WhiteList.vue')
 const UDiskAllow = () => import('@/views/client/UDiskAllow.vue')
 const DnsUrl = () => import('@/views/client/DnsUrl.vue')
+const QuickCommand = () => import('@/views/client/QuickCommand.vue')
 
 const WeeklyClientReport = () => import('@/views/weekly-report/index.vue')
 
@@ -85,6 +86,11 @@ const router = createRouter({
               path: 'setting',
               name: 'setting',
               component: Setting,
+            },
+            {
+              path: 'quick_command',
+              name: 'quick_command',
+              component: QuickCommand,
             },
             {
               path: 'authorize_net',

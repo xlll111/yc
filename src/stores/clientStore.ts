@@ -368,6 +368,29 @@ export const useClientStore = defineStore('client', () => {
     // fetchClientSettings()
   }
 
+
+
+  // 快捷指令
+  const fetchQuickCommands = async () => {
+    if (!currentClientUuid.value) {
+      return
+    }
+    const data = await clientApi.getQuickCommands()
+    return data
+  }
+  const executeQuickCommand = async (commandId: string) => {
+    if (!currentClientUuid.value) {
+      return
+    }
+    await clientApi.executeQuickCommand(currentClientUuid.value, commandId)
+  }
+  const cancelQuickCommand = async (commandId: string) => {
+    if (!currentClientUuid.value) {
+      return
+    }
+    await clientApi.cancelQuickCommand(currentClientUuid.value, commandId)
+  }
+
   return {
     // State
     currentClientUuid,
@@ -406,5 +429,8 @@ export const useClientStore = defineStore('client', () => {
     fetchUDiskRecords,
     fetchDNSUrlRecords,
     fetchScreenshots,
+    fetchQuickCommands,
+    executeQuickCommand,
+    cancelQuickCommand,
   }
 })

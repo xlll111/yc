@@ -1,12 +1,8 @@
 <template>
-  <aside
-    class="vitepress-sidebar"
-    :class="{ 'mobile-open': isSidebarOpen }"
-    :style="{
-      ...cssVariables,
-      top: isMobile ? sidebarTop + 'px' : '0',
-    }"
-  >
+  <aside class="vitepress-sidebar" :class="{ 'mobile-open': isSidebarOpen }" :style="{
+    ...cssVariables,
+    top: isMobile ? sidebarTop + 'px' : '0',
+  }">
     <!-- 移动端遮罩层 -->
     <div v-if="isMobileOpen" class="mobile-overlay" @click="closeMobileSidebar" />
 
@@ -23,12 +19,7 @@
         <!-- 移动端关闭按钮 -->
         <button class="mobile-close-btn" @click="closeMobileSidebar">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M18 6L6 18M6 6L18 18"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
+            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
         </button>
       </div>
@@ -37,55 +28,28 @@
       <nav class="sidebar-nav">
         <div v-for="item in menuItems" :key="item.id" class="nav-item-wrapper">
           <!-- 分组标题 -->
-          <div
-            v-if="
-              item.type === 'group' && !(item.id === 'client' && !clientStore.getCurrentClientUUID)
-            "
-            class="nav-group"
-          >
-            <div
-              class="nav-group-title"
-              @click="toggleGroup(item.id)"
-              :style="{ cursor: item.collapsible ? 'pointer' : 'default' }"
-            >
+          <div v-if="
+            item.type === 'group' && !(item.id === 'client' && !clientStore.getCurrentClientUUID)
+          " class="nav-group">
+            <div class="nav-group-title" @click="toggleGroup(item.id)"
+              :style="{ cursor: item.collapsible ? 'pointer' : 'default' }">
               <span class="group-title-text">{{ item.text }}</span>
-              <svg
-                v-if="item.collapsible"
-                class="group-arrow"
-                :class="{ rotated: !isGroupOpen(item.id) }"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <path
-                  d="M6 9L12 15L18 9"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                />
+              <svg v-if="item.collapsible" class="group-arrow" :class="{ rotated: !isGroupOpen(item.id) }" width="16"
+                height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
               </svg>
             </div>
             <div class="nav-group-items" v-show="isGroupOpen(item.id)">
-              <div
-                v-for="child in item.items"
-                :key="child.id"
-                class="nav-item"
-                :class="{ active: activeLink === child.link }"
-                @click="navigateTo(child.link)"
-              >
+              <div v-for="child in item.items" :key="child.id" class="nav-item"
+                :class="{ active: activeLink === child.link }" @click="navigateTo(child.link)">
                 <span class="nav-item-text">{{ child.text }}</span>
               </div>
             </div>
           </div>
 
           <!-- 单独链接 -->
-          <div
-            v-else-if="item.type === 'link'"
-            class="nav-item standalone"
-            :class="{ active: activeLink === item.link }"
-            @click="navigateTo(item.link)"
-          >
+          <div v-else-if="item.type === 'link'" class="nav-item standalone"
+            :class="{ active: activeLink === item.link }" @click="navigateTo(item.link)">
             <span class="nav-item-text">{{ item.text }}</span>
           </div>
         </div>
@@ -95,12 +59,7 @@
     <!-- 移动端展开按钮 -->
     <button class="mobile-toggle-btn" @click="openMobileSidebar">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path
-          d="M3 12H21M3 6H21M3 18H21"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-        />
+        <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
       </svg>
     </button>
   </aside>
@@ -115,7 +74,7 @@ import { useClientStore } from '@/stores/clientStore'
 // 定义侧边栏菜单数据结构
 const menuItems = ref([
   {
-    id: 'overview',
+    id: 'clients',
     type: 'link',
     text: '客户端列表',
     link: '/clients',
@@ -129,6 +88,7 @@ const menuItems = ref([
     items: [
       { id: 'overview', text: '总览', link: '/client/overview' },
       { id: 'setting', text: '设置', link: '/client/setting' },
+      { id: 'quick_command', text: '快捷指令', link: '/client/quick_command' },
       { id: 'authorize_net', text: '联网授权', link: '/client/authorize_net' },
       { id: 'net_whitelist', text: '联网白名单', link: '/client/net_whitelist' },
       { id: 'udisk_records', text: 'U盘记录', link: '/client/udisk_records' },
@@ -499,9 +459,11 @@ onUnmounted(() => {
     left: 0;
     height: 0;
   }
+
   .vitepress-sidebar.mobile-open {
     height: 100%;
   }
+
   .sidebar-container.mobile-open {
     transform: translateX(0);
   }
@@ -542,6 +504,7 @@ onUnmounted(() => {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }

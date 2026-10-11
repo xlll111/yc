@@ -29,7 +29,9 @@
         <div class="title-section">
           <h2>应用白名单</h2>
           <span v-if="whiteList.loaded" class="badge">{{ whiteList.data.length }}</span>
-          <span v-else><Spinner inline size="tiny" /></span>
+          <span v-else>
+            <Spinner inline size="tiny" />
+          </span>
         </div>
         <p class="subtitle">白名单中的应用不会被联网控制影响</p>
       </div>
@@ -220,9 +222,7 @@ onMounted(() => {
   cursor: pointer;
   padding: 8px 16px;
   border-radius: 9999px;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .back-button:hover {
@@ -273,9 +273,11 @@ onMounted(() => {
   padding: 24px;
   transition: box-shadow 0.2s ease;
 }
+
 .whitelist-card:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
+
 /* 状态卡片 */
 .loading-state,
 .error-state,
@@ -331,6 +333,7 @@ onMounted(() => {
   background-color: #1e3a8a;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
+
 /* 卡片头部 */
 .card-header {
   margin-bottom: 18px;
@@ -411,9 +414,7 @@ onMounted(() => {
   font-weight: 500;
   font-size: 0.95rem;
   cursor: pointer;
-  transition:
-    background 0.2s ease,
-    transform 0.05s linear;
+  transition: background 0.2s ease, transform 0.05s linear;
   font-family: inherit;
   white-space: nowrap;
 }

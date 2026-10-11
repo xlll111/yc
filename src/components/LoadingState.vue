@@ -7,9 +7,9 @@
 @ai-not 骨架屏|进度百分比|全局全屏加载（用 Spinner 全屏模式）|表单校验提示
 @ai-summary 统一处理「加载中 / 错误 / 空 / 正常内容」四种状态的容器组件，内部复用 Spinner 展示加载态，内置错误重试按钮和空状态占位。
 @ai-import import LoadingState from '@/components/LoadingState.vue'
-@ai-example <LoadingState :loading="loading"><div>内容</div></LoadingState>
-@ai-example <LoadingState :loading="loading" :error="error" @retry="fetchData"><List /></LoadingState>
-@ai-example <LoadingState :loading="loading" :empty="!list.length" empty-title="暂无订单"><OrderList /></LoadingState>
+@ai-example <LoadingState :loading="loading"></LoadingState>
+@ai-example <LoadingState :loading="loading" :error="error" @retry="fetchData"></LoadingState>
+@ai-example <LoadingState :loading="loading" :empty="!list.length" empty-title="暂无订单"></LoadingState>
 @ai-props loading:boolean, error:boolean, empty:boolean, loadingText:string, errorText:string, showRetry:boolean, retryText:string, emptyTitle:string, emptyHint:string
 @ai-events retry
 @ai-slots default（正常内容，AI 调用时必须传入）
@@ -26,17 +26,8 @@
 
   <!-- 错误状态 -->
   <div v-else-if="error" class="error-state">
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="48"
-      height="48"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="10" />
       <line x1="12" y1="8" x2="12" y2="12" />
       <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -49,17 +40,8 @@
 
   <!-- 空状态 -->
   <div v-else-if="empty" class="empty-state">
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="48"
-      height="48"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
       <rect x="2" y="4" width="20" height="16" rx="2" />
       <line x1="8" y1="10" x2="16" y2="10" />
     </svg>

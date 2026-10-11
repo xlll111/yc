@@ -82,4 +82,13 @@ export const clientApi = {
       signal,
     })
   },
+  getQuickCommands(): Promise<any> {
+    return request.authget('/clients/get_quick_commands')
+  },
+  executeQuickCommand(uuid: string, commandId: string): Promise<any> {
+    return request.authpost(`/clients/command/${commandId}/execute`, null, { params: { uuid } })
+  },
+  cancelQuickCommand(uuid: string, commandId: string): Promise<any> {
+    return request.authpost(`/clients/command/${commandId}/cancel`, null, { params: { uuid } })
+  },
 }

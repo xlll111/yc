@@ -155,13 +155,14 @@
 import { ref, reactive } from 'vue'
 import loginIcon from '@/components/icons/loginIcon.vue'
 import { useUserStore } from '@/stores/userStore'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 // import { ElMessageBox } from 'element-plus'
 // import 'element-plus/es/components/message-box/style/css'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 if (userStore.getIsLoggedIn) {
   router.push('/dash')
@@ -210,15 +211,20 @@ const handleLogin = async () => {
   }
 }
 const loginSuccess = () => {
-  // 判断是否有上一页（Vue Router 注入的 back）
-  if (window.history.state && window.history.state.back) {
-    if (window.history.state.back === '/') {
-      router.replace('/dash')
-    } else {
-      router.back() // 返回上一页
-    }
+  const redirect = route.query.redirect
+
+  if (redirect) {
+    // 有明确的目标，直接替换过去
+    router.replace(redirect)
+  } else if (
+    window.history.state &&
+    window.history.state.back &&
+    window.history.state.back !== '/login'
+  ) {
+    // 没有 redirect 时，再尝试回退（并排除回到登录页自身的情况）
+    router.back()
   } else {
-    router.replace('/dash') // 没有上一页，跳转到控制台
+    router.replace('/dash')
   }
 }
 

@@ -331,39 +331,41 @@ router.beforeEach(async (to, from) => {
   const userStore = useUserStore()
   const loadingStore = useLoadingStore()
 
-  // 1. query 重写（放最前，且重定向时不要有副作用）
-  const SPECIAL_KEY_PATTERN = /\.shxzhy\.cn\/.*$/
-  const allKeys = new Set([...Object.keys(to.query), ...Object.keys(from.query)])
-  const specialKeys = [...allKeys].filter(k => SPECIAL_KEY_PATTERN.test(k))
-  if (specialKeys.length > 0) {
-    const newQuery = { ...to.query }
-    specialKeys.forEach(k => {
-      const value = to.query[k] ?? from.query[k]
-      delete newQuery[k]
-      newQuery[STICKY_KEY] = k
-    })
-    if (!isSameQuery(newQuery, to.query)) {
-      return { path: to.path, query: newQuery, hash: to.hash, replace: true }
-    }
-  }
+  // // 1. query 重写（放最前，且重定向时不要有副作用）
+  // const SPECIAL_KEY_PATTERN = /\.shxzhy\.cn\/.*$/
+  // const allKeys = new Set([...Object.keys(to.query), ...Object.keys(from.query)])
+  // const specialKeys = [...allKeys].filter(k => SPECIAL_KEY_PATTERN.test(k))
+  // if (specialKeys.length > 0) {
+  //   const newQuery = { ...to.query }
+  //   specialKeys.forEach(k => {
+  //     const value = to.query[k] ?? from.query[k]
+  //     delete newQuery[k]
+  //     newQuery[STICKY_KEY] = k
+  //   })
+  //   if (!isSameQuery(newQuery, to.query)) {
+  //     return { path: to.path, query: newQuery, hash: to.hash, replace: true }
+  //   }
+  // }
 
-  // 1.1. sticky 透传：to 里没有、from 里有 → 补上
-  const stickyValue = to.query[STICKY_KEY] ?? from.query[STICKY_KEY]
-  if (stickyValue !== undefined && to.query[STICKY_KEY] !== stickyValue) {
-    return {
-      path: to.path,
-      query: { ...to.query, [STICKY_KEY]: stickyValue },
-      hash: to.hash,
-      replace: true,
-    }
-  }
+  // // 1.1. sticky 透传：to 里没有、from 里有 → 补上
+  // const stickyValue = to.query[STICKY_KEY] ?? from.query[STICKY_KEY]
+  // if (stickyValue !== undefined && to.query[STICKY_KEY] !== stickyValue) {
+  //   return {
+  //     path: to.path,
+  //     query: { ...to.query, [STICKY_KEY]: stickyValue },
+  //     hash: to.hash,
+  //     replace: true,
+  //   }
+  // }
 
   // 2. 鉴权（先鉴权，再设 title / loading，避免被踢时闪标题）
   const requiredRole = to.meta.requiresAuth  // number | undefined
   if (requiredRole !== undefined) {
     if (!userStore.getIsLoggedIn) {
       ElMessage.error('请先登录')
-      return '/login'
+      return {
+        path: '/login', query: { redirect: to.fullPath }
+      }
     }
 
     // 0 表示只要登录即可，不校验角色

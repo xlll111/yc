@@ -58,6 +58,7 @@
                 class="btn btn--secondary"
                 :disabled="commandStates[command.id]?.loading"
                 @click="confirmCommand(command, 'cancel')"
+                v-if="category.id != 'cat_system'"
               >
                 <Spinner
                   v-if="

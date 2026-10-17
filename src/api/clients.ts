@@ -10,6 +10,14 @@ import type {
   clientWhiteListItem,
   clientDnsUrlRecord,
   clientDnsUrlRecordRequest,
+  AppQueryResponse,
+  AppQueryResultResponse,
+  AppLaunchRequest,
+  AppLaunchResponse,
+  AppKillRequest,
+  AppKillResponse,
+  KeyEvent,
+  KeyEventsResponse
 } from '@/stores/clientStore'
 
 export const clientApi = {
@@ -91,4 +99,22 @@ export const clientApi = {
   cancelQuickCommand(uuid: string, commandId: string): Promise<any> {
     return request.authpost(`/clients/command/${commandId}/cancel`, null, { params: { uuid } })
   },
+
+  // 实时操控
+  requestAppList(uuid: string, type: string): Promise<AppQueryResponse> {
+    return request.authpost(`/clients/app/query`, { type }, { params: { uuid } })
+  },
+  pollAppListResult(uuid: string, requestId: string): Promise<AppQueryResultResponse> {
+    return request.authget(`/clients/app/query/result`, { uuid, requestId })
+  },
+  launchApp(uuid: string, app: AppLaunchRequest): Promise<AppLaunchResponse> {
+    return request.authpost(`/clients/app/launch`, { app }, { params: { uuid } })
+  },
+  killApp(uuid: string, app: AppKillRequest): Promise<AppKillResponse> {
+    return request.authpost(`/clients/app/kill`, { app }, { params: { uuid } })
+  },
+  sendKeyEvents(uuid: string, events: KeyEvent[]): Promise<KeyEventsResponse> {
+    return request.authpost(`/clients/key/events`, { events }, { params: { uuid } })
+  },
+
 }

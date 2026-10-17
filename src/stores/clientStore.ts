@@ -67,6 +67,99 @@ export interface clientDnsUrlRecordRequest {
   page: number
   pageSize: number
 }
+
+
+/** ---------- 应用列表查询 ---------- */
+export type AppQueryType = 'launchable' | 'running'
+export type AppQueryStatus = 'pending' | 'ready' | 'failed'
+
+export interface AppQueryResponse {
+  /** 异步查询任务 ID */
+  requestId: string
+  /** 毫秒时间戳，过期后轮询返回 failed */
+  expiresAt: string
+}
+
+export interface AppInfo {
+  /** 客户端侧唯一标识 */
+  appId?: string
+  /** 展示名 */
+  name: string
+  /** 可执行路径，launchable 必给 */
+  execPath?: string
+  /** base64 data URL 或可访问 URL */
+  icon?: string
+  /** 仅 running 状态给出 */
+  pid?: number
+}
+
+export interface AppQueryResultResponse {
+  requestId: string
+  status: AppQueryStatus
+  /** status === 'ready' 时必填，可为空数组 */
+  apps: AppInfo[]
+  /** status === 'failed' 时的原因 */
+  message?: string
+  updatedAt: string
+}
+
+/** ---------- 启动 / 关闭应用 ---------- */
+export interface AppLaunchRequest {
+  appId: string
+  execPath?: string
+  name?: string
+}
+
+export interface AppLaunchResponse {
+  /** true = 已成功推送到客户端连接 */
+  accepted: boolean
+  /** 指令 ID，用于服务端日志追溯 */
+  commandId: string
+}
+
+export interface AppKillRequest {
+  /** 与 pid 至少给一个，服务端优先使用 pid */
+  appId?: string
+  pid?: number
+  name?: string
+}
+
+export type AppKillResponse = AppLaunchResponse
+
+/** ---------- 键盘键击 ---------- */
+export type KeyAction = 'down' | 'up'
+export type ModifierName = 'Control' | 'Shift' | 'Alt' | 'Meta'
+
+export interface KeyEvent {
+  action: KeyAction
+  /** KeyboardEvent.key，如 "Control" | "a" | "Enter" | " " */
+  key: string
+  /** KeyboardEvent.code，如 "ControlLeft" | "KeyA" | "Space" */
+  code: string
+  /** 兼容老式 API，如 65 / 17 / 13 */
+  keyCode: number
+  /** 该事件发生时的修饰键快照 */
+  modifiers: ModifierName[]
+}
+export interface KeyEventsResponse {
+  accepted: boolean
+  commandId: string
+  /** 实际接收并转发的事件条数 */
+  count: number
+}
+
+/** 单次键击事件上限，与服务端保持一致 */
+export const KEY_EVENTS_MAX = 64
+
+/** ---------- 业务错误 ---------- */
+export class ClientApiError extends Error {
+  code: number
+  constructor(code: number, message: string) {
+    super(message)
+    this.name = 'ClientApiError'
+    this.code = code
+  }
+}
 export const useClientStore = defineStore('client', () => {
   // State
   const currentClientUuid = ref<string | null>(null)
@@ -87,6 +180,13 @@ export const useClientStore = defineStore('client', () => {
   const getCurrentUDiskRecords = defineAsyncState(currentUDiskRecords, 'list')
   const getCurrentDNSUrlRecords = computed(() => currentDNSUrlRecords.value)
   // Actions
+  const currentClientOnline = () => {
+    if (!currentClientUuid.value) return false
+    if (getCurrentClientInfo.error.value) return false
+    const lastSeen = getCurrentClientInfo.data.value.lastSeen
+    const diff = Date.now() - new Date(lastSeen).getTime()
+    return Math.abs(diff) < 120000
+  }
   const fetchClients = async (): Promise<clientInfo[]> => {
     const data = await clientApi.getClients()
     // console.log('fetching clients', data)
@@ -391,6 +491,84 @@ export const useClientStore = defineStore('client', () => {
     await clientApi.cancelQuickCommand(currentClientUuid.value, commandId)
   }
 
+
+  /* -------------------- 1. 请求应用列表 -------------------- */
+  /**
+   * 通知服务端向客户端下发查询指令，返回一次查询任务 ID。
+   * 调用后需使用 pollAppListResult 轮询直至 status 非 pending。
+   * @throws ClientApiError 参数缺失 / 服务端拒绝 / 客户端离线
+   */
+  async function requestAppList(
+    type: AppQueryType
+  ): Promise<AppQueryResponse> {
+    if (currentClientUuid.value === null) throw new ClientApiError(40001, '缺少 clientUUId')
+    if (type !== 'launchable' && type !== 'running') {
+      throw new ClientApiError(40001, 'type 非法')
+    }
+    return clientApi.requestAppList(currentClientUuid.value, type) // 请求应用列表
+  }
+
+  /* -------------------- 2. 轮询查询结果 -------------------- */
+  /**
+   * 按 requestId 查询异步任务结果，幂等，可重复调用直至 status 非 pending。
+   * @throws ClientApiError requestId 失效 / 服务端异常
+   */
+  async function pollAppListResult(
+    requestId: string
+  ): Promise<AppQueryResultResponse> {
+    if (currentClientUuid.value === null) throw new ClientApiError(40001, '缺少 clientUUId')
+    return clientApi.pollAppListResult(currentClientUuid.value, requestId) // 轮询查询结果
+  }
+
+  /* -------------------- 3. 启动应用 -------------------- */
+  /**
+   * 下发启动指令，服务端推送到客户端连接后立即返回，不等待执行结果。
+   * @throws ClientApiError 参数缺失 / 客户端离线 / 服务端异常
+   */
+  async function launchApp(
+    payload: AppLaunchRequest
+  ): Promise<AppLaunchResponse> {
+    if (currentClientUuid.value === null) throw new ClientApiError(40001, '缺少 clientUUId')
+    if (!payload.appId) throw new ClientApiError(40001, '缺少 appId')
+    return clientApi.launchApp(currentClientUuid.value, payload) // 启动应用
+  }
+
+  /* -------------------- 4. 关闭应用 -------------------- */
+  /**
+   * 下发关闭指令，服务端推送到客户端连接后立即返回，不等待执行结果。
+   * @throws ClientApiError 参数缺失 / 客户端离线 / 目标进程不存在
+   */
+  async function killApp(payload: AppKillRequest): Promise<AppKillResponse> {
+    const { appId, pid } = payload
+    if (currentClientUuid.value === null) throw new ClientApiError(40001, '缺少 clientUUId')
+    if (!appId && pid == null) {
+      throw new ClientApiError(40001, '缺少 appId 或 pid')
+    }
+    return clientApi.killApp(currentClientUuid.value, payload) // 关闭应用
+  }
+
+  /* -------------------- 5. 发送键击事件 -------------------- */
+  /**
+   * 批量下发有序键击事件（含修饰键 down/up），服务端按数组顺序转发给客户端。
+   * 失败抛错，成功返回服务端确认的转发条数。
+   * @throws ClientApiError 参数缺失 / events 为空或超限 / 客户端离线 / 限速
+   */
+  async function sendKeyEvents(
+    events: KeyEvent[],
+  ): Promise<KeyEventsResponse> {
+    if (currentClientUuid.value === null) throw new ClientApiError(40001, '缺少 clientUUId')
+    if (!Array.isArray(events) || events.length === 0) {
+      throw new ClientApiError(40001, 'events 不能为空')
+    }
+    if (events.length > KEY_EVENTS_MAX) {
+      throw new ClientApiError(
+        40001,
+        `单次键击事件不能超过 ${KEY_EVENTS_MAX} 条`
+      )
+    }
+    return clientApi.sendKeyEvents(currentClientUuid.value, events) // 发送键击事件
+  }
+
   return {
     // State
     currentClientUuid,
@@ -411,6 +589,7 @@ export const useClientStore = defineStore('client', () => {
     getCurrentUDiskRecords,
     getCurrentDNSUrlRecords,
     // Actions
+    currentClientOnline,
     setCurrentClient,
     fetchClients,
     fetchClientByUUID,
@@ -432,5 +611,11 @@ export const useClientStore = defineStore('client', () => {
     fetchQuickCommands,
     executeQuickCommand,
     cancelQuickCommand,
+    // 实时操控
+    requestAppList,
+    pollAppListResult,
+    launchApp,
+    killApp,
+    sendKeyEvents
   }
 })

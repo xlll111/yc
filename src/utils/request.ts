@@ -202,7 +202,11 @@ class Request {
   }
 
   get<T = any>(url: string, params?: any, config?: RequestConfig): Promise<T> {
-    return this.instance.get(url, { params, ...config })
+    const { params: configParams, ...rest } = config || {}
+    return this.instance.get(url, {
+      ...rest,
+      params: { ...params, ...configParams },   // 合并而不是覆盖
+    })
   }
 
   post<T = any>(url: string, data?: any, config?: RequestConfig): Promise<T> {
@@ -236,8 +240,11 @@ class Request {
     const token = userStore.getToken
     if (token) {
       return this.get(url, params, {
-        headers: { Authorization: `Bearer ${token}` },
         ...config,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...config?.headers,
+        },
       })
     } else {
       return Promise.reject(new Error('未登录'))

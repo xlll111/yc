@@ -76,7 +76,7 @@
                 <button
                   class="btn btn-primary btn-sm"
                   :disabled="launchingId === app.appId"
-                  @click="handleLaunch(app)"
+                  @click="askLaunch(app)"
                 >
                   {{ launchingId === app.appId ? '发送中…' : '启动' }}
                 </button>
@@ -193,6 +193,39 @@
         </div>
       </section>
     </div>
+
+    <!-- ========== 启动应用确认弹窗 ========== -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="launchConfirmState.visible" class="modal-mask" @click.self="closeLaunchConfirm">
+          <div class="modal-card">
+            <h3 class="modal-title">启动应用</h3>
+            <p class="modal-text">
+              确定要向客户端发送「{{ launchConfirmState.app?.name }}」的启动指令吗？
+            </p>
+            <p class="modal-extra" v-if="launchConfirmState.app?.execPath">
+              {{ launchConfirmState.app.execPath }}
+            </p>
+            <div class="modal-footer">
+              <button
+                class="btn btn-secondary"
+                :disabled="launchConfirmState.sending"
+                @click="closeLaunchConfirm"
+              >
+                取消
+              </button>
+              <button
+                class="btn btn-primary"
+                :disabled="launchConfirmState.sending"
+                @click="confirmLaunch"
+              >
+                {{ launchConfirmState.sending ? '发送中…' : '确认启动' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- ========== 关闭应用确认弹窗 ========== -->
     <Teleport to="body">
@@ -313,9 +346,25 @@ function refreshAll() {
 
 /* ---------------- 启动应用 ---------------- */
 const launchingId = ref('')
+const launchConfirmState = reactive({ visible: false, app: null, sending: false })
 
-async function handleLaunch(app) {
+function askLaunch(app) {
   if (launchingId.value) return
+  launchConfirmState.app = app
+  launchConfirmState.sending = false
+  launchConfirmState.visible = true
+}
+
+function closeLaunchConfirm() {
+  if (launchConfirmState.sending) return
+  launchConfirmState.visible = false
+  launchConfirmState.app = null
+}
+
+async function confirmLaunch() {
+  if (launchConfirmState.sending || !launchConfirmState.app) return
+  launchConfirmState.sending = true
+  const app = launchConfirmState.app
   launchingId.value = app.appId
   try {
     await clientStore.launchApp({
@@ -325,9 +374,12 @@ async function handleLaunch(app) {
     })
     // 指令发送完成即可，无需等待客户端执行结果
     ElMessage.success(`已向客户端发送「${app.name}」启动指令`)
+    launchConfirmState.visible = false
+    launchConfirmState.app = null
   } catch (err) {
     ElMessage.error(err?.message || `「${app.name}」启动指令发送失败`)
   } finally {
+    launchConfirmState.sending = false
     launchingId.value = ''
   }
 }
@@ -1079,6 +1131,16 @@ onUnmounted(() => {
   line-height: 1.6;
   color: var(--text-secondary);
   word-break: break-word;
+}
+
+.modal-extra {
+  margin: -12px 0 20px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--border-light);
+  font-size: 12px;
+  color: var(--text-light);
+  word-break: break-all;
 }
 
 .modal-footer {

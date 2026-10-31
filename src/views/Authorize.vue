@@ -1,13 +1,20 @@
 <template>
   <div class="auth-container">
-    <div class="auth-card">
+    <!-- 整体加载态：用户名缺失时显示 -->
+    <div v-if="!username" class="loading-wrap">
+      <LoadingState loading loading-text="加载用户信息..." />
+    </div>
+    <!-- 正常授权卡片 -->
+    <div v-else class="auth-card">
       <!-- 品牌区域 -->
       <div class="brand-section">
         <div class="logo-wrapper">
           <loginIcon class="logo-icon" />
         </div>
         <h1 class="brand-title">授权确认</h1>
-        <p class="brand-subtitle">应用请求访问您的账户</p>
+        <p class="brand-subtitle">
+          你好，<span class="username-highlight">{{ username }}</span>
+        </p>
       </div>
 
       <!-- 应用信息 -->
@@ -75,9 +82,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import loginIcon from '@/components/icons/loginIcon.vue'
+import LoadingState from '@/components/LoadingState.vue'
 import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 import { useUserStore } from '@/stores/userStore'
@@ -87,6 +95,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const isLoading = ref(false)
+const username = computed(() => userStore.getUserInfo?.username || '')
 
 // 从 URL 查询参数中读取 OAuth 请求信息
 const clientId = computed(() => route.query.client_id)
@@ -111,13 +120,14 @@ const scopes = computed(() =>
     .map((key) => ({ key, ...(scopeMap[key] || { label: key, desc: '自定义权限' }) }))
 )
 
-onMounted(() => {
+onMounted(async () => {
   // 如果用户未登录，跳转到登录页并携带回跳地址
   if (!userStore.getIsLoggedIn) {
     const returnUrl = route.fullPath
     router.replace(`/login?redirect=${encodeURIComponent(returnUrl)}`)
     return
   }
+
   // 校验必要参数
   if (!clientId.value || !redirectUri.value || !state.value) {
     ElMessage.error('授权请求参数不完整')
@@ -148,14 +158,14 @@ const handleAuthorize = async () => {
       code_challenge: codeChallenge.value,
       code_challenge_method: codeChallengeMethod.value || 'S256',
     })
-    window.location.href = redirectUrl // 直接跳回第三方应用
+    window.location.href = redirectUrl
   } catch (e) {
     ElMessage.error(e?.message || '授权失败，请稍后重试')
     isLoading.value = false
   }
 }
+
 const handleDeny = () => {
-  // 拒绝授权：带 error 参数跳回 B 站
   if (redirectUri.value && state.value) {
     window.location.href = buildRedirect({
       error: 'access_denied',
@@ -166,6 +176,9 @@ const handleDeny = () => {
     router.back()
   }
 }
+
+// 清理（若有定时器可在此处理）
+onUnmounted(() => {})
 </script>
 
 <style lang="scss" scoped>
@@ -175,7 +188,22 @@ const handleDeny = () => {
   padding: $spacing-8;
   flex: auto;
 }
+.loading-wrap {
+  @include flex-center;
+  width: 100%;
+  min-height: 320px;
+  // 给加载态一个和授权卡片同宽的舞台，视觉上不再小
+  padding: 48px 24px;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  border-radius: $radius-lg;
 
+  // 只作用于直接子节点，不改内部类
+  > * {
+    width: 100%;
+    max-width: 480px;
+  }
+}
 .auth-card {
   max-width: 480px;
   width: 100%;
@@ -222,6 +250,11 @@ const handleDeny = () => {
   font-size: $font-size-base;
   color: $color-text-base;
   font-weight: 400;
+}
+
+.username-highlight {
+  color: $color-primary;
+  font-weight: 600;
 }
 
 .client-info {

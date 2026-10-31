@@ -9,6 +9,7 @@ import type {
   UserInfoChangePasswordRequest,
   USerGlobalSettings,
 } from '@/stores/userStore'
+import type { OAuthAuthorizeRequest, OAuthAuthorizeResponse } from '@/stores/userStore'
 
 // 用户相关 API
 export const userApi = {
@@ -85,5 +86,9 @@ export const userApi = {
   },
   updateGlobalSettings(userGlobalSettings: Partial<USerGlobalSettings>): Promise<void> {
     return request.authpost('/user/update_global_settings', { userGlobalSettings })
+  },
+  // OAuth 授权
+  oauthAuthorize(data: OAuthAuthorizeRequest): Promise<OAuthAuthorizeResponse> {
+    return request.authpost('/auth/oauth/authorize', data)
   },
 }

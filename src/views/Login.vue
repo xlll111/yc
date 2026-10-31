@@ -221,10 +221,19 @@ const loginSuccess = () => {
     window.history.state.back &&
     window.history.state.back !== '/login'
   ) {
-    // 没有 redirect 时，再尝试回退（并排除回到登录页自身的情况）
-    router.back()
+    // 有上一页且不是登录页
+    const backPath = window.history.state.back
+    const isHome = router.resolve(backPath).path === '/'
+    if (isHome) {
+      // 上一页是首页 -> 跳转到控制台
+      router.replace('/dash') // 根据你的控制台路由调整
+    } else {
+      // 上一页不是首页 -> 返回上一页
+      router.back()
+    }
   } else {
-    router.replace('/dash')
+    // 没有上一页或上一页是登录页 -> 默认跳控制台
+    router.replace('/dash') // 根据你的控制台路由调整
   }
 }
 

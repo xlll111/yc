@@ -13,6 +13,7 @@ const Cloud = () => import('@/views/cloud/CloudPage.vue')
 const ClientsList = () => import('@/views/ClientsList.vue')
 const GlobalSetting = () => import('@/views/GlobalSetting.vue')
 const EmailVerify = () => import('@/views/EmailVerify.vue')
+const Authorize = () => import('@/views/Authorize.vue')
 
 const Client = () => import('@/views/Client.vue')
 const Overview = () => import('@/views/client/Overview.vue')
@@ -57,6 +58,14 @@ const router = createRouter({
       component: Register,
       meta: {
         title: '注册',
+      },
+    },
+    {
+      path: '/oauth/authorize',
+      name: 'OAuthAuthorize',
+      component: Authorize,
+      meta: {
+        title: 'OAuth授权',
       },
     },
     {

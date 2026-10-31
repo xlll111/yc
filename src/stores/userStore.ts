@@ -54,7 +54,20 @@ export interface LoginResponse {
   token: string
   userInfo: UserInfo
 }
+// OAuth授权请求参数类型
+export interface OAuthAuthorizeRequest {
+  client_id: string
+  redirect_uri: string
+  response_type: string
+  scope: string
+  state: string
+  code_challenge?: string
+  code_challenge_method?: string
+}
 
+export interface OAuthAuthorizeResponse {
+  redirect_url: string
+}
 export const useUserStore = defineStore('user', () => {
   // State
   const token = ref<string>(localStorage.getItem('access_token') || '')
@@ -272,7 +285,24 @@ export const useUserStore = defineStore('user', () => {
     // console.log('Global settings updated:', settings) // 打印更新后的全局设置
     return true
   }
-
+  // OAuth 授权确认
+  const oauthAuthorize = async (
+    params: Omit<OAuthAuthorizeRequest, 'access_token'>,
+  ): Promise<string> => {
+    if (!token.value) {
+      throw new Error('未登录，无法进行授权')
+    }
+    try {
+      const requestData: OAuthAuthorizeRequest = {
+        ...params,
+      }
+      const response = await userApi.oauthAuthorize(requestData)
+      return response.redirect_url
+    } catch (error) {
+      console.error('OAuth authorize failed:', error)
+      throw error
+    }
+  }
   return {
     // State
     token,
@@ -305,5 +335,6 @@ export const useUserStore = defineStore('user', () => {
     fetchGlobalSettings,
     fetchDingtalkFileTransferClients,
     updateUerGlobalSettings,
+    oauthAuthorize,
   }
 })

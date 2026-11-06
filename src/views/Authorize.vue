@@ -105,6 +105,7 @@ const state = computed(() => route.query.state)
 const scopeParam = computed(() => route.query.scope || 'openid profile')
 const codeChallenge = computed(() => route.query.code_challenge)
 const codeChallengeMethod = computed(() => route.query.code_challenge_method)
+const nonce = computed(() => route.query.nonce)
 
 // 根据 scope 展示权限说明
 const scopeMap = {
@@ -129,8 +130,15 @@ onMounted(async () => {
   }
 
   // 校验必要参数
-  if (!clientId.value || !redirectUri.value || !state.value) {
+  if (
+    !clientId.value ||
+    !redirectUri.value ||
+    !state.value ||
+    !codeChallenge.value ||
+    !nonce.value
+  ) {
     ElMessage.error('授权请求参数不完整')
+    return
   }
 })
 
@@ -155,6 +163,7 @@ const handleAuthorize = async () => {
       response_type: 'code',
       scope: scopeParam.value,
       state: state.value,
+      nonce: nonce.value,
       code_challenge: codeChallenge.value,
       code_challenge_method: codeChallengeMethod.value || 'S256',
     })

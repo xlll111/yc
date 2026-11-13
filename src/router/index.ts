@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
 import { useLoadingStore } from '@/stores/loading'
 import { useUserStore } from '@/stores/userStore'
 import { ElMessage } from 'element-plus'
@@ -25,16 +25,18 @@ const DnsUrl = () => import('@/views/client/DnsUrl.vue')
 const QuickCommand = () => import('@/views/client/QuickCommand.vue')
 const RealtimeControl = () => import('@/views/client/RealtimeControl.vue')
 
-
 const WeeklyClientReport = () => import('@/views/weekly-report/index.vue')
 
 const ShxzhyDrive = () => import('@/views/ShxzhyDrive.vue')
 
 const Blank = () => import('@/components/blank.vue')
 const E404 = () => import('@/views/E404.vue')
-
+console.log(import.meta.env.VITE_ZXHY) // 输出 'true' 或 'false' 根据环境变量设置
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history:
+    import.meta.env.VITE_ZXHY === 'true'
+      ? createWebHashHistory(import.meta.env.BASE_URL)
+      : createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
@@ -375,12 +377,13 @@ router.beforeEach(async (to, from) => {
   // }
 
   // 2. 鉴权（先鉴权，再设 title / loading，避免被踢时闪标题）
-  const requiredRole = to.meta.requiresAuth  // number | undefined
+  const requiredRole = to.meta.requiresAuth // number | undefined
   if (requiredRole !== undefined) {
     if (!userStore.getIsLoggedIn) {
       ElMessage.error('请先登录')
       return {
-        path: '/login', query: { redirect: to.fullPath }
+        path: '/login',
+        query: { redirect: to.fullPath },
       }
     }
 

@@ -219,7 +219,7 @@ const loginSuccess = () => {
   } else if (
     window.history.state &&
     window.history.state.back &&
-    window.history.state.back !== '/login'
+    !['/login', '/register'].includes(router.resolve(window.history.state.back).path)
   ) {
     // 有上一页且不是登录页
     const backPath = window.history.state.back

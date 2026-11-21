@@ -8,6 +8,9 @@ import type {
   UserInfoChangeRequest,
   UserInfoChangePasswordRequest,
   USerGlobalSettings,
+  ShxzhyStatus,
+  ShxzhyLoginRequest,
+  ShxzhyLoginResponse,
 } from '@/stores/userStore'
 import type { OAuthAuthorizeRequest, OAuthAuthorizeResponse } from '@/stores/userStore'
 
@@ -28,7 +31,7 @@ export const userApi = {
     return request.get(
       '/user/get_user_info_by_token',
       null,
-      { headers: { Authorization: `Bearer ${token}` } }, // 第三个参数是 config
+      { headers: { Authorization: `Bearer ${token}` } } // 第三个参数是 config
     )
   },
 
@@ -62,7 +65,7 @@ export const userApi = {
     userName: string,
     password: string,
     captchaId: string,
-    captchaValue: string,
+    captchaValue: string
   ): Promise<Object> {
     if (captchaId && captchaValue) {
       return request.authpost('/user/shxzhy_verify', {
@@ -75,6 +78,32 @@ export const userApi = {
       return request.authpost('/user/shxzhy_verify', { userName, password })
     }
   },
+  // 查询慧云认证服务连通状态（无需登录）
+  // 服务端负责探测能否连接到慧云，前端只读状态
+  getShxzhyStatus(): Promise<ShxzhyStatus> {
+    return request.get('/auth/shxzhy_status', null, {
+      // 状态探测不应该长时间阻塞页面
+      timeout: 10000,
+    })
+  },
+
+  // 慧云登录（无需登录）
+  // 账号密码由服务端转发给慧云校验，未注册的账号由服务端自动注册
+  shxzhyLogin(data: ShxzhyLoginRequest): Promise<ShxzhyLoginResponse> {
+    const payload: Record<string, string | boolean> = {
+      userName: data.userName,
+      password: data.password,
+    }
+    if (data.rememberMe !== undefined) {
+      payload.rememberMe = data.rememberMe
+    }
+    if (data.captchaId && data.captchaValue) {
+      payload.captchaId = data.captchaId
+      payload.captchaValue = data.captchaValue
+    }
+    return request.post('/auth/shxzhy_login', payload, { withCredentials: true })
+  },
+
   getDingtalkVerificationToken(): Promise<{ dingtalk_verification_token: string }> {
     return request.authget('/user/get_dingtalk_verification_token')
   },

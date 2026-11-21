@@ -146,6 +146,27 @@
           还没有账户？
           <a href="#" class="signup-link" @click.prevent="handleSignup">立即注册</a>
         </div>
+
+        <div class="divider">
+          <span class="divider-text">其他登录方式</span>
+        </div>
+
+        <a href="#" class="shxzhy-login-link" @click.prevent="goShxzhyLogin">
+          <svg class="link-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
+            <path
+              d="M12 6.5C9.5 6.5 7.5 8.5 7.5 11C7.5 13.5 9.5 15.5 12 15.5C14.5 15.5 16.5 13.5 16.5 11C16.5 8.5 14.5 6.5 12 6.5Z"
+              stroke="currentColor"
+              stroke-width="1.5"
+            />
+            <path d="M8 17.5L12 15.5L16 17.5" stroke="currentColor" stroke-width="1.5" />
+          </svg>
+          使用慧云账号登录
+        </a>
       </form>
     </div>
   </div>
@@ -245,6 +266,12 @@ const handleForgotPassword = () => {
 // 注册处理
 const handleSignup = () => {
   router.push('/register')
+}
+
+// 前往慧云登录页
+const goShxzhyLogin = () => {
+  const redirect = route.query.redirect
+  router.push(redirect ? { path: '/login/shxzhy', query: { redirect } } : '/login/shxzhy')
 }
 </script>
 
@@ -461,6 +488,50 @@ const handleSignup = () => {
   color: $color-text-base;
   @include font-family-base;
   margin-top: $spacing-4;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: $spacing-6;
+  color: $color-text-tertiary;
+  font-size: $font-size-sm;
+  margin-top: $spacing-4;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: $color-border;
+  }
+}
+
+.shxzhy-login-link {
+  @include flex-center;
+  gap: $spacing-4;
+  width: 100%;
+  padding: $spacing-5 $spacing-8;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  color: $color-text-base;
+  font-size: $font-size-base;
+  font-weight: 500;
+  @include font-family-base;
+  text-decoration: none;
+  transition: all $transition-base;
+
+  .link-icon {
+    width: 18px;
+    height: 18px;
+    color: $color-primary;
+  }
+
+  &:hover {
+    border-color: $color-primary;
+    background: $color-primary-light;
+    color: $color-primary;
+  }
 }
 
 .demo-hint {

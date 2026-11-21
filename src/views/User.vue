@@ -325,27 +325,79 @@
             <p class="modal-hint small">邮箱：{{ userInfo.email }}</p>
           </div>
           <div v-else-if="modalType === 'shxzhy'">
-            <p class="modal-hint">
-              由于特殊原因，行知慧云暂时无法被访问，恢复时间未知（2026年8月22日）
-            </p>
-            <p class="modal-hint">我们将调用行知·慧云的登录接口验证您的身份</p>
-            <p class="modal-hint">您的数据只将用于验证身份，您无法使用行知·慧云账号登录YCService</p>
-            <label class="modal-label">慧云账号</label>
-            <input v-model="tempShxzhyUsername" class="modal-input" placeholder="请输入慧云账号" />
-            <label class="modal-label">慧云密码</label>
-            <input
-              v-model="tempShxzhyPassword"
-              class="modal-input password-mask"
-              placeholder="请输入慧云密码"
-            />
-            <label class="modal-label" v-if="tempShxzhyCaptchaId">验证码</label>
-            <input
-              v-model="tempShxzhyCaptchaValue"
-              class="modal-input"
-              placeholder="请输入验证码"
-              v-if="tempShxzhyCaptchaId"
-            />
-            <img v-if="tempShxzhyCaptchaId" :src="shxzhyCaptchaImageBase64" alt="" />
+            <!-- 慧云服务连通状态（判断在服务端，前端只展示） -->
+            <div class="shxzhy-status" :class="`shxzhy-status--${shxzhyServiceStatus}`">
+              <template v-if="shxzhyServiceStatus === 'checking'">
+                <span class="status-spinner"></span>
+                <span>正在检测慧云服务状态...</span>
+              </template>
+              <template v-else-if="shxzhyServiceStatus === 'online'">
+                <svg
+                  class="status-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20 6L9 17L4 12"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>慧云服务在线</span>
+              </template>
+              <template v-else>
+                <div class="status-unavailable">
+                  <div class="status-unavailable-text">
+                    当前服务不可用：{{
+                      shxzhyStatusMessage || '暂时无法连接到慧云认证服务，请稍后再试'
+                    }}
+                  </div>
+                  <button
+                    class="status-retry-btn"
+                    :disabled="shxzhyStatusChecking"
+                    @click="fetchShxzhyServiceStatus"
+                  >
+                    {{ shxzhyStatusChecking ? '检测中...' : '重新检测' }}
+                  </button>
+                </div>
+              </template>
+            </div>
+
+            <template v-if="shxzhyServiceStatus !== 'offline' && shxzhyServiceStatus !== 'unknown'">
+              <p class="modal-hint">我们将调用行知·慧云的登录接口验证您的身份</p>
+              <p class="modal-hint">您的数据只将用于验证身份</p>
+              <label class="modal-label">慧云账号</label>
+              <input
+                v-model="tempShxzhyUsername"
+                class="modal-input"
+                placeholder="请输入慧云账号"
+                :disabled="shxzhyServiceStatus !== 'online'"
+              />
+              <label class="modal-label">慧云密码</label>
+              <input
+                v-model="tempShxzhyPassword"
+                class="modal-input password-mask"
+                placeholder="请输入慧云密码"
+                :disabled="shxzhyServiceStatus !== 'online'"
+              />
+              <label class="modal-label" v-if="tempShxzhyCaptchaId">验证码</label>
+              <input
+                v-model="tempShxzhyCaptchaValue"
+                class="modal-input"
+                placeholder="请输入验证码"
+                v-if="tempShxzhyCaptchaId"
+                :disabled="shxzhyServiceStatus !== 'online'"
+              />
+              <img
+                v-if="tempShxzhyCaptchaId"
+                :src="shxzhyCaptchaImageBase64"
+                alt="验证码"
+                class="shxzhy-captcha"
+              />
+            </template>
           </div>
 
           <div v-else-if="modalType === 'dingtalk'">
@@ -443,6 +495,10 @@ const tempShxzhyPassword = ref('')
 const tempShxzhyCaptchaId = ref('')
 const tempShxzhyCaptchaValue = ref('')
 const shxzhyCaptchaImageBase64 = ref('')
+// 慧云服务连通状态：checking 检测中 / online 在线 / offline 服务端确认不可用 / unknown 无法确认
+const shxzhyServiceStatus = ref('checking')
+const shxzhyStatusMessage = ref('')
+const shxzhyStatusChecking = ref(false)
 const tempPhone = ref('')
 const tempCaptcha = ref('')
 const bindCommand = ref('')
@@ -562,6 +618,28 @@ const handleVerifyEmail = async () => {
 }
 const handleshxzhyVerify = async () => {
   openModal('shxzhy', '慧云认证')
+  // 打开弹窗时检测慧云服务连通性（与慧云登录页共用同一个慧云服务）
+  fetchShxzhyServiceStatus()
+}
+
+// 检测慧云服务连通性：判断逻辑在服务端，前端只获取状态
+const fetchShxzhyServiceStatus = async () => {
+  if (shxzhyStatusChecking.value) return
+  shxzhyStatusChecking.value = true
+  shxzhyServiceStatus.value = 'checking'
+  shxzhyStatusMessage.value = ''
+  try {
+    const status = await userStore.fetchShxzhyStatus()
+    if (status?.available) {
+      shxzhyServiceStatus.value = 'online'
+    } else {
+      // 服务端明确探测到慧云不可用 → offline；接口异常 → unknown
+      shxzhyServiceStatus.value = status?.message ? 'offline' : 'unknown'
+      shxzhyStatusMessage.value = status?.message || '暂时无法确认慧云服务状态，请稍后重试'
+    }
+  } finally {
+    shxzhyStatusChecking.value = false
+  }
 }
 
 const handleBindDingtalk = async () => {
@@ -648,6 +726,15 @@ const handleModalFormatCheck = async () => {
         break
       }
       case 'shxzhy': {
+        // 慧云服务不在线时不允许提交认证
+        if (shxzhyServiceStatus.value !== 'online') {
+          if (shxzhyServiceStatus.value === 'checking') {
+            ElMessage.warning('正在检测慧云服务状态，请稍候')
+          } else {
+            ElMessage.error('慧云服务当前不可用，暂时无法进行认证')
+          }
+          return
+        }
         if (!userInfo.value.emailVerified) {
           ElMessage.error('请先验证邮箱')
           return
@@ -716,7 +803,7 @@ const handleModalConfirm = async () => {
           tempShxzhyUsername.value,
           tempShxzhyPassword.value,
           tempShxzhyCaptchaId.value,
-          tempShxzhyCaptchaValue.value,
+          tempShxzhyCaptchaValue.value
         )
         if (result.success) {
           await userStore.refreshToken()
@@ -724,6 +811,13 @@ const handleModalConfirm = async () => {
           ElMessage.success('慧云认证成功')
           closeModal()
         } else {
+          // 服务端探测到慧云不可达，同步更新弹窗内的服务状态提示
+          if (result?.service_unavailable) {
+            shxzhyServiceStatus.value = 'offline'
+            shxzhyStatusMessage.value = result?.details || '暂时无法连接到慧云认证服务'
+            ElMessage.error('当前服务不可用，请稍后再试')
+            return
+          }
           const data = result.data
           if (data?.captcha_id) {
             tempShxzhyCaptchaId.value = data.captcha_id
@@ -861,13 +955,7 @@ const checkMxRecord = async (domain) => {
   font-weight: 600;
   color: #374151;
   margin: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    sans-serif;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   letter-spacing: -0.3px;
 }
 
@@ -878,13 +966,7 @@ const checkMxRecord = async (domain) => {
   background: #f3f4f6;
   color: #6b7280;
   font-weight: 500;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    sans-serif;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -903,13 +985,7 @@ const checkMxRecord = async (domain) => {
   font-size: 14px;
   color: #6b7280;
   margin: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    sans-serif;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
 }
 
 .info-icon {
@@ -937,13 +1013,7 @@ const checkMxRecord = async (domain) => {
   background: #eff6ff;
   padding: 2px 12px 2px 8px;
   border-radius: 9999px;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    sans-serif;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
 }
 
 .meta-icon {
@@ -974,13 +1044,7 @@ const checkMxRecord = async (domain) => {
   cursor: pointer;
   transition: background-color 0.2s ease;
   color: #374151;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    sans-serif;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
 }
 
 .action-item:hover {
@@ -1107,13 +1171,7 @@ const checkMxRecord = async (domain) => {
   font-weight: 600;
   color: #374151;
   margin: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    sans-serif;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
 }
 
 .modal-close {
@@ -1141,13 +1199,7 @@ const checkMxRecord = async (domain) => {
   font-weight: 500;
   color: #374151;
   margin-bottom: 4px;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    sans-serif;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
 }
 
 .modal-input {
@@ -1158,17 +1210,9 @@ const checkMxRecord = async (domain) => {
   font-size: 14px;
   color: #374151;
   background: #ffffff;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   margin-bottom: 14px;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    sans-serif;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   box-sizing: border-box;
 }
 
@@ -1187,19 +1231,105 @@ const checkMxRecord = async (domain) => {
   color: #6b7280;
   margin: 0 0 6px 0;
   line-height: 1.6;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    sans-serif;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
 }
 
 .modal-hint.small {
   font-size: 13px;
   color: #9ca3af;
 }
+
+/* 慧云服务连通状态横幅 */
+.shxzhy-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.shxzhy-status--checking {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.shxzhy-status--online {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.shxzhy-status--offline,
+.shxzhy-status--unknown {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.status-spinner {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border: 2px solid #fde68a;
+  border-top-color: #f59e0b;
+  border-radius: 50%;
+  animation: shxzhy-status-spin 0.8s linear infinite;
+}
+
+@keyframes shxzhy-status-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.status-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.status-unavailable {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.status-unavailable-text {
+  word-break: break-all;
+}
+
+.status-retry-btn {
+  align-self: flex-start;
+  background: none;
+  border: 1px solid #fee2e2;
+  border-radius: 6px;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 3px 12px;
+  transition: all 0.2s ease;
+}
+
+.status-retry-btn:hover:not(:disabled) {
+  background: #ffe5e5;
+}
+
+.status-retry-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.shxzhy-captcha {
+  display: block;
+  margin-top: 8px;
+  max-width: 100%;
+  height: 40px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+
 .modal-row {
   display: flex;
   gap: 10px;
@@ -1228,13 +1358,7 @@ const checkMxRecord = async (domain) => {
   cursor: pointer;
   white-space: nowrap;
   transition: background-color 0.2s ease;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    sans-serif;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
 }
 
 .captcha-btn:hover {
@@ -1259,16 +1383,8 @@ const checkMxRecord = async (domain) => {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    opacity 0.2s ease;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    sans-serif;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
 }
 
 .modal-btn.cancel {

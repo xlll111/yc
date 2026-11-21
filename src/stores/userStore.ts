@@ -68,6 +68,47 @@ export interface OAuthAuthorizeRequest {
 export interface OAuthAuthorizeResponse {
   redirect_url: string
 }
+
+// 慧云服务连通状态
+export interface ShxzhyStatus {
+  available: boolean
+  message?: string
+}
+
+// 慧云登录请求参数类型（密码传明文，由服务端转发给慧云校验）
+export interface ShxzhyLoginParams {
+  userName: string
+  password: string
+  rememberMe?: boolean
+  captchaId?: string
+  captchaValue?: string
+}
+
+// 慧云登录请求体
+export interface ShxzhyLoginRequest {
+  userName: string
+  password: string
+  rememberMe?: boolean
+  captchaId?: string
+  captchaValue?: string
+}
+
+// 慧云登录响应类型
+// 成功: { success: true, token, userInfo, isNewUser }
+// 需要验证码: { success: false, details, data: { captcha_id, captcha_image_base64 } }
+// 账密错误 / 服务不可用: { success: false, details, service_unavailable? }
+export interface ShxzhyLoginResponse {
+  success: boolean
+  token?: string
+  userInfo?: UserInfo
+  isNewUser?: boolean
+  details?: string
+  service_unavailable?: boolean
+  data?: {
+    captcha_id: string
+    captcha_image_base64: string
+  }
+}
 export const useUserStore = defineStore('user', () => {
   // State
   const token = ref<string>(localStorage.getItem('access_token') || '')
@@ -243,12 +284,43 @@ export const useUserStore = defineStore('user', () => {
     userName: string,
     password: string,
     captchaId: string,
-    captchaValue: string,
+    captchaValue: string
   ) => {
     if (!userInfo.value) return false
     const result = await userApi.shxzhyVerify(userName, password, captchaId, captchaValue)
     // console.log('shxzhyVerify result:', result) // 打印验证结果
     return result
+  }
+
+  // 查询慧云认证服务连通状态（登录页与个人中心的慧云认证共用同一个慧云服务）
+  // 状态探测与判断全部在服务端完成，前端只负责展示
+  const fetchShxzhyStatus = async (): Promise<ShxzhyStatus> => {
+    try {
+      return await userApi.getShxzhyStatus()
+    } catch (error) {
+      // 接口本身异常（网络问题 / 服务端故障）时，按“无法确认”处理
+      console.error('Fetch shxzhy status failed:', error)
+      return { available: false, message: '暂时无法确认慧云服务状态，请稍后重试' }
+    }
+  }
+
+  // 慧云登录：账号密码交给服务端，由服务端向慧云校验；未注册的账号由服务端自动注册
+  // 登录成功后与普通登录一样，保存 token 与用户信息
+  const shxzhyLogin = async (params: ShxzhyLoginParams): Promise<ShxzhyLoginResponse> => {
+    const response = await userApi.shxzhyLogin({
+      userName: params.userName,
+      password: params.password,
+      rememberMe: params.rememberMe,
+      captchaId: params.captchaId,
+      captchaValue: params.captchaValue,
+    })
+    if (response?.success && response.token && response.userInfo) {
+      localStorage.setItem('access_token', response.token)
+      token.value = response.token
+      userInfo.value = response.userInfo
+      isLoggedIn.value = true
+    }
+    return response
   }
 
   const fetchDingtalkVerificationToken = async () => {
@@ -287,7 +359,7 @@ export const useUserStore = defineStore('user', () => {
   }
   // OAuth 授权确认
   const oauthAuthorize = async (
-    params: Omit<OAuthAuthorizeRequest, 'access_token'>,
+    params: Omit<OAuthAuthorizeRequest, 'access_token'>
   ): Promise<string> => {
     if (!token.value) {
       throw new Error('未登录，无法进行授权')
@@ -331,6 +403,8 @@ export const useUserStore = defineStore('user', () => {
     sendEmailVerification,
     emailVerify,
     shxzhyVerify,
+    fetchShxzhyStatus,
+    shxzhyLogin,
     fetchDingtalkVerificationToken,
     fetchGlobalSettings,
     fetchDingtalkFileTransferClients,

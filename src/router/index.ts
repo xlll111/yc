@@ -5,6 +5,7 @@ import { ElMessage } from 'element-plus'
 import 'element-plus/es/components/message/style/css'
 const Home = () => import('@/views/Home.vue')
 const Login = () => import('@/views/Login.vue')
+const ShxzhyLogin = () => import('@/views/ShxzhyLogin.vue')
 const Register = () => import('@/views/Register.vue')
 const About = () => import('@/views/AboutView.vue')
 const Dash = () => import('@/views/Dash.vue')
@@ -52,6 +53,14 @@ const router = createRouter({
       component: Login,
       meta: {
         title: '登录',
+      },
+    },
+    {
+      path: '/login/shxzhy',
+      name: 'ShxzhyLogin',
+      component: ShxzhyLogin,
+      meta: {
+        title: '慧云登录',
       },
     },
     {
